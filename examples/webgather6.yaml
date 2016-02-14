@@ -1,0 +1,29 @@
+var:
+  # 采集列表
+  itemList: []
+
+    
+gather:
+  - url: http://www.gtja.com.hk/rss/markRss.aspx
+    html: false
+    xpath: "//item"
+    save:
+      to: itemList
+      property:
+          author: "author/text()"
+          pubDate: "pubDate/text()"
+resource: 
+#    db1: 
+#        url: "jdbc:jtds:sqlserver://127.0.0.1:1433/test"
+#        databaseName: datacenter
+#        username: sa
+#        password: "12345678"
+    file1: 
+        url: "file://items.txt?format=plantext"
+
+#保存
+persist:
+    itemList: file1
+    #itemList: 
+    #    resource: db1
+    #    sql: "insert into WERTHER_001(quName) values ('${cityList.A}')"

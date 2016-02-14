@@ -1,0 +1,19 @@
+resource: 
+    jsonfile: 
+        url: "file://D:/temp/bbb.json?format=json"
+    csvfile:
+        url: "file://D:/temp/bbb.csv?format=csv"
+
+
+
+
+gather:
+  - url: jsonfile
+    xpath: json($.AVGPRICE)
+    save: 
+      to: data
+
+#保存
+persist:
+    data.AVGPRICE: 
+        resource: csvfile

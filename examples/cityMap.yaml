@@ -1,0 +1,14 @@
+--- 
+    beijing: !org.shenjitang.webgather.study.City
+        name: beijing
+        title: 北京
+    shanghai: !org.shenjitang.webgather.study.City
+        name: shanghai
+        title: 上海
+    nanjing: !org.shenjitang.webgather.study.City
+        name: nanjing
+        title: 南京
+    xian: !org.shenjitang.webgather.study.City
+        name: xian
+        title: 西安
+      

@@ -1,0 +1,40 @@
+resource: 
+    db1: 
+        url: "jdbc:mysql://localhost:3306/test"
+        #databaseName: test
+        username: root
+        password: "12345678"
+    mongo1:
+        url: mongodb://localhost:27017/vbao
+
+var:
+    t_province: []
+    t_district: []
+    t_city: []
+    
+
+gather:
+    - url: db1
+      param: 
+          sql: "select * from t_province"
+      save: 
+          to: t_province
+    - url: db1
+      param: 
+          sql: "select * from t_district"
+      save: 
+          to: t_district
+    - url: db1
+      param: 
+          sql: "select * from t_city"
+      save: 
+          to: t_city
+        
+persist:
+    t_province: 
+        resource: mongo1
+    t_district: 
+        resource: mongo1
+    t_city: 
+        resource: mongo1
+
