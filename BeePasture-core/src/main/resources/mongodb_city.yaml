@@ -3,8 +3,7 @@ var:
     
 resource: 
     mongo1:
-        url: mongodb://localhost:27017/test
-        
+        url: mongodb://localhost:27017/test        
 
 gather:
   - url: "http://www.dianping.com/citylist"
@@ -32,6 +31,5 @@ gather:
 persist:
     city: 
         resource: mongo1
-#        database: vbaobao
-#        collection: shopClass1
+
 

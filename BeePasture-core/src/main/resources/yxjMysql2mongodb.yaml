@@ -5,13 +5,7 @@ resource:
         username: root
         password: "12345678"
     mongo1:
-        url: mongodb://localhost:27017/vbao
-
-var:
-    t_province: []
-    t_district: []
-    t_city: []
-    
+        url: mongodb://localhost:27017/vbao    
 
 gather:
     - url: db1
