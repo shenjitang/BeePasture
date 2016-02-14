@@ -1,0 +1,52 @@
+resource: 
+    db1: 
+        url: "jdbc:jtds:sqlserver://172.20.10.229:1433/anaplatform_chajian"
+        databaseName: datacenter
+        username: sa
+        password: "rz_229"
+var:
+  # 城市列表
+  defines: 
+    - name: 折线图设置1
+      content: 
+        # 图形定义
+        type: 折线图
+        title: 
+            align: center
+            style: "color:#00FF00 font-style:宋体 font-size:24px"
+        x: 
+            style: "font-size:11px"
+        y: 
+            style: "font-size:11px"
+        legend:
+            layout: vertical
+            align: right
+            verticalAlign: middle
+            borderWidth: 0
+        series: 
+            - style: "color:#00FF00"
+            - style: "color:#FF0000"
+    - name: 柱状图设置1
+      content: 
+        # 图形定义
+        type: 柱状图
+        title: 
+            align: center
+            style: "color:#00FF00 font-style:宋体 font-size:24px"
+        x: 
+            style: "font-size:11px"
+        y: 
+            style: "font-size:11px"
+        legend:
+            layout: vertical
+            align: right
+            verticalAlign: middle
+            borderWidth: 0
+        series: 
+            - style: "color:#00FF00"
+            - style: "color:#FF0000"
+gather: []
+persist:
+    defines: 
+        resource: db1
+        sql: "insert into plugin_graph_define (name, content) values ('${defines.name}', '${yaml.dump(defines.content, true)}')"  

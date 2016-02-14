@@ -1,0 +1,24 @@
+var:
+  user: []
+  urls: 
+    - "http://www.cofeed.com/soybean/14091264043.html"
+    - "http://www.cofeed.com/soybean/15081445556.html"
+gather:
+  - url: urls
+    heads:
+        Accept: "text/html, application/xhtml+xml, image/jxr, */*"
+        Accept-Language: "zh-Hans-CN,zh-Hans;q=0.8,en-US;q=0.5,en;q=0.3"
+        User-Agent: "Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; LCJB; rv:11.0) like Gecko"
+        Host: www.cofeed.com
+        Connection: Keep-Alive
+        Pragma: no-cache
+        DNT: 1
+        Cookie: "VERSION=2,0,0,0; BRIDGE_INVITE_0=0; Hm_lvt_61225203ce8828fbd02be30e29dc4360=1438652606,1438653062; lzstat_uv=2864509163548547465|914410; Hm_lpvt_61225203ce8828fbd02be30e29dc4360=1438653062; lzstat_ss=1159017162_0_1438681862_914410; LoginCode=A3042900EAU6183C800EAEE0LK; ASPSESSIONIDAARSTTQA=ADNKLEMDMIKOIAEGPBOHAKNH; CofeedCookie=CofeedUserStr=8e56f73e4cbc5685"
+    # xpath: "//div[@class='nav_bot_lgntxt']"
+    save:
+      to: user
+#      property:
+#          name: //text()
+#保存
+persist:
+    user: "file://d:/temp/user.txt?encoding=utf8"
