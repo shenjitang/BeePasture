@@ -1,21 +1,19 @@
-# BeePasture
-BeePasture:蜜蜂牧场是一个简单易用的数据ETL工具。支持各种传统的关系型数据库比如mysql, oracle, sqlserver，mongodb等nosql数据库，网页数据抓取，文件。支持json,xml,html等数据格式，支持xpath, jsonpath, beetl脚本模板。任务是通过简单的yaml脚本编写的。<br>
-
-# 用法：
-BeePasture-core<br>
+BeePasture
+==========
+蜜蜂牧场是一个简单易用的脚本形式的数据ETL工具。支持各种传统的关系型数据库比如mysql, oracle, sqlserver，mongodb等nosql数据库，网页数据抓取，文件。支持json,xml,html等数据格式，支持xpath, jsonpath, beetl脚本模板。脚本是通过简单的yaml编写的。<br>
 request: jdk1.7<br>
-execute:<br>
-java -jar BeePasture-core-1.0.jar webgather4.yaml<br>
-<br>
-set file encoding default is GBK<br>
-java -DfileEncoding=utf8 -jar BeePasture-core-1.0.jar webgather4.yaml<br>
-<br>
-script file is yaml language.<br> 
-sample: webgather1.yaml,webgather2.yaml,webgather3.yaml,webgather4.yaml<br>
-<br>
-脚本样例在目录examples中。<br>
 
-BeePasture-grizzly2是sun的jersey框架的restful服务。脚本通过http post执行。<br>
+BeePasture-core
+------
+命令行运行工具<br>
+用法： 
+        java -jar BeePasture-core-1.0.jar webgather4.yaml
+指定脚本文件的encoding<br>
+        java -DfileEncoding=utf8 -jar BeePasture-core-1.0.jar webgather4.yaml
+<br>
+*脚本样例在目录examples中*
+
+
 <br>
 <br>
 # 脚本简单说明：
@@ -42,3 +40,8 @@ var：
 这个是大众点评网上所有的城市列表，是个有26个成员的数组，其中${i}分别是A,B,C,D...Z。    ${time}为当前时间戳，
 x..x是数组中的不同部分的定义，可以是字母，比如：A..Z 和 a..g，也可以是数字，比如：5..100。
 抓取大众点评网所有城市的脚本见 examples/mongodb_city.yaml
+
+BeePasture-grizzly2
+------
+是sun的jersey框架的restful服务。脚本通过http post执行。
+
