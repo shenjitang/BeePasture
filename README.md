@@ -7,12 +7,10 @@ BeePasture-core
 ------
 命令行运行工具<br>
 用法： <br>
-		`java -jar BeePasture-core-1.0.jar webgather4.yaml` <br>
+		java -jar BeePasture-core-1.0.jar webgather4.yaml <br>
 指定脚本文件的encoding <br>
-		`java -DfileEncoding=utf8 -jar BeePasture-core-1.0.jar webgather4.yaml` <br>
-*脚本样例在目录examples中*
-
-
+		java -DfileEncoding=utf8 -jar BeePasture-core-1.0.jar webgather4.yaml <br>
+脚本样例在`examples`目录中
 <br>
 <br>
 # 脚本简单说明：
