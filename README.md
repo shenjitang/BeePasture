@@ -11,8 +11,45 @@ BeePasture-core
 指定脚本文件的encoding <br>
 		`java -DfileEncoding=utf8 -jar BeePasture-core-1.0.jar webgather4.yaml` <br>
 脚本样例在`examples`目录中
-<br>
-<br>
+mongodb_city.yaml  
+是采集大众点评网上所有的城市的采集脚本  
+``` mongodb_city
+var:
+    cityUrlList: "A..Z http://www.dianping.com/ajax/json/index/citylist/getCitylist?_nr_force=${time}&do=getByPY&firstPY=${i}"
+    
+resource: 
+    mongo1:
+        url: mongodb://localhost:27017/test
+        
+
+gather:
+  # 获取城市列表
+  - url: "http://www.dianping.com/citylist"
+    xpath: "//div[@class='terms']/a"
+    save: 
+      to: city
+      property: 
+        title: //text()
+        name: 
+            xpath: @href
+            templete: "${it.substring(1)}"
+  # 获取城市列表 更多
+  - url: cityUrlList
+    xpath: json($.msg.html);//a
+    save:
+      to: city
+      append: true
+      property:
+          title: //text()
+          name: 
+            xpath: @href
+            templete: "${it.substring(1)}"
+            
+#保存
+persist:
+    city: 
+        resource: mongo1
+```
 # 脚本简单说明：
 脚本为yaml格式。顶级key有以下四种:<br>
 1. `resource`:  定义各种源，包括文件，数据库等，比如mysql, mongodb, file 等。定义了资源的访问参数，是资源读写的入口。<br>
