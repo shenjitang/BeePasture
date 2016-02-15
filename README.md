@@ -19,11 +19,22 @@ BeePasture-grizzly2是sun的jersey框架的restful服务。脚本通过http post
 <br>
 <br>
 # 脚本简单说明：
-脚本分为四大部分
-1，resource:  定义各种源，包括文件，数据库等，比如mysql, mongodb, file 等。
-2，var: 定义变量，无需说明类型，脚本中也可以不定义而直接使用。
-3，gather：定义数据，可以使用xpath, jsonpath, 脚本（beetl）
-4，persist: 保存，可以保存到resource中指定的源中
+脚本为yaml格式。顶级key:<br>
+1，resource:  定义各种源，包括文件，数据库等，比如mysql, mongodb, file 等。定义了资源的访问参数，是资源读写的入口。<br>
+2，var: 定义变量，无需说明类型，脚本中也可以不定义而直接使用。<br>
+3，gather：定义数据，可以使用xpath, jsonpath, 脚本（beetl）<br>
+4，persist: 保存，可以保存到resource中指定的源中<br>
+
+
+# resource包含子key是资源名称，资源种类有 file，dir，jdbc，mongodb ...
+resource: 
+    mydb: 
+        url: "jdbc:jtds:sqlserver://localhost:1433/test"
+        username: sa
+        password: "12345678"
+    oneFile: 
+        url: "file://D:/temp/CSs.SQL?format=yaml"
+
 
 变量定义支持数组，比如：
 var：

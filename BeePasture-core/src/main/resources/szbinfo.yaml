@@ -1,0 +1,22 @@
+resource: 
+    db1: 
+        url: "jdbc:mysql://localhost:3306/test"
+        #databaseName: test
+        username: root
+        password: "12345678"
+
+var:
+    data: []
+
+gather:
+    - url: "http://172.20.10.57:8080/bdsc_service/v1/news/search/page.serv?mediatype=1"
+      xpath: json($.result)
+      save: 
+          to: data
+
+        
+persist:
+#    data: file1
+    data: 
+        resource: db1
+        sql: "insert into szbinfo (ID,TITLE) values(${data.id},'${data.title}')"

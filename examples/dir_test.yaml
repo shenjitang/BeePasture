@@ -1,0 +1,21 @@
+    
+resource: 
+
+    file1: 
+        url: "dir://d:/temp?filefilter=*.xml"
+    file2: 
+        url: "file://d:/temp/fileList.txt?format=plantext"        
+
+gather:
+  - url: file1
+    save:
+        to: fileList
+
+#保存
+persist:
+    fileList: 
+        resource: file2
+
+        
+
+

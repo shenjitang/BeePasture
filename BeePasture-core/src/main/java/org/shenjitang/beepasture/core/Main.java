@@ -38,7 +38,7 @@ public class Main {
         //String fileEncoding = System.getProperty("fileEncoding", "utf8");
         //String fileName = "D:\\workspace\\神机堂\\项目\\webgather\\webgather-web\\src\\main\\resources\\mysql2mongodb.yaml";
         //String fileName = "D:\\workspace\\神机堂\\项目\\webgather\\webgather-web\\src\\main\\resources\\webgather_queue.yaml";
-        String fileName = "D:\\workspace\\神机堂\\项目\\BeePasture\\BeePasture-core\\src\\main\\resources\\webgather1.yaml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\dir_test.yaml";
         //String fileName = "D:\\temp\\CZCEdata.yaml";
         if (args.length > 0) {
             fileName = args[0];
