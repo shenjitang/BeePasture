@@ -23,13 +23,17 @@ BeePasture-core
 
 # resource：
 包含子key是资源名称，资源种类有 file，dir，jdbc，mongodb ...
-		resource:   
-				mydb:   
-				url: "jdbc:jtds:sqlserver://localhost:1433/test"  
-				username: sa  
-				password: "12345678"  
-		oneFile:   
-				url: "file://D:/temp/CSs.SQL?format=yaml"  
+``` resource
+resource:   
+	#名称，可以是 字符，数字，_ 的组合
+	mydb:   
+		url: "jdbc:jtds:sqlserver://localhost:1433/test"  
+		username: sa  
+		password: "12345678"  
+	oneFile:   
+		url: "file://D:/temp/CSs.SQL?format=yaml"  
+```
+resource中的资源类型是以url参数中的schema部分指定的。支持的schema有：`jdbc,file,dir,mongodb`  
 
 
 变量定义支持数组，比如：
