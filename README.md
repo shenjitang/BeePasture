@@ -73,11 +73,18 @@ resource:
 resource中的资源类型是以url参数中的schema部分指定的。支持的schema有：`jdbc,file,dir,mongodb`  
 
 
-变量定义支持数组，比如：
+变量定义
+--------
+``` var
 var：
+    cityList: []
     cityUrlList: "A..Z http://www.dianping.com/ajax/json/index/citylist/getCitylist?_nr_force=${time}&do=getByPY&firstPY=${i}"
-这个是大众点评网上所有的城市列表，是个有26个成员的数组，其中${i}分别是A,B,C,D...Z。    ${time}为当前时间戳，
-x..x是数组中的不同部分的定义，可以是字母，比如：A..Z 和 a..g，也可以是数字，比如：5..100。
+```
+`[]`表示数组  
+`n..n somestring${i}`也是数组
+上例是大众点评网上所有的城市列表，是个有26个成员的数组，其中${i}分别是A,B,C,D...Z。    
+`${time}`为当前时间戳
+`n..n`是数组中的不同部分的定义，可以是字母，比如：A..Z 和 a..g，也可以是数字，比如：5..100。  
 抓取大众点评网所有城市的脚本见 examples/mongodb_city.yaml
 
 BeePasture-grizzly2
