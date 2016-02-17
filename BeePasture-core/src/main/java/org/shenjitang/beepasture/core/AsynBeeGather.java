@@ -186,7 +186,6 @@ public class AsynBeeGather {
             if (append == null) {
                 append = true;
             }
-            System.out.println("*********************append:" + append);
             if (!vars.containsKey(to) || !append) {
                 vars.put(to, new ArrayList());
             }
@@ -383,7 +382,6 @@ public class AsynBeeGather {
         List list = pageAnalyzer.getList(node, xpath);
         for (Object item : list) {
             if (properMap == null || properMap.isEmpty()) {
-                System.out.println(item.toString());
                 returnList.add(item);
             } else {
                 Map map = new HashMap();
@@ -411,7 +409,7 @@ public class AsynBeeGather {
                         if (StringUtils.isNoneBlank(script)) {
                             value = template.expressCalcu(script, value, null);
                         }
-                        System.out.println("key:" + key + "    path=" + path + "    value=" + value);
+                        //System.out.println("key:" + key + "    path=" + path + "    value=" + value);
                         map.put(key, value);
                     } catch (Exception e) {
                         e.printStackTrace();

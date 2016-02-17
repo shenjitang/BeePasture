@@ -14,7 +14,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.LinkedTransferQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
@@ -45,7 +44,7 @@ public class BeeGather {
     private String gather;
     private final ScriptTemplateExecuter template = new ScriptTemplateExecuter();
     private final ResourceMng resourceMng = new ResourceMng();
-    private final Log log = LogFactory.getLog(BeeGather.class);
+    private static final Log LOGGER = LogFactory.getLog(BeeGather.class);
     
 
     public String getGather() {
@@ -69,7 +68,7 @@ public class BeeGather {
 
      public void init() throws Exception {
         Map route = (Map)Yaml.load(gather);
-        log.debug(route);
+        LOGGER.debug(route);
         resources = (Map)route.get("resource");
         if (resources != null) {
             resourceMng.init(resources);
@@ -147,7 +146,7 @@ public class BeeGather {
             if (append == null) {
                 append = true;
             }
-            System.out.println("*********************append:" + append);
+            //System.out.println("*********************append:" + append);
             if (!vars.containsKey(to) || !append) {
                 vars.put(to, new ArrayList());
             }
@@ -341,7 +340,7 @@ public class BeeGather {
         List list = pageAnalyzer.getList(node, xpath);
         for (Object item : list) {
             if (properMap == null || properMap.isEmpty()) {
-                System.out.println(item.toString());
+                //System.out.println(item.toString());
                 returnList.add(item);
             } else {
                 Map map = new HashMap();
@@ -369,7 +368,7 @@ public class BeeGather {
                         if (StringUtils.isNoneBlank(script)) {
                             value = template.expressCalcu(script, value, null);
                         }
-                        System.out.println("key:" + key + "    path=" + path + "    value=" + value);
+                        //System.out.println("key:" + key + "    path=" + path + "    value=" + value);
                         map.put(key, value);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -390,27 +389,6 @@ public class BeeGather {
         return list;
     }
 
-    
-    public static void main(String[] args) throws Exception {
-        /*
-        String str = "<%var a=1,b=2; %> a+b=${a+b}   aaa  ${sys.currentTimeMillis()}";
-        StringTemplateResourceLoader resourceLoader = new StringTemplateResourceLoader();		
-		Configuration cfg = Configuration.defaultConfiguration();
-		GroupTemplate gt = new GroupTemplate(resourceLoader, cfg);
-        gt.registerFunctionPackage("sys", System.class);
-		Template t = gt.getTemplate(str);
-        
-		//t.binding("time", time);		
-		String result = t.render();
-        System.out.println(result);
-                */
-        BeeGather gather = new BeeGather();
-        Map map = new HashMap();
-        map.put("abc", "123*456");
-        System.out.println(gather.template.expressCalcu("${date(),dateFormat=\"yyyy-MM-dd\"} *** ${str.substring(abc, 0, str.indexOf(abc, \"*\"))}", map));
-        
-    }
-
     private Map nameValueToMap(List<NameValuePair> params) {
         Map map = new HashMap();
         for (NameValuePair nvp : params) {
@@ -425,21 +403,6 @@ public class BeeGather {
     private Pattern DPATTERN2 =  Pattern.compile("[a-zA-Z]\\.\\.[a-zA-Z]");
 
     private Map initVars(Map vars, Map resources) throws Exception{
-//        Map varMap = new HashMap();
-//        for (Object varName : vars.keySet()) {
-//            Object value = vars.get(varName);
-//            //如果是指定的资源，就要装载资源
-//            if (value instanceof Map) {
-//                Map map = (Map)value;
-//                String resName = (String)map.get("resource");
-//                if (StringUtils.isNotBlank(resName)) {
-//                    Map resource = (Map)resources.get(resName);
-//                    Object resourceValue = resourceMng.loadResource(resource);
-//                    varMap.put(varName, resourceValue);
-//                }
-//            }
-//        }
-//        vars.putAll(varMap);
         replaceByArray(vars);
         return vars;
     }

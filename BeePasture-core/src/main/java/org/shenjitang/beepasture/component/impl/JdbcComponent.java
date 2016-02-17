@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.shenjitang.beepasture.function.ScriptTemplateExecuter;
 import org.shenjitang.beepasture.component.Component;
 
@@ -24,6 +26,7 @@ import org.shenjitang.beepasture.component.Component;
  * @author xiaolie
  */
 public class JdbcComponent implements Component {
+    private static final Log LOGGER = LogFactory.getLog(JdbcComponent.class);
     private DataSource dataSource;
     private Map params;
     private int batchExecuteCount = 100;
@@ -88,10 +91,10 @@ public class JdbcComponent implements Component {
         try {
             Statement stmt = conn.createStatement();
             try {
-                System.out.println("batch to db begin ......");
+                LOGGER.debug("batch to db begin ......");
                 for (String sql : sqlList) {
                     if (StringUtils.isNotBlank(sql)) {
-                        System.out.println(sql);
+                        LOGGER.info(sql);
                         stmt.addBatch(sql);
                     }
                 }
@@ -122,7 +125,7 @@ public class JdbcComponent implements Component {
         String sql = (String)loadParam.get("sql");
         try (Connection conn = dataSource.getConnection()) {
             try (Statement stmt = conn.createStatement()) {
-                System.out.println("sql:" + sql);
+                LOGGER.debug("sql:" + sql);
                 ResultSet rs = stmt.executeQuery(sql);
                 ResultSetMetaData meta = rs.getMetaData();
                 while(rs.next()) {

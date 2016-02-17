@@ -19,6 +19,8 @@ import java.util.zip.GZIPInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -45,6 +47,7 @@ import org.apache.http.util.EntityUtils;
  * @author xiaolie
  */
 public class HttpTools {
+    private static final Log LOGGER = LogFactory.getLog(HttpTools.class);
     private DefaultHttpClient httpClient;
     private long timeout = 300000L;
 
@@ -80,8 +83,7 @@ public class HttpTools {
             @Override
             public String handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
                 HttpEntity entity = response.getEntity();
-                Header contentTypeHeader = entity.getContentType();
-                System.out.println(contentTypeHeader.getName() + "=" + contentTypeHeader.getValue());
+                //Header contentTypeHeader = entity.getContentType();
                 Long len = entity.getContentLength();
                 byte[] content = new byte[len.intValue()];
                 InputStream in = entity.getContent();
@@ -113,7 +115,7 @@ public class HttpTools {
     public String doGet(String url, Map heads) throws Exception {
         try {
             HttpGet httpget = new HttpGet(url);
-            System.out.println("executing request " + httpget.getURI());
+            LOGGER.debug("executing request " + httpget.getURI());
             // Create a response handler
             ResponseHandler<String> responseHandler = new BasicResponseHandler();
             if (heads != null) {
@@ -121,11 +123,7 @@ public class HttpTools {
                     httpget.setHeader(key.toString(), heads.get(key).toString());
                 }
             }
-            String responseBody = httpClient.execute(httpget, responseHandler);
-//            System.out.println("----------------------------------------");
-//            System.out.println(responseBody);
-//            System.out.println("----------------------------------------");
-            return responseBody;
+            return httpClient.execute(httpget, responseHandler);
         } finally {
             // When HttpClient instance is no longer needed,
             // shut down the connection manager to ensure
@@ -172,7 +170,7 @@ public class HttpTools {
         try {
             HttpGet httpget = new HttpGet(url);
             httpget.addHeader("Accept-Encoding", "gzip, deflate");
-            System.out.println("executing request " + httpget.getURI());
+            //System.out.println("executing request " + httpget.getURI());
             String responseBody = httpClient.execute(httpget, new ResponseHandler<String>() {
                 public String handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
 //                    Header[] contentEncodeings = response.getHeaders("Content-Encoding");
@@ -298,11 +296,12 @@ public class HttpTools {
         StringBuilder str = new StringBuilder();
         String line;
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in, charSet));
-        while((line = bufferedReader.readLine()) != null){
-            str.append(line);
-            str.append("\n");
-        }
-        if(bufferedReader != null) {
+        try {
+            while ((line = bufferedReader.readLine()) != null) {
+                str.append(line);
+                str.append("\n");
+            }
+        } finally {
             bufferedReader.close();
         }
         return str.toString();
