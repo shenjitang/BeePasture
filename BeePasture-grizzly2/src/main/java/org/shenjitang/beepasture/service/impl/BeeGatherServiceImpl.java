@@ -37,7 +37,7 @@ public class BeeGatherServiceImpl implements BeeGatherService {
     }
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, "text/html; charset=UTF-8"})
     public String help() {
         Map result = new HashMap();
         result.put("success", Boolean.TRUE);
@@ -48,7 +48,7 @@ public class BeeGatherServiceImpl implements BeeGatherService {
     
     @Override
     @POST
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, "text/html; charset=UTF-8"})
     public String gather(String yaml) {
         Map result = new HashMap();
         try {

@@ -84,6 +84,80 @@ public class BeeGather {
         gatherStepList = (List)route.get("gather");
         persistStep = (Map)route.get("persist");        
     }
+     
+    protected void download(String urlStr, Map step) {
+        List urls = getUrlsFromStepUrl(urlStr);
+        Map saveTo = (Map) step.get("save");
+        String file = (String) saveTo.get("file");
+        String to = (String) saveTo.get("to");
+        for (Object ourl : urls) {
+            try {
+                String url = template.expressCalcu((String) ourl, null);
+                String fileName = template.expressCalcu(file, url, null);
+                httpTools.downloadFile(url, fileName);
+                List toList = (List)vars.get(to);
+                toList.add(fileName);
+            } catch (Exception e) {
+                LOGGER.warn("download " + urlStr, e);
+            }
+        }
+    }
+    
+    protected List getUrlsFromStepUrl(String url) {
+        List urls = null;
+        if (vars.containsKey(url)) {
+            urls = (List)vars.get(url);
+        } else {
+            urls = new ArrayList();
+            urls.add(url);
+        }
+        return urls;
+    }
+    
+    protected List loadResource(String url, Map step) throws Exception {
+        String scheme = resourceMng.getResourceScheme(url);
+        Map param = resourceMng.getResourceParam(url);
+        Component component = ResourceMng.createComponent(scheme, resourceMng.getResource(url), param);
+        Map loadParam = (Map) step.get("param");
+        Object value = component.loadResource(loadParam);
+        List list = new ArrayList();
+        if (value instanceof Collection) {
+            list.addAll((Collection) value);
+        } else {
+            list.add(value);
+        }
+        return list;
+    }
+    
+    protected void sleep(Map step) {
+        Object oSleep = step.get("sleep");
+        if (oSleep != null) {
+            Long sleep = Long.valueOf(oSleep.toString());
+            try {
+                Thread.sleep(sleep);
+            } catch (InterruptedException e) {
+                LOGGER.warn("sleep", e);
+            }
+        }
+    }
+    
+    protected <T> T getValue(Map map, String key, T defaultValue) {
+        T value = (T)map.get(key);
+        if (value == null) {
+            return defaultValue;
+        } else {
+            return value;
+        }
+    }
+    
+    protected Long getLongValue(Map map, String key) {
+        Object oValue = map.get(key);
+        if (oValue != null) {
+            return Long.valueOf(oValue.toString());
+        } else {
+            return null;
+        }
+    }
 
     public Map doGather() throws Exception {
         if (gatherStepList == null) {
@@ -91,133 +165,99 @@ public class BeeGather {
         }
         for (Object stepObj : gatherStepList) {
             Map step = (Map) stepObj;
-            String rurl = (String) step.get("url");
-            Map heads = (Map) step.get("heads");
-            String xpath = (String) step.get("xpath");
-            List urls = null;
-            if (vars.containsKey(rurl)) {
-                urls = (List)vars.get(rurl);
-            } else if (resources.containsKey(rurl)) {
-                String scheme = resourceMng.getResourceScheme(rurl);
-                Map param = resourceMng.getResourceParam(rurl);
-                Component component = ResourceMng.createComponent(scheme, resourceMng.getResource(rurl), param);
-                Map loadParam = (Map)step.get("param");
-                Object value = component.loadResource(loadParam);
-                Map saveTo = (Map) step.get("save");
-                String to = (String) saveTo.get("to");
-                Boolean append = (Boolean)saveTo.get("append");
-                if (append == null) {
-                    append = true;
-                }
-                if (!vars.containsKey(to) || !append) {
-                    vars.put(to, new ArrayList());
-                }
-                List toList = (List) vars.get(to);
-                if (value instanceof Collection) {
-                    toList.addAll((Collection)value);
-                } else {
-                    toList.add(value);
-                }
-                continue;
-            } else {
-                urls = new ArrayList();
-                urls.add(rurl);
-            }
-            Object oSleep = step.get("sleep");
-            Long sleep = null;
-            if (oSleep != null) {
-                sleep = Long.valueOf(oSleep.toString());
-            }
-            Object olimit = step.get("limit");
-            Long limit = null;
-            if (olimit != null) {
-                limit = Long.valueOf(olimit.toString());
-            }
-            String encoding = (String)step.get("encoding");
-            
-            Boolean html = (Boolean)step.get("html");
-            if (html == null) {
-                html = true;
-            }
-            
             Map saveTo = (Map) step.get("save");
             String to = (String) saveTo.get("to");
-            Boolean append = (Boolean)saveTo.get("append");
-            if (append == null) {
-                append = true;
-            }
-            //System.out.println("*********************append:" + append);
+            Boolean append = getValue(saveTo, "append", Boolean.TRUE);
             if (!vars.containsKey(to) || !append) {
                 vars.put(to, new ArrayList());
             }
-            List resultList = new ArrayList();
-            int count = 0;
-            for (Object ourl : urls) {
-                try {
-                    //Map params = new HashMap();
-                    //params.put("time", System.currentTimeMillis());
-                    String url = template.expressCalcu((String)ourl, null);
-                    //String url = (String)ourl;
-                    String page = httpTools.doGet(url, heads, encoding);
-                    if (StringUtils.isBlank(xpath)) { //如果没有xpath，整个页面放入变量
-                        resultList.add(page);
-                    } else {
-                        List<String> pages = new ArrayList();
-                        pages.add(page);
-                        String[] pathList = xpath.split(";");
-                        if (pathList.length > 1) { //多步骤
-                            pages = narrowdown(Arrays.copyOf(pathList, pathList.length - 1), pages);
-                            xpath = pathList[pathList.length - 1];
-                        }
-                        for (String p : pages) {
-                            if (xpath.startsWith("json(")) {
-                                String jsonPath = xpath.substring(5, xpath.length() - 1);
-                                Object o = JsonPath.read(p, jsonPath);
-                                if (o instanceof List) {
-                                    resultList.addAll((List)o);
-                                } else {
-                                    resultList.add(o);
-                                }
-                            } else if (xpath.startsWith("express(")) {
-                                String express = xpath.substring(8, xpath.length() - 1);
-                                Map ps = new HashMap();
-                                ps.put("time", System.currentTimeMillis());
-                                ps.put("page", p);
-                                String r = template.expressCalcu(express, ps);
-                                resultList.add(r);
-                            } else {
-                                TagNode node = pageAnalyzer.toTagNode(p);
-                                //String text = node.getText().toString();
-                                //List list1 = node.getAllElementsList(true);
-                                Map propertyMap = (Map) saveTo.get("property");
-                                List list = getList(node, xpath, propertyMap);
-                                resultList.addAll(list);
-                            }
-                        }
-                    }
-                    if (sleep != null) {
-                        Thread.sleep(sleep);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                if (limit != null && ++count >= limit) {
-                    break;
-                }
-            }
-            List toList = (List) vars.get(to);
-            String templete = (String)step.get("templete");
-            if (StringUtils.isBlank(templete)) {
-                toList.addAll(resultList);
+            String downLoadUrl = (String) step.get("download");
+            if (StringUtils.isNotBlank(downLoadUrl)) {
+                download(downLoadUrl, step);
             } else {
-                for (Object item : resultList) {
-                    try {
-                        Map map = new HashMap();
-                        map.put("page", item);
-                        String s = template.expressCalcu(templete, map);
-                        toList.add(s);
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                String rurl = (String) step.get("url");
+                List resultList = null;
+                if (resources.containsKey(rurl)) {
+                    resultList = loadResource(rurl, step);
+                } else {
+                    List urls = getUrlsFromStepUrl(rurl);
+                    Long limit = getLongValue(step, "limit");
+                    String encoding = (String)step.get("encoding");
+                    resultList = new ArrayList();
+                    int count = 0;
+                    String xpath = (String) step.get("xpath");
+                    Map heads = (Map) step.get("heads");
+                    for (Object ourl : urls) {
+                        try {
+                            String url = template.expressCalcu((String)ourl, null);
+                            String page = httpTools.doGet(url, heads, encoding);
+                            if (StringUtils.isBlank(xpath)) { //如果没有xpath，整个页面放入变量
+                                resultList.add(page);
+                            } else {
+                                List<String> pages = new ArrayList();
+                                pages.add(page);
+                                String[] pathList = xpath.split(";");
+                                if (pathList.length > 1) { //多步骤
+                                    pages = narrowdown(Arrays.copyOf(pathList, pathList.length - 1), pages);
+                                    xpath = pathList[pathList.length - 1];
+                                }
+                                for (String p : pages) {
+                                    if (xpath.startsWith("json(")) {
+                                        String jsonPath = xpath.substring(5, xpath.length() - 1);
+                                        Object o = JsonPath.read(p, jsonPath);
+                                        if (o instanceof List) {
+                                            resultList.addAll((List)o);
+                                        } else {
+                                            resultList.add(o);
+                                        }
+                                    } else if (xpath.startsWith("express(")) {
+                                        String express = xpath.substring(8, xpath.length() - 1);
+                                        Map ps = new HashMap();
+                                        ps.put("time", System.currentTimeMillis());
+                                        ps.put("page", p);
+                                        String r = template.expressCalcu(express, ps);
+                                        resultList.add(r);
+                                    } else {
+                                        TagNode node = pageAnalyzer.toTagNode(p);
+                                        //String text = node.getText().toString();
+                                        //List list1 = node.getAllElementsList(true);
+                                        Map propertyMap = (Map) saveTo.get("property");
+                                        List list = getList(node, xpath, propertyMap);
+                                        resultList.addAll(list);
+                                    }
+                                }
+                            }
+                            sleep(step);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        if (limit != null && ++count >= limit) {
+                            break;
+                        }
+                    }
+                    
+                }
+                List toList = (List) vars.get(to);
+                String templete = (String) step.get("templete");
+                if (StringUtils.isBlank(templete)) {
+                    templete = (String) step.get("template");
+                }
+                if (StringUtils.isBlank(templete)) {
+                    templete = (String) step.get("script");
+                }
+                if (StringUtils.isBlank(templete)) {
+                    toList.addAll(resultList);
+                } else {
+                    for (Object item : resultList) {
+                        try {
+                            Map map = new HashMap();
+                            map.put("page", item);
+                            map.put("it", item);
+                            String s = template.expressCalcu(templete, map);
+                            toList.add(s);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }

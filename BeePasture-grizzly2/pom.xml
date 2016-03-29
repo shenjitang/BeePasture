@@ -43,6 +43,22 @@
       <artifactId>BeePasture-core</artifactId>
       <version>${project.version}</version>
     </dependency>
+        <dependency>
+                <groupId>com.netflix.eureka</groupId>
+                <artifactId>eureka-core</artifactId>
+                <version>1.4.1</version>
+        </dependency>
+        <dependency>
+                <groupId>com.netflix.eureka</groupId>
+                <artifactId>eureka-client</artifactId>
+                <version>1.4.1</version>
+        </dependency>
+    <dependency>
+      <groupId>com.netflix.archaius</groupId>
+      <artifactId>archaius-core</artifactId>
+      <version>0.7.3</version>
+      <type>jar</type>
+    </dependency>
   </dependencies>
   <build>
     <plugins>

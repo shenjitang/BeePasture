@@ -8,6 +8,7 @@
     <modules>
         <module>BeePasture-core</module>
         <module>BeePasture-grizzly2</module>
+        <module>BeePasture-eureka-client</module>
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

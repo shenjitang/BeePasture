@@ -7,30 +7,28 @@ package org.shenjitang.beepasture.core;
 
 import java.io.File;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  *
  * @author xiaolie
  */
 public class Main {
-    private BeeGather webGather;
+    protected static Log LOGGER = LogFactory.getLog(Main.class);
 
     public Main() {
     }
-
-    public void setWebGather(BeeGather webGather) {
-        this.webGather = webGather;
-    }
-
     
     public static void main( String[] args ) throws Exception {
         //gatherUrlList("D:\\URLlist.txt", "D:\\URLlistResult.txt");
         String fileEncoding = System.getProperty("fileEncoding", "utf8");
         //String fileName = "D:\\workspace\\神机堂\\项目\\webgather\\webgather-web\\src\\main\\resources\\webgather_queue.yaml";
-        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\dir_test.yaml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\download.yaml";
         if (args.length > 0) {
             fileName = args[0];
         }
+        LOGGER.info("Starting....   fileEncoding=" + fileEncoding + " yaml=" + fileName);
         File file = new File(fileName);
         String yaml = FileUtils.readFileToString(file, fileEncoding);
         if (Boolean.valueOf(System.getProperty("asyn", "false"))) {
