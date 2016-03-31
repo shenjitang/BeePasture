@@ -58,7 +58,7 @@ public class ScriptTemplateExecuter {
         return t.render();
     }
     
-    public String expressCalcu(String str, String it, Map params) throws Exception {
+    public String expressCalcu(String str, Object it, Map params) throws Exception {
         if (params == null) {
             params = new HashMap();
         }
