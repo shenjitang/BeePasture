@@ -58,9 +58,14 @@ public class ScriptTemplateExecuter {
         return t.render();
     }
     
-    public String expressCalcu(String str, Object it, Map params) throws Exception {
+    public String expressCalcu(String str, Object it, Map<String, Object> params) throws Exception {
+        Configuration cfg = Configuration.defaultConfiguration();
+        GroupTemplate gt = new GroupTemplate(resourceLoader, cfg);
         if (params == null) {
             params = new HashMap();
+        }
+        if (it == null) {
+            it = "";
         }
         params.put("it", it);
         
@@ -70,14 +75,15 @@ public class ScriptTemplateExecuter {
         if (!params.containsKey("time")) {
             params.put("time", time);
         }
-        Configuration cfg = Configuration.defaultConfiguration();
-        GroupTemplate gt = new GroupTemplate(resourceLoader, cfg);
         gt.registerFunctionPackage("sys", System.class);
         gt.registerFunctionPackage("str", StringFunctions.class);
-        if (it == null) {
-            it = "";
+        //gt.registerFunctionPackage("it", it);
+        for (String key : params.keySet()) {
+            Object o = params.get(key);
+            if (o != null) {
+                gt.registerFunctionPackage(key, o);
+            }
         }
-        gt.registerFunctionPackage("it", it);
         Template t = gt.getTemplate(str);
         t.binding(params);
         return t.render();

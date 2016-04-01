@@ -39,7 +39,10 @@ public class GatherStep {
         pageAnalyzer = new PageAnalyzer();
         this.step = step;
         this.beeGather = beeGather;
-        withVar = getValue(step, "with", (List)null);
+        String withVarName = (String)getValue(step, "with", (String)null);
+        if (StringUtils.isNotBlank(withVarName)) {
+            withVar = (List)beeGather.getVar(withVarName);
+        }
     }
     
     public void execute() throws Exception {
@@ -304,7 +307,7 @@ public class GatherStep {
                     script = (String) propValue;
                 }
                 if (StringUtils.isNoneBlank(script)) {
-                    obj.put(key, template.expressCalcu(script, value, null));
+                    obj.put(key, template.expressCalcu(script, obj.get(key), obj));
                 } else {
                     obj.put(key, propValue);
                 }
@@ -342,7 +345,7 @@ public class GatherStep {
     }
 
     private String parseFile2Text(String fileName) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return "not support yet!";
     }
 
 }

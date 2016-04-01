@@ -24,7 +24,7 @@ public class Main {
         //gatherUrlList("D:\\URLlist.txt", "D:\\URLlistResult.txt");
         String fileEncoding = System.getProperty("fileEncoding", "utf8");
         //String fileName = "D:\\workspace\\神机堂\\项目\\webgather\\webgather-web\\src\\main\\resources\\webgather_queue.yaml";
-        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\download.yaml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\download_1.yaml";
         if (args.length > 0) {
             fileName = args[0];
         }
