@@ -1,0 +1,24 @@
+var:
+
+gather:
+  - url: "http://www.neeq.cc/controller/GetDisclosureannouncementPage?type=1&company_cd=&key=&subType=0&startDate=2016-02-22&endDate=2016-03-22&queryParams=0&page=1&_=1458623068768"
+    xpath: json($.disclosureInfos)
+    save: 
+      to: infos
+      property: 
+        fileUrl: 
+          script: "http://file.neeq.com.cn/upload${filePath}"
+        fileName:
+          script: 'd:/temp/download/${filePath.substring(filePath.lastIndexOf("/") + 1)}'
+  - with: infos
+    url: fileUrl
+    limit: 4
+    download: 
+      to: fileName
+    save:
+      to: content
+
+#保存
+persist:
+    infos: "file://d:/temp/download/downfileList.txt?encoding=utf8"
+    
