@@ -53,6 +53,7 @@ public class ScriptTemplateExecuter {
         gt.registerFunctionPackage("sys", System.class);
         gt.registerFunctionPackage("str", StringFunctions.class);
         gt.registerFunctionPackage("yaml", Yaml.class);
+        gt.registerFunction("dateAdd", new DateAddFunction());
         Template t = gt.getTemplate(str);
         t.binding(params);
         return t.render();
@@ -77,6 +78,7 @@ public class ScriptTemplateExecuter {
         }
         gt.registerFunctionPackage("sys", System.class);
         gt.registerFunctionPackage("str", StringFunctions.class);
+        gt.registerFunction("dateAdd", new DateAddFunction());
         //gt.registerFunctionPackage("it", it);
         for (String key : params.keySet()) {
             Object o = params.get(key);

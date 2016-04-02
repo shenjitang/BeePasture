@@ -1,7 +1,7 @@
 var:
 
 gather:
-  - url: "http://www.neeq.cc/controller/GetDisclosureannouncementPage?type=1&company_cd=&key=&subType=0&startDate=2016-02-22&endDate=2016-03-22&queryParams=0&page=1&_=1458623068768"
+  - url: 'http://www.neeq.cc/controller/GetDisclosureannouncementPage?type=1&company_cd=&key=&subType=0&startDate=${dateAdd(-30),dateFormat="yyyy-MM-dd"}&endDate=${date(),"yyyy-MM-dd"}&queryParams=0&page=1&_=1458623068768'
     xpath: json($.disclosureInfos)
     save: 
       to: infos

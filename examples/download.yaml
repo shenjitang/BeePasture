@@ -6,11 +6,12 @@ gather:
     templete: "http://file.neeq.com.cn/upload${it.filePath}"
     save: 
       to: infos
-  - download: infos
-    save:
-      to: fileList
-      file: 'd:/temp/download/${it.substring(it.lastIndexOf("/") + 1)}'
+  - url: infos
+    limit: 4
+    download: 
+      to: 'd:/temp/download/${it.substring(it.lastIndexOf("/") + 1)}'
+      filename: fileList
 #保存
 persist:
-    fileList: "file://d:/temp/downfileList.txt?encoding=utf8"
+    fileList: "file://d:/temp/download/downfileList.txt?encoding=utf8"
     

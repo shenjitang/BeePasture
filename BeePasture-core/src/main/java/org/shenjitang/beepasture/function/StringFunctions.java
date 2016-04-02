@@ -5,6 +5,8 @@
  */
 package org.shenjitang.beepasture.function;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -18,6 +20,11 @@ public class StringFunctions {
         } else {
             return str;
         }
+    }
+    
+    public static String now(String pattern) {
+        SimpleDateFormat format = new SimpleDateFormat(pattern);
+        return format.format(new Date());
     }
     
     public static String substring(String str, int beginIndex) {

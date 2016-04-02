@@ -264,7 +264,9 @@ public class GatherStep {
             String jsonPath = xpath.substring(5, xpath.length() - 1);
             JSONArray js = JsonPath.read(page, jsonPath);
             List list = new ArrayList();
-            list.addAll(js);
+            if (js != null) {
+                list.addAll(js);
+            }
             obj = list;
         } else if (xpath.startsWith("express(")) {
             String express = xpath.substring(8, xpath.length() - 1);
