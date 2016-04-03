@@ -6,15 +6,25 @@
 package org.shenjitang.beepasture.core;
 
 import com.jayway.jsonpath.JsonPath;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.minidev.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.tika.Tika;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.sax.BodyContentHandler;
 import org.htmlcleaner.TagNode;
 import org.shenjitang.beepasture.function.ScriptTemplateExecuter;
 import org.shenjitang.beepasture.http.HttpTools;
@@ -346,8 +356,17 @@ public class GatherStep {
         return map;
     }
 
-    private String parseFile2Text(String fileName) {
-        return "not support yet!";
+    private String parseFile2Text(String fileName)  {
+        AutoDetectParser parser = new AutoDetectParser();
+        BodyContentHandler handler = new BodyContentHandler();
+        Metadata metadata = new Metadata();
+        try (InputStream stream = new FileInputStream(new File(fileName))) {
+            parser.parse(stream, handler, metadata);
+            return handler.toString();
+        } catch (Exception ex) {
+            LOGGER.warn("tika parse:" + fileName, ex);
+            return "";
+        }
     }
 
 }

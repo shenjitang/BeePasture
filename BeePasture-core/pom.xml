@@ -102,7 +102,12 @@
       <artifactId>fastjson</artifactId>
       <version>1.2.6</version>
     </dependency>
-  </dependencies>
+  <dependency>
+    <groupId>org.apache.tika</groupId>
+    <artifactId>tika-parsers</artifactId>
+    <version>1.12</version>
+  </dependency>
+</dependencies>
 <repositories> 
   <repository> 
     <id>maven-repository</id> 
