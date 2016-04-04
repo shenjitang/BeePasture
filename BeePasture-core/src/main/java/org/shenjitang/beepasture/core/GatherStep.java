@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.minidev.json.JSONArray;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -114,7 +115,17 @@ public class GatherStep {
                                 }
                             }
                             if (saveTo != null) {
-                                page = parseFile2Text(fileName);
+                                try {
+                                    String format = (String)saveTo.get("format");
+                                    if (format != null && format.trim().equalsIgnoreCase("text")) {
+                                        String encod = getValue(saveTo, "encoding", StringUtils.isBlank(encoding)?"gbk":encoding);
+                                        page = readTextFile(fileName, encod);
+                                    } else {
+                                        page = parseFile2Text(fileName);
+                                    }
+                                } catch (Exception e) {
+                                    LOGGER.warn("parse file:" + fileName, ex);
+                                }
                             }
                         } else {
                             page = httpTools.doGet(url, heads, encoding);
@@ -367,6 +378,10 @@ public class GatherStep {
             LOGGER.warn("tika parse:" + fileName, ex);
             return "";
         }
+    }
+    
+    private String readTextFile(String fileName, String encoding) {
+        FileUtils.readFileToString(new File(fileName), encoding);
     }
 
 }
