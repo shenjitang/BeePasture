@@ -93,18 +93,18 @@ h3. gather命令结构
 * url 采集的url地址，可以包含脚本比如：${date(), "yyyy-MM-dd"}表示当前日期，${dateAdd(-30),dateFormat="yyyy-MM-dd"}表示三十天前的日期。 
 * download 如果是下载文件的url，这里指定下载到本地的文件名，放在to下边 
 * encoding 如果是文本文件，可以在这里描述文件的encoding。 
-** to 下载到本地的文件名。 
-** filename 文件名将放入那个变量中。 
+	* to 下载到本地的文件名。 
+	* filename 文件名将放入那个变量中。 
 * limit 对url列表中执行的个数限制。 
 * sleep 每执行一个url，指定sleep多少毫秒。 
 * xpath 对采集下来的页面内容用xpath过滤出数据。支持jsonpath，语法：json(path express),比如：json($}表示取json的根节点。 
 * save 保存到变量 
-** to 保存到的变量名 
-** property 变量的property 
-*** [key] 这个key直接写property的名称，也就是map的key名。他的值就是key的value。可以直接写xpath表达式（缺省）。 
-**** script value用脚本来运算得出。 
-*** script 脚本 
-** encoding 编码 
+	* to 保存到的变量名 
+	* property 变量的property 
+		* [key] 这个key直接写property的名称，也就是map的key名。他的值就是key的value。可以直接写xpath表达式（缺省）。 
+			* script value用脚本来运算得出。 
+		* script 脚本 
+	* encoding 编码 
 * with 指定缺省变量，如果指定了缺省变量，那么这个步骤中可以直接使用这个变量的property名。 
 
 # persist
