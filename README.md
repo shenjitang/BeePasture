@@ -52,10 +52,10 @@ persist:
 ```
 # 脚本简单说明：
 脚本为yaml格式。顶级key有以下四种:<br>
-1. `resource`:  定义各种源，包括文件，数据库等，比如mysql, mongodb, file 等。定义了资源的访问参数，是资源读写的入口。<br>
-2. `var`: 定义变量，无需说明类型，脚本中也可以不定义而直接使用。<br>
-3. `gather`：定义数据，可以使用xpath, jsonpath, 脚本（beetl）<br>
-4. `persist`: 保存，可以保存到resource中指定的源中<br>
+* `resource`:  定义各种源，包括文件，数据库等，比如mysql, mongodb, file 等。定义了资源的访问参数，是资源读写的入口。<br>
+* `var`: 定义变量，无需说明类型，脚本中也可以不定义而直接使用。<br>
+* `gather`：脚本执行的主体，定义处理步骤。<br>
+* `persist`: 保存，可以保存到resource中指定的源中<br>
 
 
 # resource：
@@ -72,8 +72,8 @@ resource:
 ```
 resource中的资源类型是以url参数中的schema部分指定的。支持的schema有：`jdbc,file,dir,mongodb`  
 
-
-变量定义
+# var：
+变量只有一种，所有变量都是数组，如果前一步得到的不是数组，就会放进数组，这个数组的size是1，数组里只可以是Map或String，如果数组里是Map，那么Map的key就是property
 --------
 ``` var
 var：
@@ -86,6 +86,28 @@ var：
 `${time}`为当前时间戳
 `n..n`是数组中的不同部分的定义，可以是字母，比如：A..Z 和 a..g，也可以是数字，比如：5..100。  
 抓取大众点评网所有城市的脚本见 examples/mongodb_city.yaml
+
+# gather
+脚本执行的主体，定义处理步骤，每一个步骤都是数组中的一员，步骤按顺序执行（2.0版中，变量将变成队列，每一个步骤将会是同时执行，队列中有数据就拿出来处理），可以使用xpath, jsonpath, 脚本（beetl）
+h3. gather命令结构
+* url 采集的url地址，可以包含脚本比如：${date(), "yyyy-MM-dd"}表示当前日期，${dateAdd(-30),dateFormat="yyyy-MM-dd"}表示三十天前的日期。
+* download 如果是下载文件的url，这里指定下载到本地的文件名，放在to下边
+* encoding 如果是文本文件，可以在这里描述文件的encoding。
+** to 下载到本地的文件名。
+** filename 文件名将放入那个变量中。
+* limit 对url列表中执行的个数限制。
+* sleep 每执行一个url，指定sleep多少毫秒。
+* xpath 对采集下来的页面内容用xpath过滤出数据。支持jsonpath，语法：json(path express),比如：json($}表示取json的根节点。
+* save 保存到变量
+** to 保存到的变量名
+** property 变量的property
+*** [key] 这个key直接写property的名称，也就是map的key名。他的值就是key的value。可以直接写xpath表达式（缺省）。
+**** script value用脚本来运算得出。
+*** script 脚本
+** encoding 编码
+* with 指定缺省变量，如果指定了缺省变量，那么这个步骤中可以直接使用这个变量的property名。
+
+# persist
 
 BeePasture-grizzly2
 ------
