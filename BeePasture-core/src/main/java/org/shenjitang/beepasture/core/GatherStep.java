@@ -124,7 +124,7 @@ public class GatherStep {
                                         page = parseFile2Text(fileName);
                                     }
                                 } catch (Exception e) {
-                                    LOGGER.warn("parse file:" + fileName, ex);
+                                    LOGGER.warn("parse file:" + fileName, e);
                                 }
                             }
                         } else {
@@ -367,21 +367,17 @@ public class GatherStep {
         return map;
     }
 
-    private String parseFile2Text(String fileName)  {
+    private String parseFile2Text(String fileName) throws Exception {
         AutoDetectParser parser = new AutoDetectParser();
         BodyContentHandler handler = new BodyContentHandler();
         Metadata metadata = new Metadata();
-        try (InputStream stream = new FileInputStream(new File(fileName))) {
-            parser.parse(stream, handler, metadata);
-            return handler.toString();
-        } catch (Exception ex) {
-            LOGGER.warn("tika parse:" + fileName, ex);
-            return "";
-        }
+        InputStream stream = new FileInputStream(new File(fileName));
+        parser.parse(stream, handler, metadata);
+        return handler.toString();
     }
     
-    private String readTextFile(String fileName, String encoding) {
-        FileUtils.readFileToString(new File(fileName), encoding);
+    private String readTextFile(String fileName, String encoding) throws IOException {
+        return FileUtils.readFileToString(new File(fileName), encoding);
     }
 
 }
