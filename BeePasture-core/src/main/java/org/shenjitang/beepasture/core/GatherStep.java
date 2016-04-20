@@ -15,14 +15,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import net.minidev.json.JSONArray;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.sax.BodyContentHandler;
@@ -76,20 +73,23 @@ public class GatherStep {
                     }
                 }
             } else {
-                List urls = null;
+                List urls;
                 if (withVar != null) {
                     urls = withVar;
                 } else {
                     urls = beeGather.getUrlsFromStepUrl(rurl);
                 }
-                String encoding = (String) step.get("encoding");
-                resultList = new ArrayList();
+                String charset = (String) step.get("charset");
+                String contentEncoding = (String) step.get("Content-Encoding");
                 int count = 0;
                 String xpath = (String) step.get("xpath");
-                Map heads = (Map) step.get("heads");
+                Map heads = (Map) step.get("head");
+                if (heads == null) {
+                    heads = (Map) step.get("heads");
+                }
                 for (Object ourl : urls) {
                     try {
-                        String url = null;
+                        String url;
                         if (withVar != null) {
                             url = (String)((Map)ourl).get(rurl);
                         } else {
@@ -104,7 +104,9 @@ public class GatherStep {
                             if (fileName == null) {
                                 fileName = (String)download.get("to");
                             }
+                            System.out.println("****************1downlod to :" + fileName);
                             fileName = template.expressCalcu(fileName, url, null);
+                            System.out.println("****************2downlod to :" + fileName);
                             httpTools.downloadFile(url, fileName);
                             String filenameToVar = (String)download.get("filename");
                             if (StringUtils.isNotBlank(filenameToVar)) {
@@ -118,7 +120,7 @@ public class GatherStep {
                                 try {
                                     String format = (String)saveTo.get("format");
                                     if (format != null && format.trim().equalsIgnoreCase("text")) {
-                                        String encod = getValue(saveTo, "encoding", StringUtils.isBlank(encoding)?"gbk":encoding);
+                                        String encod = getValue(saveTo, "encoding", StringUtils.isBlank(charset)?"gbk":charset);
                                         page = readTextFile(fileName, encod);
                                     } else {
                                         page = parseFile2Text(fileName);
@@ -128,7 +130,16 @@ public class GatherStep {
                                 }
                             }
                         } else {
-                            page = httpTools.doGet(url, heads, encoding);
+                            String postBody = (String) step.get("post");
+                            if (StringUtils.isNotBlank(postBody)) {
+                                page = httpTools.doPost(url, postBody, heads);
+                            } else {
+                                //if ("gzip".equalsIgnoreCase(contentEncoding)) {
+                                //    page = httpTools.doGZipGet(url);
+                                //} else {
+                                    page = httpTools.doGet(url, heads, charset);
+                                //}
+                            }
                         }
                         if (page != null) {
                             if (StringUtils.isBlank(xpath)) { //如果没有xpath，整个页面放入变量

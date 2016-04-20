@@ -61,17 +61,10 @@ public class FileComponent implements Component {
         }
         try {
             String encoding = ComponentUtils.get(params, "encoding", "GBK");
-            String format = ComponentUtils.get(params, "format", "yaml");
-            if ("plantext".equalsIgnoreCase(format) || "planttext".equalsIgnoreCase(format)) {
-                if (obj instanceof List) {
-                    StringBuilder sb = new StringBuilder();
-                    for (Object o : (List) obj) {
-                        sb.append(o.toString()).append("\n");
-                    }
-                    FileUtils.write(new File(fileName), sb, encoding);
-                } else {
-                    FileUtils.write(new File(fileName), obj.toString(), encoding);
-                }
+            String format = ComponentUtils.get(params, "format", "plant");
+            if ("yaml".equalsIgnoreCase(format)) {
+                String content = Yaml.dump(obj);
+                FileUtils.write(new File(fileName), content, encoding);
             } else if ("json".equalsIgnoreCase(format)) {
                 StringBuilder sb = new StringBuilder();
                 String jsonStr = JSON.toJSONString(obj);
@@ -84,9 +77,16 @@ public class FileComponent implements Component {
                 } else {
                     throw new RuntimeException("Object:" + obj.getClass().getName() + " can not trans to csv");
                 }
-            } else { //default = yaml
-                String content = Yaml.dump(obj);
-                FileUtils.write(new File(fileName), content, encoding);
+            } else { //default = plant
+                if (obj instanceof List) {
+                    StringBuilder sb = new StringBuilder();
+                    for (Object o : (List) obj) {
+                        sb.append(o.toString()).append("\n");
+                    }
+                    FileUtils.write(new File(fileName), sb, encoding);
+                } else {
+                    FileUtils.write(new File(fileName), obj.toString(), encoding);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -121,16 +121,16 @@ public class FileComponent implements Component {
         }
 
         String encoding = ComponentUtils.get(iparams, "encoding", "GBK");
-        String format = ComponentUtils.get(iparams, "format", "yaml");
-        if ("plantext".equalsIgnoreCase(format) || "planttext".equalsIgnoreCase(format)) {
-            return FileUtils.readFileToString(file, encoding);
+        String format = ComponentUtils.get(iparams, "format", "plant");
+        if ("yaml".equalsIgnoreCase(format)) {
+            return Yaml.load(FileUtils.readFileToString(file, encoding));
         } else if ("line".equalsIgnoreCase(format)) {
             return FileUtils.readLines(file, encoding);
         } else if ("json".equalsIgnoreCase(format)) {
             String str = FileUtils.readFileToString(file, encoding);
             return JSON.parse(str);
-        } else { //default = yaml
-            return Yaml.load(FileUtils.readFileToString(file, encoding));
+        } else { //default = plant
+            return FileUtils.readFileToString(file, encoding);
         }
     }
     

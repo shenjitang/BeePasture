@@ -15,6 +15,7 @@ var:
 # 获取城市列表
 gather:
   - url: "http://www.dianping.com/citylist"
+    charset: utf8
     xpath: "//div[@class='terms']/a"
     save: 
       to: cityList
@@ -25,6 +26,7 @@ gather:
         cityList: file:\\cityList_1.txt
 # 获取城市列表 更多
   - url: cityUrlList
+    charset: utf8
     xpath: json($.msg.html);//a
     save:
       to: cityList
@@ -37,6 +39,7 @@ gather:
 
 # 获取大分类
   - url: http://www.dianping.com/shopall/2/0
+    charset: utf8
     xpath: "//div[h2/text()='分类']/dl/dt/a"
     save: 
       to: classifyList
@@ -46,6 +49,7 @@ gather:
 
 # 获取店铺列表
   - url: http://www.dianping.com/search/category/2/10
+    charset: utf8
     xpath: "//div[@id='shop-all-list']/ul/li/div[@class='txt']/div[@class='tit']/a[@title]"
     save: 
       to: shopList
@@ -55,6 +59,7 @@ gather:
 
 # 获取店铺信息
   - url: http://www.dianping.com/shop/19482506
+    charset: utf8
     xpath: "//div[@id='body']//div[@id='basic-info']"
     save: 
       to: shopInfo

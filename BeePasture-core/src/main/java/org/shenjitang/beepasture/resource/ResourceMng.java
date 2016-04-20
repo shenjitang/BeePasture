@@ -18,6 +18,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.elasticsearch.client.Client;
 import org.ho.yaml.Yaml;
 import org.shenjitang.beepasture.component.Component;
 import org.shenjitang.beepasture.component.ComponentUtils;
@@ -74,6 +75,13 @@ public class ResourceMng {
                 } else if (scheme.equalsIgnoreCase("mongodb")) {
                     MongoDbResource monodbResource = new MongoDbResource(url);
                     resourceMap.put(name, monodbResource);
+                } else if (scheme.equalsIgnoreCase("elasticsearch")) {
+                    ElasticsearchResource resource = new ElasticsearchResource(uri);
+                    resourceMap.put(name, resource);
+                } else {
+//                    String resourceClassname = "org.shenjitang.beepasture.resource." + StringUtils.capitalize(scheme) + "Resource";
+//                    Object resource = Class.forName(resourceClassname).newInstance();
+                    throw new RuntimeException("Don't know resource :" + url);
                 }
             }
         } catch (Exception e) {
@@ -83,6 +91,7 @@ public class ResourceMng {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
+
     public String getDriverClassName(String url) {
         if (url.contains("jdbc:jtds:sqlserver")) {
             return "net.sourceforge.jtds.jdbc.Driver";

@@ -152,7 +152,7 @@ public class BeeGather {
     
     protected void saveTo(Map persistMap) throws Exception {
         if (persistMap != null) {
-            persistMap.keySet().stream().forEach((key) -> {
+            for (Object key : persistMap.keySet()) {
                 try {
                     String varName = (String) key;
                     String topVarName = varName.split("[.]")[0];
@@ -188,7 +188,7 @@ public class BeeGather {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            });
+            }
         }
     } 
     

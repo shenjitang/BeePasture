@@ -90,9 +90,9 @@ public class AsynBeeGather {
             route.put("queue", vars);
         }
         initVars(queues, resources);
-        queues.keySet().stream().forEach((queueName) -> {
+        for (Object queueName : queues.keySet()) {
             queueMap.put((String)queueName, new LinkedTransferQueue());
-        });
+        }
         gatherStepList = (List)route.get("gather");
         persistStep = (Map)route.get("persist");
         //启动异步采集线程

@@ -1,0 +1,41 @@
+var:
+
+gather:
+  - url: "http://wenshu.court.gov.cn/List/GetSession"
+    charset: gbk
+    Content-Encoding: gzip
+    head:
+        Host: wenshu.court.gov.cn
+        Connection: keep-alive
+        Accept: "*/*"
+        Origin: "http://wenshu.court.gov.cn"
+        X-Requested-With: XMLHttpRequest
+        #User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36
+        Referer: "http://wenshu.court.gov.cn/list/list/?sorttype=1&conditions=searchWord+QWJS+++%E5%85%A8%E6%96%87%E6%A3%80%E7%B4%A2:%E6%B0%B8%E5%88%A9"
+        Accept-Encoding: "gzip, deflate"
+        Accept-Language: "zh-CN,zh;q=0.8"
+    save: 
+      to: getSession
+      
+  - url: "http://wenshu.court.gov.cn/List/ListContent"
+    post: "Param=%E5%85%A8%E6%96%87%E6%A3%80%E7%B4%A2%3A%E6%B0%B8%E5%88%A9&Index=1&Page=5&Order=%E6%B3%95%E9%99%A2%E5%B1%82%E7%BA%A7&Direction=asc"
+    charset: utf8
+    Content-Encoding: gzip
+    head: 
+        Host: wenshu.court.gov.cn
+        Connection: keep-alive
+        Accept: */*
+        Origin: "http://wenshu.court.gov.cn"
+        X-Requested-With: XMLHttpRequest
+#        User-Agent: "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36"
+        Content-Type: "application/x-www-form-urlencoded; charset=UTF-8"
+        Referer: "http://wenshu.court.gov.cn/list/list/?sorttype=1&conditions=searchWord+QWJS+++%E5%85%A8%E6%96%87%E6%A3%80%E7%B4%A2:%E6%B0%B8%E5%88%A9"
+        Accept-Encoding: "gzip, deflate"
+        Accept-Language: "zh-CN,zh;q=0.8"
+    save: 
+      to: doclist
+#保存
+persist:
+    getSession: "file://d:/temp/wenshu_court_gov_cn_getsession.txt?encoding=utf8"
+    doclist: "file://d:/temp/wenshu_court_gov_cn_2.txt?encoding=utf8"
+    

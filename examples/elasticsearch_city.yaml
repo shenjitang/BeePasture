@@ -1,0 +1,24 @@
+resource: 
+    es1:
+        url: "elasticsearch://120.26.232.150:9300,121.41.74.119:9300/index/fulltext?cluster=ruiyun_es_cluster"
+        
+
+gather:
+  - url: "http://www.dianping.com/citylist"
+    charset: utf8
+    xpath: "//div[@class='terms']/a"
+    save: 
+      to: city
+      property: 
+        content: //text()
+
+
+#保存
+persist:
+    city: 
+        resource: es1
+#      _index:
+#      _type:
+#      _id:
+#      fields:
+

@@ -91,10 +91,12 @@ var：
 脚本执行的主体，定义处理步骤，每一个步骤都是数组中的一员，步骤按顺序执行（2.0版中，变量将变成队列，每一个步骤将会是同时执行，队列中有数据就拿出来处理），可以使用xpath, jsonpath, 脚本（beetl）
 h3. gather命令结构
 * url 采集的url地址，可以包含脚本比如：${date(), "yyyy-MM-dd"}表示当前日期，${dateAdd(-30),dateFormat="yyyy-MM-dd"}表示三十天前的日期。 
+* post 采用post方法，值为提交上去的内容。
 * download 如果是下载文件的url，这里指定下载到本地的文件名，放在to下边 
-* encoding 如果是文本文件，可以在这里描述文件的encoding。 
 	* to 下载到本地的文件名。 
 	* filename 文件名将放入那个变量中。 
+* charset 如果是文本文件，可以在这里描述文件的charset。 
+* Content-Encoding 设置为gzip或者不设置
 * limit 对url列表中执行的个数限制。 
 * sleep 每执行一个url，指定sleep多少毫秒。 
 * xpath 对采集下来的页面内容用xpath过滤出数据。支持jsonpath，语法：json(path express),比如：json($}表示取json的根节点。 
