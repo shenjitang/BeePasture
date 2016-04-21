@@ -37,22 +37,25 @@ public class ElasticsearchComponent implements Component {
         String idField = (String)params.get("_id");
         if (obj instanceof List) {
             for (Object item : (List)obj) {
-                String _id = null;
-                if (StringUtils.isNotBlank(idField)) {
-                    _id = (String)((Map)item).remove(idField);
+                try {
+                    String _id = null;
+                    if (StringUtils.isNotBlank(idField)) {
+                        _id = ((Map)item).remove(idField).toString();
+                    }
+                    String indexContent = JSONObject.toJSONString(item);
+                    if (StringUtils.isBlank(_id)) {
+                        IndexRequest indexRequest = new IndexRequest(index, type).source(indexContent);
+                        resource.getClient().index(indexRequest);
+                    } else {
+                        IndexRequest indexRequest = new IndexRequest(index, type, _id).source(indexContent);
+                        UpdateRequest updateRequest = new UpdateRequest(index, type, _id)
+                               .doc(indexContent)
+                               .upsert(indexRequest);              
+                        resource.getClient().update(updateRequest).get();       
+                    }
+                } catch (Exception ee) {
+                    ee.printStackTrace();
                 }
-                String indexContent = JSONObject.toJSONString(item);
-                if (StringUtils.isBlank(_id)) {
-                    IndexRequest indexRequest = new IndexRequest(index, type).source(indexContent);
-                    resource.getClient().index(indexRequest);
-                } else {
-                    IndexRequest indexRequest = new IndexRequest(index, type, _id).source(indexContent);
-                    UpdateRequest updateRequest = new UpdateRequest(index, type, _id)
-                           .doc(indexContent)
-                           .upsert(indexRequest);              
-                    resource.getClient().update(updateRequest).get();       
-                }
-
             }
         } else {
             String _id = null;

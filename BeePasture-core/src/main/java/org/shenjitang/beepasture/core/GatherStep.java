@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -333,17 +334,67 @@ public class GatherStep {
         } else if (value instanceof Map) {
             obj = (Map) value;
             for (String key : propertyMap.keySet()) {
-                String script = null;
-                Object propValue = propertyMap.get(key);
-                if (propValue instanceof Map) {
-                    script = beeGather.getScript((Map) propValue);
-                } else if (propValue instanceof String) {
-                    script = (String) propValue;
-                }
-                if (StringUtils.isNoneBlank(script)) {
-                    obj.put(key, template.expressCalcu(script, obj.get(key), obj));
-                } else {
-                    obj.put(key, propValue);
+                try {
+                    String script = null;
+                    String type = null;
+                    Object propValue = propertyMap.get(key);
+                    if (propValue instanceof Map) {
+                        script = beeGather.getScript((Map) propValue);
+                        type = (String)((Map) propValue).get("type");
+                    } else if (propValue instanceof String) {
+                        script = (String) propValue;
+                    }
+                    Object ov = obj.get(key);
+                    if (ov != null) {
+                        if (StringUtils.isNotBlank(script)) {
+                            ov = template.expressCalcu(script, obj.get(key), obj);
+                        }
+                        if (StringUtils.isNotBlank(type)) {
+                            if ("date".equalsIgnoreCase(type)) {
+                                String format = getValue((Map) propValue, "format", "yyyy-MM-dd HH:mm:ss");
+                                SimpleDateFormat sdf = new SimpleDateFormat(format);
+                                if (StringUtils.isNotBlank(ov.toString())) {
+                                    ov = sdf.parse(ov.toString());
+                                } else {
+                                    ov = null;
+                                }
+                            } else if ("String[]".equalsIgnoreCase(type)) {
+                                String split = getValue((Map) propValue, "split", ",");
+                                ov = ((String)ov).split(split);
+                            } else if ("int".equalsIgnoreCase(type) || "Integer".equalsIgnoreCase(type)) {
+                                try {
+                                    ov = Integer.valueOf(ov.toString());
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                    ov = null;
+                                }
+                            } else if ("long".equalsIgnoreCase(type)) {
+                                try {
+                                    ov = Long.valueOf(ov.toString());
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                    ov = null;
+                                }
+                            } else if ("double".equalsIgnoreCase(type)) {
+                                try {
+                                    ov = Double.valueOf(ov.toString());
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                    ov = null;
+                                }
+                            } else if ("float".equalsIgnoreCase(type)) {
+                                try {
+                                    ov = Float.valueOf(ov.toString());
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                    ov = null;
+                                }
+                            }
+                        }
+                        obj.put(key, ov);
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
             }
         } else {

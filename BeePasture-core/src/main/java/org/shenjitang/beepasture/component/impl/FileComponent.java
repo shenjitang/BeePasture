@@ -6,10 +6,13 @@
 package org.shenjitang.beepasture.component.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializeConfig;
+import com.alibaba.fastjson.serializer.SimpleDateFormatSerializer;
 import java.io.File;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +32,7 @@ import org.shenjitang.commons.csv.CSVUtils;
 public class FileComponent implements Component {
     private Map params;
     private File file;
+    static SerializeConfig mapping = new SerializeConfig();
 
     public FileComponent() {
     }
@@ -62,12 +66,14 @@ public class FileComponent implements Component {
         try {
             String encoding = ComponentUtils.get(params, "encoding", "GBK");
             String format = ComponentUtils.get(params, "format", "plant");
+            String dataFormat = ComponentUtils.get(params, "dataFormat", "yyyy-MM-dd HH:mm:ss");
             if ("yaml".equalsIgnoreCase(format)) {
                 String content = Yaml.dump(obj);
                 FileUtils.write(new File(fileName), content, encoding);
-            } else if ("json".equalsIgnoreCase(format)) {
+            } else if ("json".equalsIgnoreCase(format)) {          
+                mapping.put(Date.class, new SimpleDateFormatSerializer(dataFormat));
                 StringBuilder sb = new StringBuilder();
-                String jsonStr = JSON.toJSONString(obj);
+                String jsonStr = JSON.toJSONString(obj, mapping);
                 FileUtils.write(new File(fileName), jsonStr, encoding);
             } else if ("csv".equalsIgnoreCase(format)) {
                 if (obj instanceof List) {

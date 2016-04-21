@@ -1,0 +1,23 @@
+resource: 
+    db1: 
+        url: "jdbc:mysql://xxx.xxx.xxx.xxx:3306/szbinfo"
+        #databaseName: szbinfo
+        username: root
+        password: "12345678"
+
+var:
+  data: []
+  UrlList:
+    - "http://172.20.10.125:8080/bdsc-index/v2/search/page.serv?pageSize=1000"
+
+
+gather:
+    - url: UrlList
+      xpath: json($.result)
+      save: 
+          to: data
+        
+persist:
+    data: 
+        resource: db1
+        sql: "insert into rz_szb_info (updatetime,id,mediaType,title,content,url,author,publishTime,section,entities,clusterID,contentTags,topicWords,sentiScore,sentiPos,sentiNeg,senti,site,siteUrl,siteId,channel,channelUrl,channelId) values(now(),${data.id},'${data.mediaType}','${data.title}','${data.content}','${data.url}','${data.author}','${data.publishTime}','${data.section}','${data.entities}',${data.clusterID},'${data.contentTags}','${data.topicWords}',${data.sentiScore},'${data.sentiPos}','${data.sentiNeg}',${data.senti},'${data.site}','${data.siteUrl}','${data.siteId}','${data.channel}','${data.channelUrl}','${data.channelId}');"

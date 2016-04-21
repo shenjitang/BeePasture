@@ -59,11 +59,12 @@ public class ScriptTemplateExecuter {
         return t.render();
     }
     
-    public String expressCalcu(String str, Object it, Map<String, Object> params) throws Exception {
+    public String expressCalcu(String str, Object it, Map<String, Object> inParams) throws Exception {
         Configuration cfg = Configuration.defaultConfiguration();
         GroupTemplate gt = new GroupTemplate(resourceLoader, cfg);
-        if (params == null) {
-            params = new HashMap();
+        Map<String, Object> params = new HashMap();
+        if (inParams != null) {
+            params.putAll(inParams);
         }
         if (it == null) {
             it = "";
