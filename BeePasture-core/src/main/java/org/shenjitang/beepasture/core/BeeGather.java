@@ -92,10 +92,12 @@ public class BeeGather {
     }
      
     
-    protected List getUrlsFromStepUrl(String url) {
+    protected List getUrlsFromStepUrl(String url, Map step) throws Exception {
         List urls = null;
         if (vars.containsKey(url)) {
             urls = (List)vars.get(url);
+        } else if (containsResource(url)) {
+            urls = loadResource(url, step);
         } else {
             urls = new ArrayList();
             urls.add(url);

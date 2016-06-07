@@ -64,127 +64,102 @@ public class GatherStep {
             toVar = (String) saveTo.get("to");
         }
         Map download = (Map) step.get("download");
+        Boolean direct = (Boolean) step.get("direct");
         String xpath = (String) step.get("xpath");
-
-        List resultList = null;
-        if (beeGather.containsResource(rurl)) {
-            resultList = beeGather.loadResource(rurl, step);
-            if (toVar != null) {
-                for (Object page : resultList) {
-                    if (page != null) {
-                        if (StringUtils.isBlank(xpath)) { //如果没有xpath，整个页面放入变量
-                            //toList.add(doScript(page));
-                            toVar(toVar, doScript(page), null);
-                        } else {
-                            List<String> pages = new ArrayList();
-                            pages.add(page.toString());
-                            String[] pathList = xpath.split(";");
-                            if (pathList.length > 1) { //多步骤
-                                pages = narrowdown(Arrays.copyOf(pathList, pathList.length - 1), pages);
-                                xpath = pathList[pathList.length - 1];
-                            }
-                            for (String p : pages) {
-                                toVar(toVar, doXpath(p, xpath, (Map) saveTo.get("property")), null);
-                            }
-                        }
-                    }
-                }
-            }
-            
+        List urls;
+        if (withVar != null) {
+            urls = withVar;
         } else {
-            List urls;
-            if (withVar != null) {
-                urls = withVar;
-            } else {
-                urls = beeGather.getUrlsFromStepUrl(rurl);
-            }
-            String charset = (String) step.get("charset");
-            String contentEncoding = (String) step.get("Content-Encoding");
-            int count = 0;
-            Map heads = (Map) step.get("head");
-            if (heads == null) {
-                heads = (Map) step.get("heads");
-            }
-            for (Object ourl : urls) {
-                try {
-                    String url;
-                    if (withVar != null) {
-                        url = (String) ((Map) ourl).get(rurl);
-                    } else {
-                        url = template.expressCalcu((String) ourl, null);
-                    }
-                    String page = null;
-                    if (download != null) {// download to file
-                        String fileName = null;
-                        if (withVar != null) {
-                            fileName = (String) ((Map) ourl).get(download.get("to"));
-                        }
-                        if (fileName == null) {
-                            fileName = (String) download.get("to");
-                        }
-                        System.out.println("****************1downlod to :" + fileName);
-                        fileName = template.expressCalcu(fileName, url, null);
-                        System.out.println("****************2downlod to :" + fileName);
-                        httpTools.downloadFile(url, fileName);
-                        String filenameToVar = (String) download.get("filename");
-                        if (StringUtils.isNotBlank(filenameToVar)) {
-                            if (withVar != null) {
-                                ((Map) ourl).put(filenameToVar, fileName);
-                            } else {
-                                beeGather.getVar(filenameToVar).add(fileName);
-                            }
-                        }
-                        if (saveTo != null) {
-                            try {
-                                String format = (String) saveTo.get("format");
-                                if (format != null && format.trim().equalsIgnoreCase("text")) {
-                                    String encod = getValue(saveTo, "encoding", StringUtils.isBlank(charset) ? "gbk" : charset);
-                                    page = readTextFile(fileName, encod);
-                                } else {
-                                    page = parseFile2Text(fileName);
-                                }
-                            } catch (Exception e) {
-                                LOGGER.warn("parse file:" + fileName, e);
-                            }
-                        }
-                    } else {
-                        String postBody = (String) step.get("post");
-                        if (StringUtils.isNotBlank(postBody)) {
-                            page = httpTools.doPost(url, postBody, heads);
-                        } else {
-                            //if ("gzip".equalsIgnoreCase(contentEncoding)) {
-                            //    page = httpTools.doGZipGet(url);
-                            //} else {
-                            page = httpTools.doGet(url, heads, charset);
-                            //}
-                        }
-                    }
-                    if (page != null) {
-                        if (StringUtils.isBlank(xpath)) { //如果没有xpath，整个页面放入变量
-                            toVar(toVar, doScript(page), ourl);
-                        } else {
-                            List<String> pages = new ArrayList();
-                            pages.add(page);
-                            String[] pathList = xpath.split(";");
-                            if (pathList.length > 1) { //多步骤
-                                pages = narrowdown(Arrays.copyOf(pathList, pathList.length - 1), pages);
-                                xpath = pathList[pathList.length - 1];
-                            }
-                            for (String p : pages) {
-                                toVar(toVar, doXpath(p, xpath, (Map) saveTo.get("property")), ourl);
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                if (limit != null && ++count >= limit) {
-                    break;
-                }
-            }
-
+            urls = beeGather.getUrlsFromStepUrl(rurl, step);
         }
-
+        String charset = (String) step.get("charset");
+//            String contentEncoding = (String) step.get("Content-Encoding");
+        int count = 0;
+        Map heads = (Map) step.get("head");
+        if (heads == null) {
+            heads = (Map) step.get("heads");
+        }
+        for (Object ourl : urls) {
+            try {
+                String url;
+                if (withVar != null) {
+                    url = (String) ((Map) ourl).get(rurl);
+                } else {
+                    url = template.expressCalcu((String) ourl, null);
+                }
+                String page = null;
+                if (download != null) {// download to file
+                    String fileName = null;
+                    if (withVar != null) {
+                        fileName = (String) ((Map) ourl).get(download.get("to"));
+                    }
+                    if (fileName == null) {
+                        fileName = (String) download.get("to");
+                    }
+                    System.out.println("****************1downlod to :" + fileName);
+                    fileName = template.expressCalcu(fileName, url, null);
+                    System.out.println("****************2downlod to :" + fileName);
+                    httpTools.downloadFile(url, fileName);
+                    String filenameToVar = (String) download.get("filename");
+                    if (StringUtils.isNotBlank(filenameToVar)) {
+                        if (withVar != null) {
+                            ((Map) ourl).put(filenameToVar, fileName);
+                        } else {
+                            beeGather.getVar(filenameToVar).add(fileName);
+                        }
+                    }
+                    if (saveTo != null) {
+                        try {
+                            String format = (String) saveTo.get("format");
+                            if (format != null && format.trim().equalsIgnoreCase("text")) {
+                                String encod = getValue(saveTo, "encoding", StringUtils.isBlank(charset) ? "gbk" : charset);
+                                page = readTextFile(fileName, encod);
+                            } else {
+                                page = parseFile2Text(fileName);
+                            }
+                        } catch (Exception e) {
+                            LOGGER.warn("parse file:" + fileName, e);
+                        }
+                    }
+                } else if (direct != null && direct) {
+                    page = url;
+                } else if (url.trim().toLowerCase().startsWith("http:") || url.trim().toLowerCase().startsWith("https:")) {
+                    String postBody = (String) step.get("post");
+                    if (StringUtils.isNotBlank(postBody)) {
+                        page = httpTools.doPost(url, postBody, heads);
+                    } else {
+                        //if ("gzip".equalsIgnoreCase(contentEncoding)) {
+                        //    page = httpTools.doGZipGet(url);
+                        //} else {
+                        page = httpTools.doGet(url, heads, charset);
+                        //}
+                    }
+                } else {
+                    page = url;
+                }
+                if (page != null) {
+                    if (StringUtils.isBlank(xpath)) { //如果没有xpath，整个页面放入变量
+                        toVar(toVar, doScript(page), ourl);
+                    } else {
+                        List<String> pages = new ArrayList();
+                        pages.add(page);
+                        String[] pathList = xpath.split(";");
+                        if (pathList.length > 1) { //多步骤
+                            pages = narrowdown(Arrays.copyOf(pathList, pathList.length - 1), pages);
+                            xpath = pathList[pathList.length - 1];
+                        }
+                        for (String p : pages) {
+                            toVar(toVar, doXpath(p, xpath, (Map) saveTo.get("property")), ourl);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (limit != null && ++count >= limit) {
+                break;
+            }
+        }
     }
 
     public Object doScript(Object page) throws Exception {
@@ -234,32 +209,32 @@ public class GatherStep {
         }
     }
 
-    protected void download(String urlStr, Map step, Long limit) {
-        List urls = beeGather.getUrlsFromStepUrl(urlStr);
-        Map saveTo = (Map) step.get("save");
-        String file = (String) step.get("filename");
-        String filenameto = (String) step.get("filenameto");
-        List toFileNameList = null;
-        if (StringUtils.isNotBlank(filenameto)) {
-            toFileNameList = beeGather.getVar(filenameto);
-        }
-        int count = 0;
-        for (Object ourl : urls) {
-            if (++count > limit) {
-                break;
-            }
-            try {
-                String url = template.expressCalcu((String) ourl, null);
-                String fileName = template.expressCalcu(file, url, null);
-                httpTools.downloadFile(url, fileName);
-                if (toFileNameList != null) {
-                    toFileNameList.add(fileName);
-                }
-            } catch (Exception e) {
-                LOGGER.warn("download " + urlStr, e);
-            }
-        }
-    }
+//    protected void download(String urlStr, Map step, Long limit) throws Exception {
+//        List urls = beeGather.getUrlsFromStepUrl(urlStr);
+//        Map saveTo = (Map) step.get("save");
+//        String file = (String) step.get("filename");
+//        String filenameto = (String) step.get("filenameto");
+//        List toFileNameList = null;
+//        if (StringUtils.isNotBlank(filenameto)) {
+//            toFileNameList = beeGather.getVar(filenameto);
+//        }
+//        int count = 0;
+//        for (Object ourl : urls) {
+//            if (++count > limit) {
+//                break;
+//            }
+//            try {
+//                String url = template.expressCalcu((String) ourl, null);
+//                String fileName = template.expressCalcu(file, url, null);
+//                httpTools.downloadFile(url, fileName);
+//                if (toFileNameList != null) {
+//                    toFileNameList.add(fileName);
+//                }
+//            } catch (Exception e) {
+//                LOGGER.warn("download " + urlStr, e);
+//            }
+//        }
+//    }
 
     private List<String> narrowdown(String[] pathList, List<String> pages) throws Exception {
         for (String path : pathList) {
