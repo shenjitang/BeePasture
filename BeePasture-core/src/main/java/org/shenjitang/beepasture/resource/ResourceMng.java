@@ -68,6 +68,10 @@ public class ResourceMng {
 
                     DataSource ds = BasicDataSourceFactory.createDataSource(props);
                     resourceMap.put(name, ds);
+                } else if (scheme.equalsIgnoreCase("dir")) {
+                    String fileName = uri.getAuthority() + uri.getPath();
+                    File file = new File(fileName);
+                    resourceMap.put(name, file);
                 } else if (scheme.equalsIgnoreCase("file")) {
                     String fileName = uri.getAuthority() + uri.getPath();
                     File file = new File(fileName);

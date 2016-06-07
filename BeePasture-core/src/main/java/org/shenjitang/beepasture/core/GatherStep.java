@@ -81,14 +81,19 @@ public class GatherStep {
         }
         for (Object ourl : urls) {
             try {
-                String url;
+                String url = null;
                 if (withVar != null) {
                     url = (String) ((Map) ourl).get(rurl);
                 } else {
-                    url = template.expressCalcu((String) ourl, null);
+                    if (ourl instanceof String) {
+                        url = template.expressCalcu((String) ourl, null);
+                    }
                 }
                 String page = null;
-                if (download != null) {// download to file
+                if (ourl instanceof File) {
+                    String encoding = StringUtils.isBlank(charset) ? "gbk" : charset;
+                    page = FileUtils.readFileToString((File)ourl, encoding);
+                } else if (download != null) {// download to file
                     String fileName = null;
                     if (withVar != null) {
                         fileName = (String) ((Map) ourl).get(download.get("to"));
