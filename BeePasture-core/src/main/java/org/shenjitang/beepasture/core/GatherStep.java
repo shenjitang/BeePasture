@@ -35,6 +35,7 @@ import org.shenjitang.beepasture.http.PageAnalyzer;
  */
 public class GatherStep {
 
+    public static Log MAIN_LOGGER = LogFactory.getLog("org.shenjitang.beepasture.core.Main");
     private final Map step;
     private final BeeGather beeGather;
     private final ScriptTemplateExecuter template = new ScriptTemplateExecuter();
@@ -48,128 +49,144 @@ public class GatherStep {
         pageAnalyzer = new PageAnalyzer();
         this.step = step;
         this.beeGather = beeGather;
-        String withVarName = (String)getValue(step, "with", (String)null);
+        String withVarName = (String) getValue(step, "with", (String) null);
         if (StringUtils.isNotBlank(withVarName)) {
-            withVar = (List)beeGather.getVar(withVarName);
+            withVar = (List) beeGather.getVar(withVarName);
         }
     }
-    
+
     public void execute() throws Exception {
+        String rurl = (String) step.get("url");
         Long limit = getLongValue(step, "limit");
         Map saveTo = (Map) step.get("save");
         String toVar = null;
         if (saveTo != null) {
             toVar = (String) saveTo.get("to");
         }
-        Map download = (Map)step.get("download");
+        Map download = (Map) step.get("download");
+        String xpath = (String) step.get("xpath");
 
-            String rurl = (String) step.get("url");
-            List resultList = null;
-            if (beeGather.containsResource(rurl)) {
-                resultList = beeGather.loadResource(rurl, step);
-                if (toVar != null) {
-                    List toList = beeGather.getVar(toVar);
-                    for (Object o : resultList) {
-                        toList.add(doScript(o));
+        List resultList = null;
+        if (beeGather.containsResource(rurl)) {
+            resultList = beeGather.loadResource(rurl, step);
+            if (toVar != null) {
+                for (Object page : resultList) {
+                    if (page != null) {
+                        if (StringUtils.isBlank(xpath)) { //如果没有xpath，整个页面放入变量
+                            //toList.add(doScript(page));
+                            toVar(toVar, doScript(page), null);
+                        } else {
+                            List<String> pages = new ArrayList();
+                            pages.add(page.toString());
+                            String[] pathList = xpath.split(";");
+                            if (pathList.length > 1) { //多步骤
+                                pages = narrowdown(Arrays.copyOf(pathList, pathList.length - 1), pages);
+                                xpath = pathList[pathList.length - 1];
+                            }
+                            for (String p : pages) {
+                                toVar(toVar, doXpath(p, xpath, (Map) saveTo.get("property")), null);
+                            }
+                        }
                     }
                 }
+            }
+            
+        } else {
+            List urls;
+            if (withVar != null) {
+                urls = withVar;
             } else {
-                List urls;
-                if (withVar != null) {
-                    urls = withVar;
-                } else {
-                    urls = beeGather.getUrlsFromStepUrl(rurl);
-                }
-                String charset = (String) step.get("charset");
-                String contentEncoding = (String) step.get("Content-Encoding");
-                int count = 0;
-                String xpath = (String) step.get("xpath");
-                Map heads = (Map) step.get("head");
-                if (heads == null) {
-                    heads = (Map) step.get("heads");
-                }
-                for (Object ourl : urls) {
-                    try {
-                        String url;
+                urls = beeGather.getUrlsFromStepUrl(rurl);
+            }
+            String charset = (String) step.get("charset");
+            String contentEncoding = (String) step.get("Content-Encoding");
+            int count = 0;
+            Map heads = (Map) step.get("head");
+            if (heads == null) {
+                heads = (Map) step.get("heads");
+            }
+            for (Object ourl : urls) {
+                try {
+                    String url;
+                    if (withVar != null) {
+                        url = (String) ((Map) ourl).get(rurl);
+                    } else {
+                        url = template.expressCalcu((String) ourl, null);
+                    }
+                    String page = null;
+                    if (download != null) {// download to file
+                        String fileName = null;
                         if (withVar != null) {
-                            url = (String)((Map)ourl).get(rurl);
-                        } else {
-                            url = template.expressCalcu((String) ourl, null);
+                            fileName = (String) ((Map) ourl).get(download.get("to"));
                         }
-                        String page = null;
-                        if (download != null) {// download to file
-                            String fileName = null;
+                        if (fileName == null) {
+                            fileName = (String) download.get("to");
+                        }
+                        System.out.println("****************1downlod to :" + fileName);
+                        fileName = template.expressCalcu(fileName, url, null);
+                        System.out.println("****************2downlod to :" + fileName);
+                        httpTools.downloadFile(url, fileName);
+                        String filenameToVar = (String) download.get("filename");
+                        if (StringUtils.isNotBlank(filenameToVar)) {
                             if (withVar != null) {
-                                fileName = (String)((Map)ourl).get(download.get("to"));
+                                ((Map) ourl).put(filenameToVar, fileName);
+                            } else {
+                                beeGather.getVar(filenameToVar).add(fileName);
                             }
-                            if (fileName == null) {
-                                fileName = (String)download.get("to");
-                            }
-                            System.out.println("****************1downlod to :" + fileName);
-                            fileName = template.expressCalcu(fileName, url, null);
-                            System.out.println("****************2downlod to :" + fileName);
-                            httpTools.downloadFile(url, fileName);
-                            String filenameToVar = (String)download.get("filename");
-                            if (StringUtils.isNotBlank(filenameToVar)) {
-                                if (withVar != null) {
-                                    ((Map)ourl).put(filenameToVar, fileName);
+                        }
+                        if (saveTo != null) {
+                            try {
+                                String format = (String) saveTo.get("format");
+                                if (format != null && format.trim().equalsIgnoreCase("text")) {
+                                    String encod = getValue(saveTo, "encoding", StringUtils.isBlank(charset) ? "gbk" : charset);
+                                    page = readTextFile(fileName, encod);
                                 } else {
-                                    beeGather.getVar(filenameToVar).add(fileName);
+                                    page = parseFile2Text(fileName);
                                 }
+                            } catch (Exception e) {
+                                LOGGER.warn("parse file:" + fileName, e);
                             }
-                            if (saveTo != null) {
-                                try {
-                                    String format = (String)saveTo.get("format");
-                                    if (format != null && format.trim().equalsIgnoreCase("text")) {
-                                        String encod = getValue(saveTo, "encoding", StringUtils.isBlank(charset)?"gbk":charset);
-                                        page = readTextFile(fileName, encod);
-                                    } else {
-                                        page = parseFile2Text(fileName);
-                                    }
-                                } catch (Exception e) {
-                                    LOGGER.warn("parse file:" + fileName, e);
-                                }
-                            }
+                        }
+                    } else {
+                        String postBody = (String) step.get("post");
+                        if (StringUtils.isNotBlank(postBody)) {
+                            page = httpTools.doPost(url, postBody, heads);
                         } else {
-                            String postBody = (String) step.get("post");
-                            if (StringUtils.isNotBlank(postBody)) {
-                                page = httpTools.doPost(url, postBody, heads);
-                            } else {
-                                //if ("gzip".equalsIgnoreCase(contentEncoding)) {
-                                //    page = httpTools.doGZipGet(url);
-                                //} else {
-                                    page = httpTools.doGet(url, heads, charset);
-                                //}
+                            //if ("gzip".equalsIgnoreCase(contentEncoding)) {
+                            //    page = httpTools.doGZipGet(url);
+                            //} else {
+                            page = httpTools.doGet(url, heads, charset);
+                            //}
+                        }
+                    }
+                    if (page != null) {
+                        if (StringUtils.isBlank(xpath)) { //如果没有xpath，整个页面放入变量
+                            toVar(toVar, doScript(page), ourl);
+                        } else {
+                            List<String> pages = new ArrayList();
+                            pages.add(page);
+                            String[] pathList = xpath.split(";");
+                            if (pathList.length > 1) { //多步骤
+                                pages = narrowdown(Arrays.copyOf(pathList, pathList.length - 1), pages);
+                                xpath = pathList[pathList.length - 1];
+                            }
+                            for (String p : pages) {
+                                toVar(toVar, doXpath(p, xpath, (Map) saveTo.get("property")), ourl);
                             }
                         }
-                        if (page != null) {
-                            if (StringUtils.isBlank(xpath)) { //如果没有xpath，整个页面放入变量
-                                toVar(toVar, doScript(page), ourl);
-                            } else {
-                                List<String> pages = new ArrayList();
-                                pages.add(page);
-                                String[] pathList = xpath.split(";");
-                                if (pathList.length > 1) { //多步骤
-                                    pages = narrowdown(Arrays.copyOf(pathList, pathList.length - 1), pages);
-                                    xpath = pathList[pathList.length - 1];
-                                }
-                                for (String p : pages) {
-                                    toVar(toVar, doXpath(p, xpath, (Map) saveTo.get("property")), ourl);
-                                }
-                            }
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
-                    if (limit != null && ++count >= limit) {
-                        break;
-                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-
+                if (limit != null && ++count >= limit) {
+                    break;
+                }
             }
 
+        }
+
     }
-    
+
     public Object doScript(Object page) throws Exception {
         String templete = beeGather.getScript(step);
         if (StringUtils.isNotBlank(templete)) {
@@ -178,19 +195,21 @@ public class GatherStep {
             return page;
         }
     }
-    
-    public void toVar(String name, Object value, Object object ) {
-        if (StringUtils.isBlank(name)) return;
+
+    public void toVar(String name, Object value, Object object) {
+        if (StringUtils.isBlank(name)) {
+            return;
+        }
         if (withVar != null) {
             if (value instanceof List && ((List) value).size() > 0) {
-                ((Map)object).put(name, (List)((List) value).get(0));
+                ((Map) object).put(name, (List) ((List) value).get(0));
             } else {
-                ((Map)object).put(name, value);
+                ((Map) object).put(name, value);
             }
         } else {
             List toList = beeGather.getVar(name);
             if (value instanceof List) {
-                toList.addAll((List)value);
+                toList.addAll((List) value);
             } else {
                 toList.add(value);
             }
@@ -340,7 +359,7 @@ public class GatherStep {
                     Object propValue = propertyMap.get(key);
                     if (propValue instanceof Map) {
                         script = beeGather.getScript((Map) propValue);
-                        type = (String)((Map) propValue).get("type");
+                        type = (String) ((Map) propValue).get("type");
                     } else if (propValue instanceof String) {
                         script = (String) propValue;
                     }
@@ -360,7 +379,7 @@ public class GatherStep {
                                 }
                             } else if ("String[]".equalsIgnoreCase(type)) {
                                 String split = getValue((Map) propValue, "split", ",");
-                                ov = ((String)ov).split(split);
+                                ov = ((String) ov).split(split);
                             } else if ("int".equalsIgnoreCase(type) || "Integer".equalsIgnoreCase(type)) {
                                 try {
                                     ov = Integer.valueOf(ov.toString());
@@ -437,7 +456,7 @@ public class GatherStep {
         parser.parse(stream, handler, metadata);
         return handler.toString();
     }
-    
+
     private String readTextFile(String fileName, String encoding) throws IOException {
         return FileUtils.readFileToString(new File(fileName), encoding);
     }

@@ -15,7 +15,7 @@ import org.apache.commons.logging.LogFactory;
  * @author xiaolie
  */
 public class Main {
-    protected static Log LOGGER = LogFactory.getLog(Main.class);
+    public static Log MAIN_LOGGER = LogFactory.getLog("org.shenjitang.beepasture.core.Main");
 
     public Main() {
     }
@@ -27,11 +27,12 @@ public class Main {
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\wenshu_court_gov_cn.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\elasticsearch_city.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\webgather1.yaml";
-        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\szb_info_es.yaml";
+        //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\szb_info_es.yaml";
+        String fileName = "D:\\temp\\baidu.yaml";
         if (args.length > 0) {
             fileName = args[0];
         }
-        LOGGER.info("Starting....   fileEncoding=" + fileEncoding + " yaml=" + fileName);
+        MAIN_LOGGER.info("start fileEncoding=" + fileEncoding + " script=" + fileName);
         File file = new File(fileName);
         String yaml = FileUtils.readFileToString(file, fileEncoding);
         if (Boolean.valueOf(System.getProperty("asyn", "false"))) {
@@ -45,6 +46,7 @@ public class Main {
             webGather.doGather();
             webGather.saveTo();
         }
+        MAIN_LOGGER.info("finish fileEncoding=" + fileEncoding + " script=" + fileName);
     }
     
 //    public static void gatherUrlList(String fileName, String outFile) throws Exception {

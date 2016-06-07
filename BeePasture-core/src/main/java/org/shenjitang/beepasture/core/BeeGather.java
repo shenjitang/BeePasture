@@ -35,6 +35,7 @@ import org.shenjitang.beepasture.resource.ResourceMng;
  * @author xiaolie
  */
 public class BeeGather {
+    public static Log MAIN_LOGGER = LogFactory.getLog("org.shenjitang.beepasture.core.Main");
     private final HtmlCleaner cleaner = new  HtmlCleaner();  
     private HttpTools httpTools;
     private final ScriptTemplateExecuter template = new ScriptTemplateExecuter();
@@ -123,8 +124,10 @@ public class BeeGather {
         }
         for (Object stepObj : gatherStepList) {
             Map step = (Map) stepObj;
+            MAIN_LOGGER.info("enter " + step.get("url"));
             GatherStep gatherStep = new GatherStep(step, this);
             gatherStep.execute();
+            MAIN_LOGGER.info("level " + step.get("url"));
             gatherStep.sleep();
         }
         return vars;

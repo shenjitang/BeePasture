@@ -70,6 +70,13 @@ public class ElasticsearchResource {
                 type = p[2];
             }
         }
+        Thread th = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                close();
+            }
+        });
+        Runtime.getRuntime().addShutdownHook(th);
     }
 
     public String getIndex() {
