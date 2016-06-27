@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configures the Camel Context-->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+    <bean id="serializer" class="org.springframework.data.redis.serializer.StringRedisSerializer" />
+    <camelContext xmlns="http://camel.apache.org/schema/spring">
+        <route>
+            <from uri="direct:beetest" />
+            <marshal>
+                <json></json>
+            </marshal>
+            <to uri="kafka:hdnn71:9092,hdnn72:9092,RI5:9092?topic=beetest&amp;zookeeperConnect=hdnn71:2181,hdnn72:2181,RI5:2181" />
+        </route>
+        <route>
+            <from uri="kafka:hdnn71:9092,hdnn72:9092,RI5:9092?topic=beetest&amp;zookeeperConnect=hdnn71:2181,hdnn72:2181,RI5:2181&amp;groupId=group007" />
+            <unmarshal>
+                <json></json>
+            </unmarshal>
+            <log message="${body}" />
+        </route>
+    </camelContext>
+
+</beans>
+
+

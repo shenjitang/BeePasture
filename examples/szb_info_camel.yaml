@@ -1,0 +1,20 @@
+resource: 
+    camel:
+        url: "camelContext:camel-context.xml"
+#        url: "camel:route"     
+    
+gather:
+    - url: "http://172.20.10.125:8080/bdsc-index/v2/search/page.serv?pageSize=100"
+      xpath: json($.result)
+      save: 
+          to: data
+          property: 
+              publishTime: 
+                  type: date
+                  format: "yyyy-MM-dd HH:mm"
+        
+persist:
+     data:
+         resource: camel
+         to: "direct:beetest"
+            

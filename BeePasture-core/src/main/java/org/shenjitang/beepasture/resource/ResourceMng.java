@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.sql.DataSource;
+import org.apache.commons.beanutils.MethodUtils;
 import org.apache.commons.dbcp.BasicDataSourceFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -82,10 +83,18 @@ public class ResourceMng {
                 } else if (scheme.equalsIgnoreCase("elasticsearch")) {
                     ElasticsearchResource resource = new ElasticsearchResource(uri);
                     resourceMap.put(name, resource);
+//                } else if (scheme.equalsIgnoreCase("camelContext")) {
+//                    
                 } else {
-//                    String resourceClassname = "org.shenjitang.beepasture.resource." + StringUtils.capitalize(scheme) + "Resource";
-//                    Object resource = Class.forName(resourceClassname).newInstance();
-                    throw new RuntimeException("Don't know resource :" + url);
+                    try {
+                        String resourceClassname = "org.shenjitang.beepasture.resource." + StringUtils.capitalize(scheme) + "Resource";
+                        BeeResource resource = (BeeResource)Class.forName(resourceClassname).newInstance();
+                        resource.init(uri, params);
+                        resourceMap.put(name, resource);
+                    } catch (ClassNotFoundException e) {
+                        throw new RuntimeException("Don't know resource :" + url, e);
+                    }
+                    //throw new RuntimeException("Don't know resource :" + url);
                 }
             }
         } catch (Exception e) {

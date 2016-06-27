@@ -47,6 +47,7 @@ public class Main {
             webGather.saveTo();
         }
         MAIN_LOGGER.info("finish fileEncoding=" + fileEncoding + " script=" + fileName);
+        System.exit(0);
     }
     
 //    public static void gatherUrlList(String fileName, String outFile) throws Exception {

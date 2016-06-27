@@ -15,6 +15,8 @@ import com.netflix.discovery.DiscoveryManager;
 
 import java.io.IOException;
 import java.net.URI;
+import org.shenjitang.beepasture.grizzly2.filter.AuthorizationRequestFilter;
+import org.shenjitang.beepasture.grizzly2.filter.SimpleResponseFilter;
 
 /**
  * Main class.
@@ -34,6 +36,7 @@ public class Main {
         // create a resource config that scans for JAX-RS resources and providers
         // in org.shenjitang.beepasture.grizzly2 package
         final ResourceConfig rc = new ResourceConfig().packages("org.shenjitang.beepasture.service.impl");
+        rc.registerClasses(SimpleResponseFilter.class, AuthorizationRequestFilter.class);
 
         // create and start a new instance of grizzly http server
         // exposing the Jersey application at BASE_URI
@@ -49,7 +52,7 @@ public class Main {
         final HttpServer server = startServer();
         System.out.println(String.format("Jersey app started with WADL available at "
                 + "%sapplication.wadl\nHit enter to stop it...", BASE_URI));
-        Boolean eureka = Boolean.valueOf(System.getProperty("eureka", "true"));
+        Boolean eureka = Boolean.valueOf(System.getProperty("eureka", "false"));
         if (eureka) {
             System.out.println("start eureka reigster service...");
             registerWithEureka();

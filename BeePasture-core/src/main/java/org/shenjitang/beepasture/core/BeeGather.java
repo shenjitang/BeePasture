@@ -5,25 +5,20 @@
  */
 package org.shenjitang.beepasture.core;
 
-import com.jayway.jsonpath.JsonPath;
 import java.net.URI;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import net.minidev.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.NameValuePair;
 import org.ho.yaml.Yaml;
 import org.htmlcleaner.HtmlCleaner;
-import org.htmlcleaner.TagNode;
 import org.shenjitang.beepasture.function.ScriptTemplateExecuter;
 import org.shenjitang.beepasture.component.Component;
 import org.shenjitang.beepasture.http.HttpTools;
