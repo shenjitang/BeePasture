@@ -1,10 +1,10 @@
 resource: 
     camel:
-        url: "camelContext:camel-context.xml"
+        url: "camelContext:../examples/camel-context_mqtt.xml"
 #        url: "camel:route"     
     
 gather:
-    - url: "http://172.20.10.125:8080/bdsc-index/v2/search/page.serv?pageSize=100"
+    - url: "http://172.20.10.125:8080/bdsc-index/v2/search/page.serv?pageSize=50"
       xpath: json($.result)
       save: 
           to: data
@@ -16,5 +16,5 @@ gather:
 persist:
      data:
          resource: camel
-         to: "direct:beetest"
+         route: "direct:beetest"
             

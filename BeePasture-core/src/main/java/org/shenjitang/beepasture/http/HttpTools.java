@@ -222,12 +222,14 @@ public class HttpTools {
                 String encod =  headerEncoding==null?null:headerEncoding.getValue();
                 String charset = null;
                 Header contentType = entity.getContentType();
-                HeaderElement[] hes = contentType.getElements();
-                for (HeaderElement he : hes) {
-                    String heName = he.getName();// mime-type 比如：application/json
-                    NameValuePair pair = he.getParameterByName("charset");
-                    if (pair != null) {
-                        charset = pair.getValue();
+                if (contentType != null) {
+                    HeaderElement[] hes = contentType.getElements();
+                    for (HeaderElement he : hes) {
+                        String heName = he.getName();// mime-type 比如：application/json
+                        NameValuePair pair = he.getParameterByName("charset");
+                        if (pair != null) {
+                            charset = pair.getValue();
+                        }
                     }
                 }
                 if (StringUtils.isBlank(charset)) {

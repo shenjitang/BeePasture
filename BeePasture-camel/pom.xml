@@ -87,6 +87,16 @@
             <artifactId>camel-jackson</artifactId>
             <version>${camel.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-jms</artifactId>
+            <version>${camel.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-mqtt</artifactId>
+            <version>${camel.version}</version>
+        </dependency>
 <!--        <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-jacksonxml</artifactId>
@@ -114,6 +124,11 @@
           <artifactId>scala-library</artifactId>
           <version>2.10.4</version>
       </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-ali-ons</artifactId>
+            <version>2.16.1</version>
+        </dependency>
     </dependencies>
     <build>
       <plugins>

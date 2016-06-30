@@ -8,6 +8,8 @@ resource:
 
 gather:
   - url: file1
+    #这是file1是list，是文件列表，如果direct不设置，就是读取文件内容了。
+    direct: true
     save:
         to: fileList
 

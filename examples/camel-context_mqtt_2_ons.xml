@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configures the Camel Context-->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+    <camelContext xmlns="http://camel.apache.org/schema/spring">
+        <dataFormats>
+            <json id="json" library="Jackson" allowJmsType="true"/>
+        </dataFormats>
+<!--        <route>
+            <from uri="direct:beetest" />
+            <to uri="seda:beetest" />
+        </route>-->
+        <route>
+            <from uri="mqtt://infobroker?host=tcp://121.40.133.133:61613&amp;subscribeTopicName=info.autoTag&amp;userName=admin&amp;password=password" />
+            <unmarshal>
+                <json></json>
+            </unmarshal>
+            <log message="${body}" />
+        </route>
+    </camelContext>
+
+</beans>
+
+

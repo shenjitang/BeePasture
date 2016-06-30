@@ -1,0 +1,11 @@
+resource: 
+    camel:
+        url: "camelContext:../examples/camel-context_mqtt_2_ons.xml"
+#        url: "camel:route"     
+    
+gather:
+
+        
+persist:
+
+            

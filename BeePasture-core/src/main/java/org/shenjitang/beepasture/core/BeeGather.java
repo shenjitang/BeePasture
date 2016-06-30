@@ -5,7 +5,6 @@
  */
 package org.shenjitang.beepasture.core;
 
-import java.net.URI;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,9 +19,9 @@ import org.apache.commons.logging.LogFactory;
 import org.ho.yaml.Yaml;
 import org.htmlcleaner.HtmlCleaner;
 import org.shenjitang.beepasture.function.ScriptTemplateExecuter;
-import org.shenjitang.beepasture.component.Component;
 import org.shenjitang.beepasture.http.HttpTools;
 import org.shenjitang.beepasture.http.PageAnalyzer;
+import org.shenjitang.beepasture.resource.BeeResource;
 import org.shenjitang.beepasture.resource.ResourceMng;
 
 /**
@@ -32,9 +31,9 @@ import org.shenjitang.beepasture.resource.ResourceMng;
 public class BeeGather {
     public static Log MAIN_LOGGER = LogFactory.getLog("org.shenjitang.beepasture.core.Main");
     private final HtmlCleaner cleaner = new  HtmlCleaner();  
-    private HttpTools httpTools;
+    private final HttpTools httpTools;
     private final ScriptTemplateExecuter template = new ScriptTemplateExecuter();
-    private PageAnalyzer pageAnalyzer;
+    private final PageAnalyzer pageAnalyzer;
     private Map vars;
     private List gatherStepList;
     private Map persistStep; 
@@ -101,11 +100,9 @@ public class BeeGather {
     }
     
     protected List loadResource(String url, Map step) throws Exception {
-        String scheme = resourceMng.getResourceScheme(url);
-        Map param = resourceMng.getResourceParam(url);
-        Component component = ResourceMng.createComponent(scheme, resourceMng.getResource(url), param);
+        BeeResource beeResource = resourceMng.getResource(url);
         Map loadParam = (Map) step.get("param");
-        Object value = component.loadResource(loadParam);
+        Object value = beeResource.loadResource(loadParam);
         List list = new ArrayList();
         if (value instanceof Collection) {
             list.addAll((Collection) value);
@@ -155,36 +152,8 @@ public class BeeGather {
             for (Object key : persistMap.keySet()) {
                 try {
                     String varName = (String) key;
-                    String topVarName = varName.split("[.]")[0];
-                    
                     Object objPersist = persistMap.get(key);
-                    if (objPersist instanceof String) {
-                        String resourceStr = (String)persistMap.get(key);
-                        resourceStr = template.expressCalcu(resourceStr, null);
-                        if (resourceStr.startsWith("file:\\\\")) {
-                            resourceStr = "file://" + resourceStr.substring(7);
-                        }
-                        if (resourceStr.contains(":")) {
-                            Map params = new HashMap();
-                            params.put("url", resourceStr);
-                            persist(resourceStr, params, varName, vars.get(topVarName));
-                        } else {
-                            if (resources.containsKey(resourceStr)) {
-                                Map resource = (Map)resources.get(resourceStr);
-                                persist(resourceStr, resource, varName, vars.get(topVarName));
-                            } else {
-                                throw new RuntimeException("不支持的persist cmd: " + resourceStr);
-                            }
-                        }
-                    } else if (objPersist instanceof Map) {
-                        Map resourceMap = (Map)objPersist;
-                        String resourceName = (String)resourceMap.get("resource");
-                        Map resource = (Map)resources.get(resourceName);
-                        resource.putAll(resourceMap);
-                        persist(resourceName, resource, varName, vars.get(topVarName));
-                    } else {
-                        throw new RuntimeException("不支持的persist: " + objPersist.toString());
-                    }
+                    saveVar(varName, objPersist);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -192,22 +161,51 @@ public class BeeGather {
         }
     } 
     
+    public void saveVar(String varName, Object objPersist) throws Exception {
+        String topVarName = varName.split("[.]")[0];
+        if (objPersist instanceof String) {
+            String resourceStr = template.expressCalcu((String) objPersist, null);
+            if (resourceStr.startsWith("file:\\\\")) {
+                resourceStr = "file://" + resourceStr.substring(7);
+            }
+            if (resourceStr.contains(":")) {
+                Map params = new HashMap();
+                params.put("url", resourceStr);
+                persist(resourceStr, params, varName, vars.get(topVarName));
+            } else if (resources.containsKey(resourceStr)) {
+                Map resource = (Map) resources.get(resourceStr);
+                persist(resourceStr, resource, varName, vars.get(topVarName));
+            } else {
+                throw new RuntimeException("不支持的persist cmd: " + resourceStr);
+            }
+        } else if (objPersist instanceof Map) {
+            Map resourceMap = (Map) objPersist;
+            String resourceName = (String) resourceMap.get("resource");
+            Map resource = (Map) resources.get(resourceName);
+            Map mergeReourceMap = new HashMap();
+            mergeReourceMap.putAll(resource);
+            mergeReourceMap.putAll(resourceMap);
+            persist(resourceName, mergeReourceMap, varName, vars.get(topVarName));
+        } else {
+            throw new RuntimeException("不支持的persist: " + objPersist.toString());
+        }
+    }
+    
     
     public void persist(String resourceName, Map params, String varName, Object obj) throws Exception {
-        String urlStr = (String)params.get("url");
-        URI uri = URI.create(urlStr);
-        String scheme = uri.getScheme();
-        Component persistable = ResourceMng.createComponent(scheme, resourceMng.getResource(resourceName), params);
-//        Component persistable = (Component)Class.forName(ResourceMng.COMPONENT_PACKAGE + "." + StringUtils.capitalize(scheme) + "Component").newInstance();
-//        persistable.setResource(resourceMng.getResource(resourceName));
-        persistable.persist(uri, varName, obj);
+        BeeResource beeResource = resourceMng.getResource(resourceName);
+        beeResource.persist(varName, obj, params);
     }
     
     public void saveTo() throws Exception {
         saveTo(persistStep);
     }
-    
 
+    public ResourceMng getResourceMng() {
+        return resourceMng;
+    }
+    
+    
  
     public Map getVars() {
         return vars;

@@ -27,8 +27,12 @@ public class Main {
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\wenshu_court_gov_cn.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\elasticsearch_city.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\webgather1.yaml";
+        //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\dir_test.yaml";
+        //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\dailystock.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\szb_info_es.yaml";
-        String fileName = "D:\\temp\\baidu.yaml";
+        //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\szb_info_camel.yaml";
+        //String fileName = "D:\\temp\\baidu.yaml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\99qh1.yaml";
         if (args.length > 0) {
             fileName = args[0];
         }
@@ -47,7 +51,15 @@ public class Main {
             webGather.saveTo();
         }
         MAIN_LOGGER.info("finish fileEncoding=" + fileEncoding + " script=" + fileName);
-        System.exit(0);
+        if (args.length > 1 && "-d".equalsIgnoreCase(args[1])) {
+            while(Boolean.TRUE) {
+                try {
+                    Thread.sleep(60000L);
+                } catch (Exception e) {}
+            }
+        } else {
+            System.exit(0);
+        }
     }
     
 //    public static void gatherUrlList(String fileName, String outFile) throws Exception {

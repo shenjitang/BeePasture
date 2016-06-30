@@ -99,6 +99,7 @@ h3. gather命令结构
 * Content-Encoding 设置为gzip或者不设置
 * limit 对url列表中执行的个数限制。 
 * sleep 每执行一个url，指定sleep多少毫秒。 
+* direct true: 表示直接将url的内容付给返回值。false: 表示将url作为http的地址从网上爬取网页内容付给返回值。
 * xpath 对采集下来的页面内容用xpath过滤出数据。支持jsonpath，语法：json(path express),比如：json($}表示取json的根节点。 
 * save 保存到变量 
 	* to 保存到的变量名 

@@ -5,10 +5,16 @@
  */
 package org.shenjitang.beepasture.resource;
 
+import com.alibaba.fastjson.JSONObject;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
@@ -18,24 +24,23 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
  *
  * @author xiaolie
  */
-public class ElasticsearchResource {
+public class ElasticsearchResource extends BeeResource {
     private TransportClient client;
     private String index;
     private String type;
     private String cluster;
 
     public ElasticsearchResource() {
+        super();
     }
 
-    public ElasticsearchResource(URI uri) throws UnknownHostException {
-        init(uri);
-    }
-    
     public void close() {
         client.close();
     }
-    
-    public void init(URI uri) throws UnknownHostException {
+
+    @Override
+    public void init(String url, Map param) throws Exception {
+        super.init(url, param);
         String query = uri.getQuery();
         String[] ipPorts = uri.getAuthority().split(",");
         if (StringUtils.isNoneBlank(query)) {
@@ -126,5 +131,65 @@ public class ElasticsearchResource {
         System.out.println("Fragment:" + uri.getFragment());
         System.out.println("host:" + uri.getHost());
         System.out.println("path:" + uri.getPath());
+    }
+
+    @Override
+    public void persist(String varName, Object obj, Map persistParams) throws Exception {
+        Map allParam = new HashMap();
+        allParam.putAll(this.params);
+        allParam.putAll(persistParams);
+        String _index = (String)allParam.get("_index");
+        if (StringUtils.isBlank(_index)) {
+            _index = index;
+        }
+        String _type = (String)allParam.get("_type");
+        if (StringUtils.isBlank(_type)) {
+            _type = type;
+        }
+        String idField = (String)allParam.get("_id");
+        if (obj instanceof List) {
+            for (Object item : (List)obj) {
+                try {
+                    String _id = null;
+                    if (org.codehaus.plexus.util.StringUtils.isNotBlank(idField)) {
+                        _id = ((Map)item).remove(idField).toString();
+                    }
+                    String indexContent = JSONObject.toJSONString(item);
+                    if (org.codehaus.plexus.util.StringUtils.isBlank(_id)) {
+                        IndexRequest indexRequest = new IndexRequest(_index, _type).source(indexContent);
+                        client.index(indexRequest);
+                    } else {
+                        IndexRequest indexRequest = new IndexRequest(_index, _type, _id).source(indexContent);
+                        UpdateRequest updateRequest = new UpdateRequest(_index, _type, _id)
+                               .doc(indexContent)
+                               .upsert(indexRequest);              
+                        client.update(updateRequest).get();       
+                    }
+                } catch (Exception ee) {
+                    ee.printStackTrace();
+                }
+            }
+        } else {
+            String _id = null;
+            if (org.codehaus.plexus.util.StringUtils.isNotBlank(idField)) {
+                _id = (String) ((Map) obj).remove(idField);
+            }
+            String indexContent = JSONObject.toJSONString(obj);
+            if (org.codehaus.plexus.util.StringUtils.isBlank(_id)) {
+                IndexRequest indexRequest = new IndexRequest(_index, _type).source(indexContent);
+                client.index(indexRequest);
+            } else {
+                IndexRequest indexRequest = new IndexRequest(_index, _type, _id).source(indexContent);
+                UpdateRequest updateRequest = new UpdateRequest(_index, _type, _id)
+                        .doc(indexContent)
+                        .upsert(indexRequest);
+                client.update(updateRequest).get();
+            }
+        }    
+    }
+
+    @Override
+    public Object loadResource(Map loadParam) throws Exception {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

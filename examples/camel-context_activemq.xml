@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configures the Camel Context-->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+    <bean id="camelJmsConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+        <property name="brokerURL" value="failover://(tcp://172.20.10.83:61616,tcp://172.20.10.84:61616)?randomize=false"/>
+        <property name="useAsyncSend" value="true"/>
+    </bean>
+    <bean id="jmsConfig" class="org.apache.camel.component.jms.JmsConfiguration">
+        <property name="connectionFactory" ref="camelJmsConnectionFactory"/>
+        <property name="concurrentConsumers" value="1"/>
+        <property name="subscriptionDurable" value="true"/>
+        <property name="asyncConsumer" value="true"/>
+    </bean>
+    <bean id="activemq" class="org.apache.activemq.camel.component.ActiveMQComponent">
+        <property name="configuration" ref="jmsConfig"/>
+        <property name="deliveryPersistent" value="false"/>
+        <property name="usePooledConnection" value="true" />
+    </bean>
+
+    <camelContext xmlns="http://camel.apache.org/schema/spring">
+        <dataFormats>
+            <json id="json" library="Jackson" allowJmsType="true"/>
+        </dataFormats>
+<!--        <route>
+            <from uri="direct:beetest" />
+            <to uri="seda:beetest" />
+        </route>-->
+        <route>
+            <from uri="direct:beetest" />
+            <marshal>
+                <json></json>
+            </marshal>
+            <to uri="activemq:queue:info.autoTag"/>
+        </route>
+<!--        <route>
+            <from uri="activemq:queue:info.autoTag" />
+            <unmarshal>
+                <json></json>
+            </unmarshal>
+            <log message="${body}" />
+        </route>-->
+    </camelContext>
+
+</beans>
+
+

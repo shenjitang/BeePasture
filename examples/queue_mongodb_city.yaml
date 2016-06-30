@@ -1,0 +1,43 @@
+queue:
+    queue1:
+        type: List
+    queue2:
+        type: Queue
+
+var:
+    cityUrlList: "A..Z http://www.dianping.com/ajax/json/index/citylist/getCitylist?_nr_force=${time}&do=getByPY&firstPY=${i}"
+    
+resource: 
+    mongo1:
+        url: mongodb://localhost:27017/test
+        
+
+gather:
+  - url: "http://www.dianping.com/citylist"
+    xpath: "//div[@class='terms']/a"
+    save: 
+      to: cityqueue
+      property: 
+        title: //text()
+        name: 
+            xpath: @href
+            templete: "${it.substring(1)}"
+# 获取城市列表 更多
+  - url: cityUrlList
+    xpath: json($.msg.html);//a
+    save:
+      to: cityqueue
+      append: true
+      property:
+          title: //text()
+          name: 
+            xpath: @href
+            templete: "${it.substring(1)}"
+
+#保存
+persist:
+    cityqueue: 
+        resource: mongo1
+#        database: vbaobao
+#        collection: shopClass1
+

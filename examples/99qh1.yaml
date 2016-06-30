@@ -1,0 +1,34 @@
+﻿#resource: 
+#    db1: 
+#        url: "jdbc:mysql://localhost:3306/test"
+#        #databaseName: test
+#        username: root
+#        password: "12345678"
+
+var:
+  data: []
+  UrlList:
+    - "http://www.dce.com.cn/PublicWeb/MainServlet?action=Pu00161_result&Pu00161_Input.variety=all&Pu00161_Input.gen_date=20151030"
+#    - "http://www.dce.com.cn/PublicWeb/MainServlet?action=Pu00161_result&Pu00161_Input.variety=all&Pu00161_Input.gen_date=20151102"
+#    - "http://www.dce.com.cn/PublicWeb/MainServlet?action=Pu00161_result&Pu00161_Input.variety=all&Pu00161_Input.gen_date=20151103"
+gather:
+  - url: UrlList
+    xpath: "//body/table/tbody/tr[1]/td/table/tbody/tr"
+    save: 
+          to: data
+          property:
+              F1:"/td[1]/text()"
+              F2:"/td[2]/text()"
+              F3:"/td[3]/text()"
+              F4:"/td[4]/text()"
+              F5:"/td[5]/text()"
+              F6:"/td[6]/text()"
+              F7:"/td[7]/text()"
+              F8:"/td[8]/text()"
+              
+        
+persist:
+    data: file:\\dce.txt?encoding=utf8&format=yaml
+#    data: 
+#        resource: db1
+#        sql: "insert into szbinfo (ID,TITLE,CONTENT,URL,PUBLISHTIME,MEDIATYPE,SITE,SITEID,CHANNEL,CHANNELURL,PROVINCE,COMMENTNUM,FORWARDNUM,REPLYTIME,SENTI,KEYWORDS,PLACE,ORG,NNPSHAREHOLDER,TITLEHEX,TITLEANALYSISHEX,SCORE,INFOSOURCE) values(${data.id},'${data.title}','${data.content}','${data.url}','${data.publishTime}',${data.mediatype},'${data.site}',${data.siteId},'${data.channel}','${data.channelUrl}','${data.province}',${data.commentNum},${data.forwardNum},${data.replyTime},${data.senti},'${data.keywords}','${data.place}','${data.org}','${data.nnpShareHolder}','${data.titleHex}','${data.titleAnalysisHex}',${data.score},'A')"

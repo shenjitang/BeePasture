@@ -25,7 +25,6 @@ import org.ho.yaml.Yaml;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
 import org.shenjitang.beepasture.function.ScriptTemplateExecuter;
-import org.shenjitang.beepasture.component.Component;
 import org.shenjitang.beepasture.http.HttpTools;
 import org.shenjitang.beepasture.http.PageAnalyzer;
 import org.shenjitang.beepasture.resource.ResourceMng;
@@ -136,11 +135,8 @@ public class AsynBeeGather {
             if (vars.containsKey(rurl)) {
                 urls = (List)vars.get(rurl);
             } else if (resources.containsKey(rurl)) {
-                String scheme = resourceMng.getResourceScheme(rurl);
-                Map param = resourceMng.getResourceParam(rurl);
-                Component component = ResourceMng.createComponent(scheme, resourceMng.getResource(rurl), param);
                 Map loadParam = (Map)step.get("param");
-                Object value = component.loadResource(loadParam);
+                Object value = resourceMng.getResource(rurl).loadResource(loadParam);
                 Map saveTo = (Map) step.get("save");
                 String to = (String) saveTo.get("to");
                 Boolean append = (Boolean)saveTo.get("append");
@@ -314,13 +310,7 @@ public class AsynBeeGather {
     
     
     public void persist(String resourceName, Map params, String varName, Object obj) throws Exception {
-        String urlStr = (String)params.get("url");
-        URI uri = URI.create(urlStr);
-        String scheme = uri.getScheme();
-        Component persistable = ResourceMng.createComponent(scheme, resourceMng.getResource(resourceName), params);
-//        Component persistable = (Component)Class.forName(ResourceMng.COMPONENT_PACKAGE + "." + StringUtils.capitalize(scheme) + "Component").newInstance();
-//        persistable.setResource(resourceMng.getResource(resourceName));
-        persistable.persist(uri, varName, obj);
+        resourceMng.getResource(resourceName).persist(varName, obj, params);
     }
     
     public void saveTo() throws Exception {

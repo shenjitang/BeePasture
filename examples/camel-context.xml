@@ -7,8 +7,13 @@
        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
        http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
 
+    
     <bean id="serializer" class="org.springframework.data.redis.serializer.StringRedisSerializer" />
     <camelContext xmlns="http://camel.apache.org/schema/spring">
+<!--        <route>
+            <from uri="direct:beetest" />
+            <to uri="seda:beetest" />
+        </route>-->
         <route>
             <from uri="direct:beetest" />
             <marshal>

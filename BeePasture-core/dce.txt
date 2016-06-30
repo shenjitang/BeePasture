@@ -1,0 +1,910 @@
+--- 
+- !java.util.HashMap
+  F1: 品种
+  F5: 今日新注册量
+  F4: 昨日注册仓单量
+  F3: 仓库
+  F2: 发布日期
+  F8: 仓单变动量
+  F6: 今日新注销量
+  F7: 今日注册仓单量
+- !java.util.HashMap
+  F1: 豆一
+  F5: "0/n        "
+  F4: "1,700/n        "
+  F3: 北安直属库
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "1,700/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆一
+  F5: "0/n        "
+  F4: "1,451/n        "
+  F3: 北良港
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "1,451/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆一
+  F5: "0/n        "
+  F4: "1,444/n        "
+  F3: 大连直属库
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "1,444/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆一
+  F5: "0/n        "
+  F4: "6,009/n        "
+  F3: 哈尔滨益海
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "6,009/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆一
+  F5: "0/n        "
+  F4: "3,111/n        "
+  F3: 哈尔滨直属库
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "3,111/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆一
+  F5: "0/n        "
+  F4: "3,259/n        "
+  F3: 良运库
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "3,259/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆一
+  F5: "0/n        "
+  F4: "1,751/n        "
+  F3: 辽粮库
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "1,751/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆一
+  F5: "0/n        "
+  F4: "3,892/n        "
+  F3: 绥棱直属库
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "3,892/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆一
+  F5: "0/n        "
+  F4: "850/n        "
+  F3: 维维东北公司
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "850/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆一小计
+  F5: "0/n        "
+  F4: "23,467/n        "
+  F3: "&nbsp;"
+  F2: "&nbsp;"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "23,467/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 胶合板
+  F5: "0/n        "
+  F4: "5/n        "
+  F3: 湖州南星
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "5/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 胶合板
+  F5: "0/n        "
+  F4: "16/n        "
+  F3: 平湖华瑞
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "16/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 胶合板小计
+  F5: "0/n        "
+  F4: "21/n        "
+  F3: "&nbsp;"
+  F2: "&nbsp;"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "21/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 玉米
+  F5: "0/n        "
+  F4: "4,609/n        "
+  F3: 北良港
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "4,609/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 玉米
+  F5: "0/n        "
+  F4: "351/n        "
+  F3: 大连中船
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "351/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 玉米
+  F5: "0/n        "
+  F4: "30/n        "
+  F3: 吴家仓库
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "30/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 玉米小计
+  F5: "0/n        "
+  F4: "4,990/n        "
+  F3: "&nbsp;"
+  F2: "&nbsp;"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "4,990/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 聚乙烯
+  F5: "0/n        "
+  F4: "252/n        "
+  F3: 大场中储
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "252/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 聚乙烯
+  F5: "0/n        "
+  F4: "21/n        "
+  F3: 广州物资
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "21/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 聚乙烯
+  F5: "0/n        "
+  F4: "2,839/n        "
+  F3: 临沂立晨
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "2,839/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 聚乙烯
+  F5: "0/n        "
+  F4: "51/n        "
+  F3: 南仓中储
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "51/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 聚乙烯
+  F5: "0/n        "
+  F4: "5/n        "
+  F3: 浦东中储
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "5/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 聚乙烯
+  F5: "0/n        "
+  F4: "1,859/n        "
+  F3: 青州中储
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "1,859/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 聚乙烯
+  F5: "0/n        "
+  F4: "890/n        "
+  F3: 全程天津
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "890/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 聚乙烯
+  F5: "0/n        "
+  F4: "140/n        "
+  F3: 上海远盛
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "140/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 聚乙烯
+  F5: "0/n        "
+  F4: "5/n        "
+  F3: 浙江八三七
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "5/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 聚乙烯小计
+  F5: "0/n        "
+  F4: "6,062/n        "
+  F3: "&nbsp;"
+  F2: "&nbsp;"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "6,062/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆粕
+  F5: "0/n        "
+  F4: "1,500/n        "
+  F3: 东莞嘉吉
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "1,500/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆粕
+  F5: "0/n        "
+  F4: "1,200/n        "
+  F3: 东莞嘉吉饲料
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "1,200/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆粕
+  F5: "0/n        "
+  F4: "1,800/n        "
+  F3: 东莞中储粮
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "1,800/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆粕
+  F5: "0/n        "
+  F4: "3,325/n        "
+  F3: 南通嘉吉
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "3,325/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆粕
+  F5: "0/n        "
+  F4: "3,000/n        "
+  F3: 南通来宝
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "3,000/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆粕
+  F5: "0/n        "
+  F4: "1,800/n        "
+  F3: 阳江嘉吉
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "1,800/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆粕
+  F5: "0/n        "
+  F4: "31/n        "
+  F3: 湛江中纺
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "31/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆粕小计
+  F5: "0/n        "
+  F4: "12,656/n        "
+  F3: "&nbsp;"
+  F2: "&nbsp;"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "12,656/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 聚丙烯
+  F5: "0/n        "
+  F4: "8/n        "
+  F3: 尖峰贸易
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "8/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 聚丙烯
+  F5: "0/n        "
+  F4: "489/n        "
+  F3: 江苏金发
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "489/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 聚丙烯小计
+  F5: "0/n        "
+  F4: "497/n        "
+  F3: "&nbsp;"
+  F2: "&nbsp;"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "497/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 聚氯乙烯
+  F5: "0/n        "
+  F4: "62/n        "
+  F3: 浙江国贸
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "62/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 聚氯乙烯小计
+  F5: "0/n        "
+  F4: "62/n        "
+  F3: "&nbsp;"
+  F2: "&nbsp;"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "62/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆油
+  F5: "0/n        "
+  F4: "750/n        "
+  F3: 邦基三维
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "750/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆油
+  F5: "0/n        "
+  F4: "744/n        "
+  F3: 江海粮油
+  F2: "20151030"
+  F8: "-210/n        "
+  F6: "210/n        "
+  F7: "534/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆油
+  F5: "0/n        "
+  F4: "28/n        "
+  F3: 金光食品
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "28/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆油
+  F5: "0/n        "
+  F4: "900/n        "
+  F3: 连云港益海
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "900/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆油
+  F5: "0/n        "
+  F4: "1,200/n        "
+  F3: 龙口新龙
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "1,200/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆油
+  F5: "0/n        "
+  F4: "1,000/n        "
+  F3: 日照中纺
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "1,000/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆油
+  F5: "0/n        "
+  F4: "500/n        "
+  F3: 天津九三
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "500/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆油
+  F5: "0/n        "
+  F4: "168/n        "
+  F3: 天津中储油
+  F2: "20151030"
+  F8: "0/n        "
+  F6: "0/n        "
+  F7: "168/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 豆油小计
+  F5: "0/n        "
+  F4: "5,290/n        "
+  F3: "&nbsp;"
+  F2: "&nbsp;"
+  F8: "-210/n        "
+  F6: "210/n        "
+  F7: "5,080/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
+- !java.util.HashMap
+  F1: 总计
+  F5: "0/n        "
+  F4: "53,045/n        "
+  F3: "&nbsp;"
+  F2: "&nbsp;"
+  F8: "-210/n        "
+  F6: "210/n        "
+  F7: "52,835/n        "
+- !java.util.HashMap
+  F1: ~
+  F5: ~
+  F4: ~
+  F3: ~
+  F2: ~
+  F8: ~
+  F6: ~
+  F7: ~
