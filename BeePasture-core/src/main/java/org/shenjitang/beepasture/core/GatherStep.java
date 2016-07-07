@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,7 @@ public class GatherStep {
     private final PageAnalyzer pageAnalyzer;
     private static final Log LOGGER = LogFactory.getLog(GatherStep.class);
     private List withVar;
+    private Object withVarCurrent;
     private final String rurl;
     private final Long limit;
     private final Map saveTo;
@@ -95,6 +97,7 @@ public class GatherStep {
     }
     
     protected void onceGather(Object ourl) {
+        withVarCurrent = ourl;
         try {
             String url = null;
             if (withVar != null) {
@@ -104,7 +107,9 @@ public class GatherStep {
             } else if (ourl instanceof File) {
                 url = ((File)ourl).getAbsolutePath();
             } else {
-                url = ourl.toString();
+                //url = ourl.toString();
+                toVar(toVar, ourl, ourl);
+                return;
             }
             String page = null;
             if (direct != null && direct) {
@@ -195,12 +200,18 @@ public class GatherStep {
             return;
         }
         if (withVar != null) {
-            if (value instanceof List && ((List) value).size() > 0) {
-                ((Map) object).put(name, (List) ((List) value).get(0));
-            } else {
-                ((Map) object).put(name, value);
+            if (!((Map) object).containsKey(name)) {
+                ((Map) object).put(name, new ArrayList());
             }
-        } else {
+            List rlist = (List)((Map) object).get(name);
+            if (value instanceof List && ((List) value).size() == 1 && ((List) value).get(0) instanceof List) {
+                rlist.addAll((List) ((List) value).get(0));
+            } else if (value instanceof Collection) {
+                rlist.addAll((Collection)value);
+            } else {
+                rlist.add(value);
+            }
+        }// else {
             Object resource = beeGather.getResourceMng().getResource(name);
             if (resource == null) {
                 List toList = beeGather.getVar(name);
@@ -212,7 +223,7 @@ public class GatherStep {
             } else {
                 //to resource
             }
-        }
+        //}
     }
 
     protected <T> T getValue(Map map, String key, T defaultValue) {
@@ -355,37 +366,38 @@ public class GatherStep {
             result = new HashMap();
         }
         for (String key : propertyMap.keySet()) {
+            Object thisValue = value;
             Object ov = null;
             Object propValue = propertyMap.get(key);
             if (propValue instanceof Map) {
                 String scope = (String) ((Map)propValue).get("scope");
-                if (StringUtils.isNotBlank(scope) && "global".equalsIgnoreCase(scope.trim())) {
-                    value = page;
-                }
-            }
-            if (value instanceof String) {
-                ov = xpathPropertyObj((String) value, propValue);
-            } else if (value instanceof TagNode) {
-                ov = xpathPropertyObj((TagNode) value, propValue);
-            } else if (value instanceof Map) {
-                String script = null;
-                String type = null;
-                if (propValue instanceof Map) {
-                    script = beeGather.getScript((Map) propValue);
-                    type = (String) ((Map) propValue).get("type");
-                } else if (propValue instanceof String) {
-                    script = (String) propValue;
-                }
-                ov = result.get(key);
-                if (ov != null) {
-                    if (StringUtils.isNotBlank(script)) {
-                        ov = template.expressCalcu(script, result.get(key), result);
+                if (StringUtils.isNotBlank(scope)) {
+                    if ("global".equalsIgnoreCase(scope.trim())) {
+                        thisValue = page;
+                    } else if ("var".equalsIgnoreCase(scope.trim())) {
+                        thisValue = withVarCurrent;
                     }
                 }
             }
+            String script = null;
             String type = null;
             if (propValue instanceof Map) {
+                script = beeGather.getScript((Map) propValue);
                 type = (String) ((Map) propValue).get("type");
+            }
+            if (thisValue instanceof String) {
+                ov = xpathPropertyObj((String) thisValue, propValue);
+            } else if (thisValue instanceof TagNode) {
+                ov = xpathPropertyObj((TagNode) thisValue, propValue);
+            } else if (thisValue instanceof Map) {
+                ov = ((Map) thisValue).get(key);
+            }
+//                ov = template.expressCalcu(script, thisValue, result);
+            if (ov == null) {
+                ov = thisValue;
+            }
+            if (StringUtils.isNotBlank(script)) {
+                ov = template.expressCalcu(script, ov, page, withVarCurrent, result);
             }
             if (StringUtils.isNotBlank(type) && ov != null) {
                 if ("date".equalsIgnoreCase(type)) {
@@ -440,23 +452,19 @@ public class GatherStep {
             String value = null;
             try {
                 String path = null;
-                String script = null;
                 if (propertyParam instanceof Map) {
                     path = (String) ((Map) propertyParam).get("xpath");
-                    script = beeGather.getScript((Map) propertyParam);
                 } else {
                     path = propertyParam.toString();
                 }
-                
-                if (path.startsWith("json(")) {
+                if (StringUtils.isBlank(path)) {
+                    value = page;
+                } else if (path.startsWith("json(")) {
                     String jsonPath = path.substring(5, path.length() - 1);
                     value = JsonPath.read(page, jsonPath);
                 } else {
                     TagNode tn = pageAnalyzer.toTagNode((String) page);
                     value = pageAnalyzer.getText(tn, path);
-                }
-                if (StringUtils.isNoneBlank(script)) {
-                    value = template.expressCalcu(script, value, null);
                 }
                 return value;
             } catch (Exception e) {
@@ -469,18 +477,15 @@ public class GatherStep {
             String value = null;
             try {
                 String path = null;
-                String script = null;
                 if (propertyParam instanceof Map) {
                     path = (String) ((Map) propertyParam).get("xpath");
-                    script = beeGather.getScript((Map) propertyParam);
                 } else {
                     path = propertyParam.toString();
                 }
-                
-                value = pageAnalyzer.getText(tn, path);
-                if (StringUtils.isNoneBlank(script)) {
-                    value = template.expressCalcu(script, value, null);
+                if (StringUtils.isBlank(path)) {
+                    path = ".";
                 }
+                value = pageAnalyzer.getText(tn, path);
                 return value;
             } catch (Exception e) {
                 e.printStackTrace();

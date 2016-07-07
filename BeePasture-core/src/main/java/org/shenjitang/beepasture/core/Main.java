@@ -32,7 +32,10 @@ public class Main {
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\szb_info_es.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\szb_info_camel.yaml";
         //String fileName = "D:\\temp\\baidu.yaml";
-        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\99qh1.yaml";
+        //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\mongo2es.yaml";
+        //String fileName = "D:\\temp\\webgather\\gt.yaml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\baidu01_multi_1.yaml";
+        //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\download_1.yaml";
         if (args.length > 0) {
             fileName = args[0];
         }

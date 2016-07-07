@@ -91,4 +91,38 @@ public class ScriptTemplateExecuter {
         t.binding(params);
         return t.render();
     }
+    
+    public String expressCalcu(String str, Object it, Object page, Object thisVar, Map<String, Object> inParams) throws Exception {
+        Configuration cfg = Configuration.defaultConfiguration();
+        GroupTemplate gt = new GroupTemplate(resourceLoader, cfg);
+        Map<String, Object> params = new HashMap();
+        if (inParams != null) {
+            params.putAll(inParams);
+        }
+        if (it == null) {
+            it = "";
+        }
+        params.put("it", it);
+        params.put("_page", page);
+        params.put("_this",thisVar);
+        Long time = System.currentTimeMillis();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(time);
+        if (!params.containsKey("time")) {
+            params.put("time", time);
+        }
+        gt.registerFunctionPackage("sys", System.class);
+        gt.registerFunctionPackage("str", StringFunctions.class);
+        gt.registerFunction("dateAdd", new DateAddFunction());
+        //gt.registerFunctionPackage("it", it);
+        for (String key : params.keySet()) {
+            Object o = params.get(key);
+            if (o != null) {
+                gt.registerFunctionPackage(key, o);
+            }
+        }
+        Template t = gt.getTemplate(str);
+        t.binding(params);
+        return t.render();
+    }    
 }

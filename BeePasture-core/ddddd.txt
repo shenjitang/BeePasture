@@ -1,0 +1,100 @@
+{index_name=糖果产品产量:当月值   , index_code=BERG999000001}
+{index_name=糖果产品产量:累计值   , index_code=BERG999000002}
+{index_name=糖果产品产量:累计同比, index_code=BERG999000003}
+{index_name=糕点产品产量:当月值   , index_code=BERG999000004}
+{index_name=糕点产品产量:累计值   , index_code=BERG999000005}
+{index_name=糕点产品产量:累计同比   , index_code=BERG999000006}
+{index_name=乳制品产品产量:当月值   , index_code=BERG999000007}
+{index_name=乳制品产品产量:累计值   , index_code=BERG999000008}
+{index_name=乳制品产品产量:累计同比   , index_code=BERG999000009}
+{index_name=碳酸饮料产品产量:当月值   , index_code=BERG999000010}
+{index_name=碳酸饮料产品产量:累计值   , index_code=BERG999000011}
+{index_name=碳酸饮料产品产量:累计同比   , index_code=BERG999000012}
+{index_name=饼干产品产量:当月值, index_code=BERG999000013}
+{index_name=饼干产品产量:累计值, index_code=BERG999000014}
+{index_name=饼干产品产量:累计同比, index_code=BERG999000015}
+{index_name=罐头产品产量:当月值, index_code=BERG999000016}
+{index_name=罐头产品产量:累计值, index_code=BERG999000017}
+{index_name=罐头产品产量:累计同比, index_code=BERG999000018}
+{index_name=软饮料产品产量:当月值, index_code=BERG999000019}
+{index_name=软饮料产品产量:累计值, index_code=BERG999000020}
+{index_name=软饮料产品产量:累计同比, index_code=BERG999000021}
+{index_name=白糖现货价格:广东湛江, index_code=BERG999000022}
+{index_name=白糖现货价格:云南昆明, index_code=BERG999000023}
+{index_name=白糖现货价格:广西柳州, index_code=BERG999000024}
+{index_name=白糖现货价格:营口鲅鱼圈, index_code=BERG999000025}
+{index_name=白糖现货价格:广西南宁, index_code=BERG999000026}
+{index_name=白糖:全国产量, index_code=BERG999000027}
+{index_name=白糖:全国:进口量, index_code=BERG999000028}
+{index_name=白糖:全国:出口量, index_code=BERG999000029}
+{index_name=白糖全国:期末库存, index_code=BERG999000030}
+{index_name=白糖进口平均单价:当月值, index_code=BERG999000031}
+{index_name=白糖出口平均单价:当月值, index_code=BERG999000032}
+{index_name=白糖出口数量:累计值, index_code=BERG999000033}
+{index_name=白糖出口数量:累计同比, index_code=BERG999000034}
+{index_name=白糖出口金额:累计值, index_code=BERG999000035}
+{index_name=白糖出口金额:累计同比, index_code=BERG999000036}
+{index_name=白糖进口数量:累计值, index_code=BERG999000037}
+{index_name=白糖进口数量:累计同比, index_code=BERG999000038}
+{index_name=白糖进口金额:累计值, index_code=BERG999000039}
+{index_name=白糖进口金额:累计同比, index_code=BERG999000040}
+{index_name=白糖:关税配额商品进口数量和金额（年）, index_code=BERG999000041}
+{index_name=菜籽油现货价格:安徽安庆, index_code=BERG999000042}
+{index_name=菜籽油现货价格:安徽合肥, index_code=BERG999000043}
+{index_name=菜籽油现货价格:湖北荆州, index_code=BERG999000044}
+{index_name=菜籽油现货价格:湖南岳阳, index_code=BERG999000045}
+{index_name=菜籽油现货价格:江苏南京, index_code=BERG999000046}
+{index_name=菜籽油现货价格:江西九江, index_code=BERG999000047}
+{index_name=菜籽油现货价格:四川成都, index_code=BERG999000048}
+{index_name=菜籽油现货价格:浙江杭州, index_code=BERG999000049}
+{index_name=波罗的海干散货运指数, index_code=BERG999000050}
+{index_name=美元指数, index_code=BERG999000051}
+{index_name=原油指数, index_code=BERG999000052}
+{index_name=CRB指数, index_code=BERG999000053}
+{index_name=美豆指数, index_code=BERG999000054}
+{index_name=连豆指数, index_code=BERG999000055}
+{index_name=大豆:美国种植意向面积, index_code=BERG999000056}
+{index_name=大豆:美国实际种植面积, index_code=BERG999000057}
+{index_name=大豆:美国实际收割面积, index_code=BERG999000058}
+{index_name=各国大豆单产水平:阿根廷, index_code=BERG999000059}
+{index_name=各国大豆单产水平:巴西, index_code=BERG999000060}
+{index_name=各国大豆单产水平:中国, index_code=BERG999000061}
+{index_name=各国大豆单产水平:美国, index_code=BERG999000062}
+{index_name=黑龙江:哈尔滨:气温, index_code=BERG999000063}
+{index_name=黑龙江:海伦:气温, index_code=BERG999000064}
+{index_name=黑龙江:牡丹江:气温, index_code=BERG999000065}
+{index_name=黑龙江:克山:气温, index_code=BERG999000066}
+{index_name=黑龙江:哈尔滨:降水量, index_code=BERG999000067}
+{index_name=黑龙江:海伦:降水量, index_code=BERG999000068}
+{index_name=黑龙江:牡丹江:降水量, index_code=BERG999000069}
+{index_name=黑龙江:克山:降水量, index_code=BERG999000070}
+{index_name=美豆现货报价:衣阿华州, index_code=BERG999000071}
+{index_name=美豆现货报价:伊利诺斯, index_code=BERG999000072}
+{index_name=美豆现货报价:明尼苏达, index_code=BERG999000073}
+{index_name=美豆现货报价:内布拉斯加, index_code=BERG999000074}
+{index_name=美豆现货报价:印第安纳, index_code=BERG999000075}
+{index_name=美豆现货报价:南达科他, index_code=BERG999000076}
+{index_name=美豆现货报价:衣阿华州, index_code=BERG999000077}
+{index_name=美豆现货报价:伊利诺斯, index_code=BERG999000078}
+{index_name=美豆现货报价:明尼苏达, index_code=BERG999000079}
+{index_name=美豆现货报价:内布拉斯加, index_code=BERG999000080}
+{index_name=美豆现货报价:印第安纳, index_code=BERG999000081}
+{index_name=美豆现货报价:南达科他, index_code=BERG999000082}
+{index_name=大豆月度进口量:总进口量, index_code=BERG999000083}
+{index_name=大豆月度进口量:美国, index_code=BERG999000084}
+{index_name=大豆月度进口量:阿根廷, index_code=BERG999000085}
+{index_name=大豆月度进口量:巴西, index_code=BERG999000086}
+{index_name=大豆月度进口量:加拿大, index_code=BERG999000087}
+{index_name=大豆供需平衡:美国:期初库存, index_code=BERG999000088}
+{index_name=大豆供需平衡:美国:期初库存产量, index_code=BERG999000089}
+{index_name=大豆供需平衡:美国:期初库存进口量, index_code=BERG999000090}
+{index_name=大豆供需平衡:美国:期初库存消费量, index_code=BERG999000091}
+{index_name=大豆供需平衡:美国:期初库存出口量, index_code=BERG999000092}
+{index_name=大豆供需平衡:美国:期末库存, index_code=BERG999000093}
+{index_name=大豆供需平衡:巴西:期初库存, index_code=BERG999000094}
+{index_name=大豆供需平衡:巴西:期初库存产量, index_code=BERG999000095}
+{index_name=大豆供需平衡:巴西:期初库存进口量, index_code=BERG999000096}
+{index_name=大豆供需平衡:巴西:期初库存消费量, index_code=BERG999000097}
+{index_name=大豆供需平衡:巴西:期初库存出口量, index_code=BERG999000098}
+{index_name=大豆供需平衡:巴西:期末库存, index_code=BERG999000099}
+{index_name=大豆供需平衡:阿根廷:期初库存, index_code=BERG999000100}

@@ -61,4 +61,22 @@ public class StringFunctions {
         }  
         return sb.toString();  
     }
+    
+    public static Date smartDate(String str) {
+        if (str.indexOf("分钟前") > 0) {
+            long n = Long.valueOf(str.substring(0, str.indexOf("分钟前")).trim());
+            return new Date(System.currentTimeMillis() - (n*60000L));
+        }
+        if (str.indexOf("小时前") > 0) {
+            long n = Long.valueOf(str.substring(0, str.indexOf("小时前")).trim());
+            return new Date(System.currentTimeMillis() - (n*60*60000L));
+        }
+        SimpleDateFormat format = new SimpleDateFormat("yyyy年MM月dd日 HH:mm");
+        try {
+            return format.parse(str);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
