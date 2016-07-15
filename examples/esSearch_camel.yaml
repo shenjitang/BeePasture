@@ -1,0 +1,42 @@
+resource: 
+    es1:
+        url: "elasticsearch://120.26.232.150:9300/test/test?cluster=ruiyun_es_cluster"
+    camel:
+        url: "camelContext:camel-context_2_ons.xml"
+
+var:
+    datas: []
+    queryFragments :
+        from: 0
+        size: 5
+#        fields: []
+        query: 
+            constant_score: 
+                filter:
+                    missing:
+                        field: autoTag
+
+gather:
+    - url: es1
+      param: 
+          query: queryFragments
+      save: 
+          to: datas
+          property:
+              infoType: 
+                  script: "news"
+              infoSource:
+                  script: "上证报"
+              id:
+                  script: "${_id}"
+
+        
+persist:
+#    datas: file:\\estest.txt?encoding=utf8&format=yaml
+
+    datas:
+#        resource: es1
+#        _id: id
+        resource: camel
+        route: "direct:beetest"
+        

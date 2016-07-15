@@ -1,0 +1,21 @@
+resource: 
+#    db1: 
+#        url: "jdbc:mysql://localhost:3306/test"
+#        username: root
+#        password: "12345678"
+gather:
+    - url: 'http://www.sse.com.cn/market/dealingdata/overview/margin/a/rzrqjygk${dateAdd(-1), "yyyyMMdd"}.xls'
+      download:
+          to: 'rzrqjygk${dateAdd(-1), "yyyy-MM-dd"}.xls'
+      save: 
+          to: data
+          format: excel
+#          filter: '${_count>0?"true":"false")'
+        
+persist:
+    data.明细信息: "file://excel.txt?encoding=utf8&format=yaml"
+#    data.明细信息:
+#        resource: db1
+#        sql: "insert into szbinfo  values(${明细信息[0]},'${明细信息[1]}','${明细信息[2]}'"
+
+    

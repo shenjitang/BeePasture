@@ -63,8 +63,8 @@ public class CamelContextResource extends BeeResource {
 //        String url = "camelContext:cameltest.xml";
 //        CamelContextResource resource = new CamelContextResource();
 //        resource.init(url, null);
-        org.shenjitang.beepasture.core.Main.main(new String[] {"../examples/szb_info_camel.yaml"});
-        //org.shenjitang.beepasture.core.Main.main(new String[] {"../examples/camel_only.yaml", "-d"});
+        //org.shenjitang.beepasture.core.Main.main(new String[] {"../examples/szb_info_camel.yaml"});
+        org.shenjitang.beepasture.core.Main.main(new String[] {"../examples/camel_only.yaml", "-d"});
         
     }
 

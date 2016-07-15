@@ -1,0 +1,16 @@
+resource: 
+    file1: 
+        url: "excel://D:/temp/chenlei/rzrqjygk20160708.xls"
+
+gather:
+    - url: file1
+      save: 
+          to: data
+    - with: data
+      url: 明细信息
+      save:
+          to: data1
+        
+persist:
+    data1: file:\\excel.txt?encoding=utf8&format=yaml
+

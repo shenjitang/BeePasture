@@ -1,0 +1,39 @@
+
+resource:
+    camel:
+        url: "camelContext:camel-context_baidu_company01.xml"
+
+var:
+  data: []
+  UrlList:
+    - "http://news.baidu.com/ns?cl=2&rn=20&tn=news&word=%E4%B8%AD%E7%9F%B3%E5%8C%96"
+
+
+gather:
+  - url: UrlList
+    xpath: ".//*[@id]/h3"
+    save:
+          to: data
+          property:
+              title: "/a/text()"
+              url: "/a/@href/text()"
+              content: "../div//text()"
+              site:
+                  xpath: ../div/p/text()
+                  script: '${it.substring(0, it.indexOf("&"))}'
+              publishTime:
+                  xpath: ../div/p/text()
+                  script: '<%var o; it=it.substring(it.lastIndexOf(";")+1); o=str.smartDate(it);%>${o,"yyyy-MM-dd HH:mm"}'
+                  type: date
+                  format: "yyyy-MM-dd HH:mm"
+              companyName:
+                  xpath: ../div/p/text()
+                  script: "中石化"
+              id:
+                  xpath: ../div/p/text()
+                  script: "baidu-zhongshihua-${time}"
+
+persist:
+    data:
+        resource: camel
+        route: "direct:beetest"

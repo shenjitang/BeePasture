@@ -5,6 +5,7 @@
  */
 package org.shenjitang.beepasture.resource;
 
+import org.shenjitang.beepasture.resource.util.ResourceUtils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializeConfig;
 import com.alibaba.fastjson.serializer.SimpleDateFormatSerializer;
@@ -28,7 +29,7 @@ import org.shenjitang.commons.csv.CSVUtils;
  * @author xiaolie
  */
 public class FileResource extends BeeResource {
-    private File file;
+    protected File file;
     static SerializeConfig mapping = new SerializeConfig();
 
     public FileResource() {
@@ -131,6 +132,7 @@ public class FileResource extends BeeResource {
             return JSON.parse(str);
         } else { //default = plant
             return FileUtils.readFileToString(file, encoding);
-        }    }
+        }    
+    }
     
 }

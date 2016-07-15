@@ -1,0 +1,51 @@
+﻿#resource: 
+#    db1: 
+#        url: "jdbc:mysql://localhost:3306/test"
+#        #databaseName: test
+#        username: root
+#        password: "12345678"
+
+var:
+  companyList:
+      - name: 中石化
+        url: http://news.baidu.com/ns?cl=2&rn=20&tn=news&word=%E4%B8%AD%E7%9F%B3%E5%8C%96
+      - name: 中石油
+        url: http://news.baidu.com/ns?cl=2&rn=20&tn=news&word=%E4%B8%AD%E7%9F%B3%E6%B2%B9
+      - name: 中国移动
+        url: http://news.baidu.com/ns?cl=2&rn=20&tn=news&word=中国移动
+      - name: 中国联通
+        url: http://news.baidu.com/ns?cl=2&rn=20&tn=news&word=中国联通
+      - name: 荣之联
+        url: http://news.baidu.com/ns?cl=2&rn=20&tn=news&word=荣之联
+      - name: 保利地产
+        url: http://news.baidu.com/ns?cl=2&rn=20&tn=news&word=保利地产
+  data: []
+
+
+gather:
+  - with: companyList
+    url: url
+    xpath: ".//*[@id]/h3"
+    sleep: 1000
+    save: 
+          to: data
+          property:
+              title: "/a/text()"
+              url: "/a/@href/text()"
+              content: "../div//text()"
+              site:
+                  xpath: "../div/p/text()"
+                  script: '${it.substring(0, it.indexOf("&"))}'
+              publishTime: 
+                  xpath: "../div/p/text()"
+                  script: '<%var o; it=it.substring(it.lastIndexOf(";")+1); o=str.smartDate(it);%>${o,"yyyy-MM-dd HH:mm"}'
+                  type: date
+                  format: "yyyy-MM-dd HH:mm"
+              companyName: 
+                  script: "${_this.name}"
+        
+persist:
+    data: file:\\baidu01.txt?encoding=utf8&format=yaml
+#    data: 
+#        resource: db1
+#        sql: "insert into szbinfo (ID,TITLE,CONTENT,URL,PUBLISHTIME,MEDIATYPE,SITE,SITEID,CHANNEL,CHANNELURL,PROVINCE,COMMENTNUM,FORWARDNUM,REPLYTIME,SENTI,KEYWORDS,PLACE,ORG,NNPSHAREHOLDER,TITLEHEX,TITLEANALYSISHEX,SCORE,INFOSOURCE) values(${data.id},'${data.title}','${data.content}','${data.url}','${data.publishTime}',${data.mediatype},'${data.site}',${data.siteId},'${data.channel}','${data.channelUrl}','${data.province}',${data.commentNum},${data.forwardNum},${data.replyTime},${data.senti},'${data.keywords}','${data.place}','${data.org}','${data.nnpShareHolder}','${data.titleHex}','${data.titleAnalysisHex}',${data.score},'A')"

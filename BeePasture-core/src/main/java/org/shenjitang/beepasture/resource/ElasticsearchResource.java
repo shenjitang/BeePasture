@@ -9,16 +9,21 @@ import com.alibaba.fastjson.JSONObject;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHitField;
 
 /**
  *
@@ -153,6 +158,11 @@ public class ElasticsearchResource extends BeeResource {
                     String _id = null;
                     if (org.codehaus.plexus.util.StringUtils.isNotBlank(idField)) {
                         _id = ((Map)item).remove(idField).toString();
+                    } else if (((Map)item).containsKey("_id")) {
+                        _id = ((Map)item).remove("_id").toString();
+                    }
+                    if (((Map)item).containsKey("_id")) {
+                        ((Map)item).remove("_id");
                     }
                     String indexContent = JSONObject.toJSONString(item);
                     if (org.codehaus.plexus.util.StringUtils.isBlank(_id)) {
@@ -190,6 +200,35 @@ public class ElasticsearchResource extends BeeResource {
 
     @Override
     public Object loadResource(Map loadParam) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        List resultList = new ArrayList();
+        Object queryFragments = loadParam.get("query");
+        SearchRequestBuilder builder = client.prepareSearch(index);
+        if (StringUtils.isNotBlank(type)) {
+            builder = builder.setTypes(type);
+        }
+        if (queryFragments instanceof String) {
+            builder = builder.setSource((String)queryFragments);
+        } else if (queryFragments instanceof Map) {
+            builder = builder.setSource((Map)queryFragments);
+        }
+        SearchResponse response = builder.execute().actionGet();
+        //String str = response.toString();
+        //return str;
+        SearchHit[] searchHits = response.getHits().getHits();
+        for (int i = 0; i < searchHits.length; i++) {
+            SearchHit hit = searchHits[i];
+            Map record = new HashMap();
+            record.put("_id", hit.getId());
+            if (hit.sourceAsMap() != null) {
+                record.putAll(hit.sourceAsMap());
+            }
+            resultList.add(record);
+//            for (String key : hit.fields().keySet()) {
+//                SearchHitField field = hit.fields().get(key);
+//                record.put(field.getName(), field.getName());
+//            }
+//            resultList.add(record);
+        }
+        return resultList;
     }
 }

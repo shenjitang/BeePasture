@@ -1,0 +1,26 @@
+resource: 
+    db1: 
+        url: "jdbc:jtds:sqlserver://121.40.82.180:1433/anaplatform_caiji_02"
+        #databaseName: test
+        username: sa
+        password: "rz_180"
+#    mongo1:
+#        url: mongodb://121.40.133.133:27017
+    es1:
+        url: "elasticsearch://120.26.232.150:9300/dc_index_define/dc_index_define?cluster=ruiyun_es_cluster"
+var:
+    datas: []
+
+
+gather:
+    - url: db1
+      param: 
+          sql: "select top 100 * from dc_index_define"
+      save: 
+          to: datas
+
+        
+persist:
+    datas:
+        resource: es1
+        _id: index_code

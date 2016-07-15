@@ -1,0 +1,17 @@
+resource: 
+gather:
+    - url: 'http://www.sse.com.cn/market/dealingdata/overview/margin/a/rzrqjygk${dateAdd(-1), "yyyyMMdd"}.xls'
+      download:
+          to: 'rzrqjygk${dateAdd(-1), "yyyy-MM-dd"}.xls'
+      save: 
+          to: data
+          format: excel
+    - with: data
+      url: "明细信息"
+      direct: true
+      save:
+          to: data1
+        
+persist:
+    data1: "file://excel.txt?encoding=utf8&format=yaml"
+    

@@ -101,7 +101,19 @@ public class BeeGather {
     
     protected List loadResource(String url, Map step) throws Exception {
         BeeResource beeResource = resourceMng.getResource(url);
-        Map loadParam = (Map) step.get("param");
+        //资源装载的params里的参数，如果是对vars的引用，就要替换成vars立的值。
+        Map loadParam = new HashMap();
+        if (step.get("param") != null) {
+            Map map = (Map) step.get("param");
+            for (Object key : map.keySet()) {
+                Object value = map.get(key);
+                if (vars.containsKey(value)) {
+                    loadParam.put(key, vars.get(value));
+                } else {
+                    loadParam.put(key, value);
+                }
+            }
+        }
         Object value = beeResource.loadResource(loadParam);
         List list = new ArrayList();
         if (value instanceof Collection) {

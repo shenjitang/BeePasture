@@ -7,25 +7,26 @@
        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
        http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
 
+    
+    <bean id="serializer" class="org.springframework.data.redis.serializer.StringRedisSerializer" />
     <camelContext xmlns="http://camel.apache.org/schema/spring">
-        <dataFormats>
-            <json id="json" library="Jackson" allowJmsType="true"/>
-        </dataFormats>
+<!--        <route>
+            <from uri="direct:beetest" />
+            <to uri="seda:beetest" />
+        </route>-->
         <route>
-            <from uri="mqtt://infobroker?host=tcp://121.40.133.133:61613&amp;subscribeTopicName=info.autoTag&amp;userName=admin&amp;password=password" />
-           <!-- <unmarshal>
+            <from uri="direct:beetest" />
+            <marshal>
                 <json></json>
-            </unmarshal> -->
+            </marshal>
             <setHeader headerName="ONS.tag">
               <constant>szb</constant>
             </setHeader>
-            <to uri="ons://szbinfo?accessKey=xxxxxxxxxx&amp;secretKey=xxxxxxxxxx&amp;producerId=PID_szbinfo" />
+            <to uri="ons://companyinfo?accessKey=xxxxxxxxxx&amp;secretKey=xxxxxxxxxx&amp;producerId=PID_ry_dev_test_01" />
             <log message="${body}" />
         </route>
-<!--        <route>
-            <from uri="ons://task001?accessKey=xxxxxxxxxx&amp;secretKey=xxxxxxxxxx&amp;consumerId=CID_topic1" />
-        </route> -->
     </camelContext>
 
 </beans>
+
 
