@@ -108,7 +108,7 @@ h3. gather命令结构
 	* property 变量的property 
 		* [key] 这个key直接写property的名称，也就是map的key名。他的值就是key的value。可以直接写xpath表达式（缺省）。 
                         * scope global或local(缺省)。local表示这里的脚本或xpath处理的是上一级xpath和script处理过的结果。global表示处理的是这个步骤传入内容（在上一级xpath和script处理前的值）
-			* script value用脚本来运算得出。 
+                        * script value用脚本来运算得出。 
 		* regex 正则表达式，针对当前变量。
                 * script 脚本 变量说明
                         * it 经过xpath定位后的网页内容
