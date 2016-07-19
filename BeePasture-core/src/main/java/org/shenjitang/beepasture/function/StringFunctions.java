@@ -5,9 +5,16 @@
  */
 package org.shenjitang.beepasture.function;
 
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import org.apache.commons.lang3.StringUtils;
+import java.net.URLEncoder;
+import java.net.URLDecoder;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -79,4 +86,77 @@ public class StringFunctions {
             return null;
         }
     }
+    
+    public static String urlEncod(String str, String charset) throws Exception {
+        if (StringUtils.isNotBlank(str)) {
+            return URLEncoder.encode(str, charset);
+        } else {
+            return str;
+        }
+    }
+    
+    public static String urlDecode(String str, String charset) throws Exception {
+        if (StringUtils.isNotBlank(str)) {
+            return URLDecoder.decode(str, charset);
+        } else {
+            return str;
+        }
+    }
+    
+    public static String scheme(String str) {
+        URI uri = URI.create(str);
+        return uri.getScheme();
+    }
+    
+    public static String authority(String str) {
+        URI uri = URI.create(str);
+        return uri.getAuthority();
+    }
+
+    public static String host(String str) {
+        URI uri = URI.create(str);
+        return uri.getHost();
+    }
+
+    public static Integer port(String str) {
+        URI uri = URI.create(str);
+        return uri.getPort();
+    }
+    public static String queryStr(String str) {
+        URI uri = URI.create(str);
+        return uri.getQuery();
+    }
+    public static Map query(String str) {
+        Map map = new HashMap();
+        URI uri = URI.create(str);
+        String query = uri.getQuery();
+        if (StringUtils.isNotBlank(query)) {
+            String[] querys = query.split("&");
+            for (String q : querys) {
+                String[] qc = q.split("=");
+                map.put(qc[0], qc[1]);
+            }
+        }
+        return map;
+    }
+    
+    public static String regex(String str, String regex, int n) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(str);
+        if (matcher.find()) {
+            return matcher.group(n);
+        } else {
+            return str;
+        }        
+    }
+    public static String regex(String str, String regex) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(str);
+        if (matcher.find()) {
+            return matcher.group();
+        } else {
+            return str;
+        }
+    }
+    
 }

@@ -18,6 +18,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import net.minidev.json.JSONArray;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -134,9 +136,9 @@ public class GatherStep {
                 if (fileName == null) {
                     fileName = (String) download.get("to");
                 }
-                System.out.println("****************1downlod to :" + fileName);
+//                System.out.println("****************1downlod to :" + fileName);
                 fileName = template.expressCalcu(fileName, url, null);
-                System.out.println("****************2downlod to :" + fileName);
+//                System.out.println("****************2downlod to :" + fileName);
                 httpTools.downloadFile(url.toString(), fileName);
                 String filenameToVar = (String) download.get("filename");
                 if (StringUtils.isNotBlank(filenameToVar)) {
@@ -202,6 +204,20 @@ public class GatherStep {
     }
 
     public Object doScript(Object page) throws Exception {
+        if (page == null) {
+            return page;
+        }
+        if (StringUtils.isBlank(page.toString())) {
+            return page;
+        }
+        String regex = (String)step.get("regex");
+        if (StringUtils.isNotBlank(regex)) {
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(page.toString());
+            if (matcher.find()) {
+                page = matcher.group();
+            }
+        }
         String templete = beeGather.getScript(step);
         if (StringUtils.isNotBlank(templete)) {
             return template.expressCalcu(templete, page, null);
@@ -432,12 +448,12 @@ public class GatherStep {
                 }
             }
             obj = list;
-        } else if (xpath.startsWith("express(")) {
-            String express = xpath.substring(8, xpath.length() - 1);
-            Map ps = new HashMap();
-            ps.put("time", System.currentTimeMillis());
-            ps.put("page", page);
-            obj = template.expressCalcu(express, ps);
+//        } else if (xpath.startsWith("express(")) {
+//            String express = xpath.substring(8, xpath.length() - 1);
+//            Map ps = new HashMap();
+//            ps.put("time", System.currentTimeMillis());
+//            ps.put("page", page);
+//            obj = template.expressCalcu(express, ps);
         } else { //xpath
             TagNode node = pageAnalyzer.toTagNode(page);
             obj = pageAnalyzer.getList(node, xpath);
@@ -445,10 +461,10 @@ public class GatherStep {
         List resultList = new ArrayList();
         if (obj instanceof List) {
             for (Object o : (List) obj) {
-                resultList.add(setProperties(page, o, propertyMap));
+                resultList.add(setProperties(page, doScript(o), propertyMap));
             }
         } else {
-            resultList.add(setProperties(page, obj, propertyMap));
+            resultList.add(setProperties(page, doScript(obj), propertyMap));
         }
         return resultList;
     }
@@ -612,8 +628,10 @@ public class GatherStep {
             String value = null;
             try {
                 String path = null;
+                String regex = null;
                 if (propertyParam instanceof Map) {
                     path = (String) ((Map) propertyParam).get("xpath");
+                    regex = (String) ((Map) propertyParam).get("regex");
                 } else {
                     path = propertyParam.toString();
                 }
@@ -626,6 +644,14 @@ public class GatherStep {
                     TagNode tn = pageAnalyzer.toTagNode((String) page);
                     value = pageAnalyzer.getText(tn, path);
                 }
+                
+                if (StringUtils.isNotBlank(regex)) {
+                    Pattern pattern = Pattern.compile(regex);
+                    Matcher matcher = pattern.matcher(value);
+                    if (matcher.find()) {
+                        value = matcher.group();
+                    }
+                }
                 return value;
             } catch (Exception e) {
                 e.printStackTrace();
@@ -637,8 +663,10 @@ public class GatherStep {
             String value = null;
             try {
                 String path = null;
+                String regex = null;
                 if (propertyParam instanceof Map) {
                     path = (String) ((Map) propertyParam).get("xpath");
+                    regex = (String) ((Map) propertyParam).get("regex");
                 } else {
                     path = propertyParam.toString();
                 }
@@ -646,6 +674,13 @@ public class GatherStep {
                     path = ".";
                 }
                 value = pageAnalyzer.getText(tn, path);
+                if (StringUtils.isNotBlank(regex)) {
+                    Pattern pattern = Pattern.compile(regex);
+                    Matcher matcher = pattern.matcher(value);
+                    if (matcher.find()) {
+                        value = matcher.group();
+                    }
+                }                
                 return value;
             } catch (Exception e) {
                 e.printStackTrace();

@@ -100,14 +100,17 @@ h3. gather命令结构
 * limit 对url列表中执行的个数限制。 
 * sleep 每执行一个url，指定sleep多少毫秒。 
 * direct true: 表示直接将url的内容付给返回值。false: 表示将url作为http的地址从网上爬取网页内容付给返回值。
-* xpath 对采集下来的页面内容用xpath过滤出数据。支持jsonpath，语法：json(path express),比如：json($}表示取json的根节点。 
+* xpath 对采集下来的页面内容用xpath过滤出数据。支持jsonpath，语法：json(path express),比如：json($}表示取json的根节点。
+* regex 正则表达式过滤数据，先执行xpath，再执行regex
+* script 脚本模板，先执行xpath，再执行regex，最后执行script
 * save 保存到变量 
 	* to 保存到的变量名 
 	* property 变量的property 
 		* [key] 这个key直接写property的名称，也就是map的key名。他的值就是key的value。可以直接写xpath表达式（缺省）。 
                         * scope global或local(缺省)。local表示这里的脚本或xpath处理的是上一级xpath和script处理过的结果。global表示处理的是这个步骤传入内容（在上一级xpath和script处理前的值）
 			* script value用脚本来运算得出。 
-		* script 脚本 变量说明
+		* regex 正则表达式，针对当前变量。
+                * script 脚本 变量说明
                         * it 经过xpath定位后的网页内容
                         * _page 通过url采集下来的原始网页
                         * _this url的内容，如果有with语句，就是with指定的变量。
@@ -115,6 +118,27 @@ h3. gather命令结构
 * with 指定缺省变量，如果指定了缺省变量，那么这个步骤中可以直接使用这个变量的property名。 
 
 # persist
+
+# script的函数说明
+* it,_this, _page 为String类型，可以直接使用String的方法，比如：${it.substring(0, it.lastIndexOf("...") + 3)}
+* str函数 字符串函数，比如：str.urlDecode(str, "utf8")，函数列表：
+        * String now(String pattern) 返回当前时间字符串，pattern为日期格式，比如: yyyy-MM-dd
+        * String trim(String str)
+        * String substring(String str, int beginIndex)
+        * String substring(String str, int beginIndex, int endIndex)
+        * int indexOf(String str, String indexOfStr)
+        * String unicode2str(String str)
+        * Date smartDate(String str)
+        * String urlEncod(String str, String charset)
+        * String urlDecode(String str, String charset)
+        * String scheme(String str)
+        * String authority(String str)
+        * String host(String str)
+        * Integer port(String str)
+        * String queryStr(String str)
+        * Map query(String str)  得到url中的参数对，比如要得到url中page参数: ${str.query(_this)["page"]}
+        * String regex(String str, String regex, int n)
+        * String regex(String str, String regex)
 
 BeePasture-grizzly2
 ------

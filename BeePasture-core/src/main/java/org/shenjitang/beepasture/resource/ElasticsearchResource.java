@@ -136,6 +136,14 @@ public class ElasticsearchResource extends BeeResource {
         System.out.println("Fragment:" + uri.getFragment());
         System.out.println("host:" + uri.getHost());
         System.out.println("path:" + uri.getPath());
+        uriStr = "http://120.26.232.150:9300?a=b&c=d";
+        uri = URI.create(uriStr);
+        System.out.println("Scheme:" + uri.getScheme());
+        System.out.println("Authority:" + uri.getAuthority());
+        System.out.println("Fragment:" + uri.getFragment());
+        System.out.println("host:" + uri.getHost());
+        System.out.println("port:" + uri.getPort());
+        System.out.println("path:" + uri.getPath());
     }
 
     @Override

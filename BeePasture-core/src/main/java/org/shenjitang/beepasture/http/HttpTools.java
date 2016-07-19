@@ -15,13 +15,19 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.Writer;
+import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -42,6 +48,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.params.ClientPNames;
 import org.apache.http.client.params.CookiePolicy;
+import javax.net.ssl.SSLSocketFactory;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -50,7 +57,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
-
 /**
  *
  * @author xiaolie
@@ -461,4 +467,32 @@ public class HttpTools {
 //        context.setCookieSpecRegistry(registry);
 //        context.setCookieStore(cookieStore);
 //    }
+    
+    public String doSSLGet(String url, Map heads, final String encoding) throws Exception {
+        String result = null;
+        final SSLClient client = new SSLClient();  
+        HttpGet httpget = new HttpGet(url);
+        if (heads != null) {
+            for (Object key : heads.keySet()) {
+                httpget.setHeader(key.toString(), heads.get(key).toString());
+            }
+        }
+        HttpResponse response = client.execute(httpget);
+        if (response != null) {
+            HttpEntity resEntity = response.getEntity();
+            if (resEntity != null) {
+                result = EntityUtils.toString(resEntity, encoding);
+            }
+        }
+        return result;
+    }
+    
+    public static void main(String[] args) throws Exception {
+        HttpTools tools = new HttpTools();
+        Map head = new HashMap();
+        head.put("HOST", "www.baidu.com:443");
+        String content = tools.doSSLGet("https://www.baidu.com:443", head, "gbk");
+        System.out.println(content);
+    }
+ 
 }

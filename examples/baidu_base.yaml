@@ -1,0 +1,44 @@
+﻿#resource: 
+#    db1: 
+#        url: "jdbc:mysql://localhost:3306/test"
+#        #databaseName: test
+#        username: root
+#        password: "12345678"
+
+var:
+  data: []
+
+
+gather:
+  - url: "http://www.baidu.com/s?wd=%E4%B8%AD%E7%9F%B3%E5%8C%96&pn=20&oq=%E4%B8%AD%E7%9F%B3%E5%8C%96&ie=utf-8&rsv_pq=87461230000053b9&rsv_t=97aa7bjJC3k50bsiJm%2Fi3kAvkNcsGa0uCUiiIc0455H2DPgaFeOeUVRcbVk&gpc=stf%3D1468739472%2C1468825872%7Cstftype%3D1&tfflag=1"
+#  - url: "http://news.baidu.com/ns?cl=2&rn=20&tn=news&word=%E4%B8%AD%E7%9F%B3%E5%8C%96"
+    xpath: ".//*[@id]/h3"
+    save: 
+          to: data
+          property:
+              title: "/a/text()"
+              url: "/a/@href/text()"
+              content: 
+                xpath: "../div//text()"
+                script: '${it.substring(0, it.lastIndexOf("...") + 3)}'
+              site:
+                  xpath: "../div/p/text()"
+                  script: '${it.substring(0, it.indexOf("&"))}'
+              publishTime: 
+                  xpath: "../div/p/text()"
+                  script: '<%var o; it=it.substring(it.lastIndexOf(";")+1); o=str.smartDate(it);%>${o,"yyyy-MM-dd HH:mm"}'
+                  type: date
+                  format: "yyyy-MM-dd HH:mm"
+              companyName: 
+                  script: '${str.urlDecode(str.query(_this)["wd"], "gbk")}'
+#              company1:
+#                  script: '${str.urlDecode(str.regex(_this, "(?=wd=).*?(?=&)"), "utf8")}'
+#                  regex: '(?=wd).*?(?=&)'
+              company2:
+                  script: '${str.urlDecode(str.regex(_this, "wd=(.*?)&", 1), "utf8")}'
+        
+persist:
+    data: file:\\baidu_https.txt?encoding=utf8&format=yaml
+#    data: 
+#        resource: db1
+#        sql: "insert into szbinfo (ID,TITLE,CONTENT,URL,PUBLISHTIME,MEDIATYPE,SITE,SITEID,CHANNEL,CHANNELURL,PROVINCE,COMMENTNUM,FORWARDNUM,REPLYTIME,SENTI,KEYWORDS,PLACE,ORG,NNPSHAREHOLDER,TITLEHEX,TITLEANALYSISHEX,SCORE,INFOSOURCE) values(${data.id},'${data.title}','${data.content}','${data.url}','${data.publishTime}',${data.mediatype},'${data.site}',${data.siteId},'${data.channel}','${data.channelUrl}','${data.province}',${data.commentNum},${data.forwardNum},${data.replyTime},${data.senti},'${data.keywords}','${data.place}','${data.org}','${data.nnpShareHolder}','${data.titleHex}','${data.titleAnalysisHex}',${data.score},'A')"
