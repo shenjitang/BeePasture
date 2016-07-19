@@ -122,23 +122,23 @@ h3. gather命令结构
 # script的函数说明
 * it,_this, _page 为String类型，可以直接使用String的方法，比如：${it.substring(0, it.lastIndexOf("...") + 3)}
 * str函数 字符串函数，比如：str.urlDecode(str, "utf8")，函数列表：
-        * String now(String pattern) 返回当前时间字符串，pattern为日期格式，比如: yyyy-MM-dd
-        * String trim(String str)
-        * String substring(String str, int beginIndex)
-        * String substring(String str, int beginIndex, int endIndex)
-        * int indexOf(String str, String indexOfStr)
-        * String unicode2str(String str)
-        * Date smartDate(String str)
-        * String urlEncod(String str, String charset)
-        * String urlDecode(String str, String charset)
-        * String scheme(String str)
-        * String authority(String str)
-        * String host(String str)
-        * Integer port(String str)
-        * String queryStr(String str)
-        * Map query(String str)  得到url中的参数对，比如要得到url中page参数: ${str.query(_this)["page"]}
-        * String regex(String str, String regex, int n)
-        * String regex(String str, String regex)
+	* String now(String pattern) 返回当前时间字符串，pattern为日期格式，比如: yyyy-MM-dd
+	* String trim(String str)
+	* String substring(String str, int beginIndex)
+	* String substring(String str, int beginIndex, int endIndex)
+	* int indexOf(String str, String indexOfStr)
+	* String unicode2str(String str)
+	* Date smartDate(String str)
+	* String urlEncod(String str, String charset)
+	* String urlDecode(String str, String charset)
+	* String scheme(String str)
+	* String authority(String str)
+	* String host(String str)
+	* Integer port(String str)
+	* String queryStr(String str)
+	* Map query(String str)  得到url中的参数对，比如要得到url中page参数: ${str.query(_this)["page"]}
+	* String regex(String str, String regex, int n)
+	* String regex(String str, String regex)
 
 BeePasture-grizzly2
 ------
