@@ -22,6 +22,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.codehaus.plexus.util.StringUtils;
 import org.ho.yaml.Yaml;
+import org.shenjitang.beepasture.resource.util.ExcelParser;
 import org.shenjitang.commons.csv.CSVUtils;
 
 /**
@@ -52,26 +53,31 @@ public class FileResource extends BeeResource {
     }
 
     @Override
-    public void persist(String varName, Object obj, Map persistParams) throws Exception {
+    public void persist(String varName, Object obj, Map persistParams) {
         Map allParam = new HashMap();
         allParam.putAll(this.params);
         allParam.putAll(persistParams);
-        String topVarName = varName.split("[.]")[0];
-        String tailVarName = null;
-        if (topVarName.length() < varName.length()) {
-            tailVarName = varName.substring(topVarName.length() + 1);
-            if (obj instanceof List) {
-                if (((List)obj).size() == 1) {
-                    obj = ((List)obj).get(0);
+        if (StringUtils.isNotBlank(varName)) {
+            String topVarName = varName.split("[.]")[0];
+            String tailVarName = null;
+            if (topVarName.length() < varName.length()) {
+                tailVarName = varName.substring(topVarName.length() + 1);
+                if (obj instanceof List) {
+                    if (((List)obj).size() == 1) {
+                        obj = ((List)obj).get(0);
+                    }
+                }
+                if (obj instanceof Map) {
+                    obj = ((Map)obj).get(tailVarName);
+                } else {
+                    try {
+                        obj = PropertyUtils.getProperty(obj, tailVarName);
+                    } catch (Exception e) {
+                        LOGGER.warn("persist:" + varName, e);
+                    }
                 }
             }
-            if (obj instanceof Map) {
-                obj = ((Map)obj).get(tailVarName);
-            } else {
-                obj = PropertyUtils.getProperty(obj, tailVarName);
-            }
         }
-
         try {
             String encoding = ResourceUtils.get(allParam, "encoding", "GBK");
             String format = ResourceUtils.get(allParam, "format", "plant");
@@ -105,7 +111,7 @@ public class FileResource extends BeeResource {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.warn("file:" + file.getAbsolutePath(), e);
         }
     }
 
@@ -114,10 +120,12 @@ public class FileResource extends BeeResource {
         Map iparams = new HashMap();
         
         String query  = uri.getQuery();
-        List<NameValuePair> queryPair = URLEncodedUtils.parse(query, Charset.forName("UTF-8"));
-        if (queryPair != null) {
-            for (NameValuePair nvp : queryPair) {
-                iparams.put(nvp.getName(), nvp.getValue());
+        if (query != null) {
+            List<NameValuePair> queryPair = URLEncodedUtils.parse(query, Charset.forName("UTF-8"));
+            if (queryPair != null) {
+                for (NameValuePair nvp : queryPair) {
+                    iparams.put(nvp.getName(), nvp.getValue());
+                }
             }
         }
 
@@ -130,6 +138,8 @@ public class FileResource extends BeeResource {
         } else if ("json".equalsIgnoreCase(format)) {
             String str = FileUtils.readFileToString(file, encoding);
             return JSON.parse(str);
+        } else if ("excel".equalsIgnoreCase(format)) {
+            return ExcelParser.parseExcel(file, null);
         } else { //default = plant
             return FileUtils.readFileToString(file, encoding);
         }    

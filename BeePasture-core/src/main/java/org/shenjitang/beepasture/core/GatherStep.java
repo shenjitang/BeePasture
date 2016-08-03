@@ -7,32 +7,21 @@ package org.shenjitang.beepasture.core;
 
 import com.jayway.jsonpath.JsonPath;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import net.minidev.json.JSONArray;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.parser.AutoDetectParser;
-import org.apache.tika.sax.BodyContentHandler;
 import org.htmlcleaner.TagNode;
 import org.shenjitang.beepasture.function.ScriptTemplateExecuter;
 import org.shenjitang.beepasture.http.HttpTools;
 import org.shenjitang.beepasture.http.PageAnalyzer;
-import org.shenjitang.beepasture.resource.util.ExcelParser;
+import org.shenjitang.beepasture.resource.BeeResource;
 
 /**
  *
@@ -44,45 +33,36 @@ public class GatherStep {
     private final Map step;
     private final BeeGather beeGather;
     private final ScriptTemplateExecuter template = new ScriptTemplateExecuter();
-    private final HttpTools httpTools;
     private final PageAnalyzer pageAnalyzer;
     private static final Log LOGGER = LogFactory.getLog(GatherStep.class);
     private List withVar;
     private Object withVarCurrent;
     private Long count = 0L;
-    private final String rurl;
+    private final String rurl; //yamel中url的值（脚本中的源句）
     private final Long limit;
     private final Map saveTo;
-    private String toVar = null;
-    private final Map download;
-    private final Boolean direct;
-    private final String xpath;
-    private final String charset;
+    private final Object xpath;
     private Map heads;
+    private final Map templateParamMap = new HashMap();
+    private String script; //yamel中script或template的值（脚本中的源句）
 
-    public GatherStep(Map step, BeeGather beeGather) {
-        httpTools = new HttpTools();
+    public GatherStep(Map step) {
         pageAnalyzer = new PageAnalyzer();
         this.step = step;
-        this.beeGather = beeGather;
+        this.beeGather = BeeGather.getInstance();
         String withVarName = (String) getValue(step, "with", (String) null);
         if (StringUtils.isNotBlank(withVarName)) {
             withVar = (List) beeGather.getVar(withVarName);
         }
         rurl = (String) step.get("url");
-        limit = getLongValue(step, "limit");
+        limit = GatherStep.getLongValue(step, "limit");
         saveTo = (Map) step.get("save");
-        if (saveTo != null) {
-            toVar = (String) saveTo.get("to");
-        }
-        download = (Map) step.get("download");
-        direct = (Boolean) step.get("direct");
-        xpath = (String) step.get("xpath");
-        charset = (String) step.get("charset");
+        xpath = step.get("xpath");
         heads = (Map) step.get("head");
         if (heads == null) {
             heads = (Map) step.get("heads");
         }
+        script = beeGather.getScript(step);
     }
 
     public void execute() throws Exception {
@@ -90,9 +70,8 @@ public class GatherStep {
         if (withVar != null) {
             urls = withVar;
         } else {
-            urls = beeGather.getUrlsFromStepUrl(rurl, step);
+            urls = beeGather.getUrlsFromStepUrl(rurl, step); //如果是资源，也是从这里加载了
         }
-        int count = 0;
         for (Object ourl : urls) {
             onceGather(ourl);
             if (limit != null && ++count >= limit) {
@@ -101,241 +80,227 @@ public class GatherStep {
         }
     }
     
-    protected void onceGather(Object ourl) {
-        count = 0L;
+    public boolean needExpressCalcu(Object str) {
+        return str instanceof String && str.toString().contains("${");
+    }
+    
+    /**
+     * 對url中取得的內容做xpath處理。
+     * @param page
+     * @return 
+     */
+    public List doXpath(List page) {
+        if (xpath == null){
+            return page;
+        }
+        if (xpath instanceof List) {
+            for (Object x : (List)xpath) {
+                page = doXpath(page, (String)x);
+            }
+        } else {
+            if (StringUtils.isBlank((String)xpath)) {
+                return page;
+            }
+            page = doXpath(page, (String)xpath);
+        }
+        return page;
+    }
+    
+    private List doXpath(List page, String xpath) {    
+        List pageList = new ArrayList();
+        for (Object p : (List)page) {
+            if (p instanceof TagNode) {
+                try {
+                    pageList.addAll(pageAnalyzer.getList((TagNode)p, xpath));
+                } catch (Exception e) {
+                    LOGGER.warn("xpath:" + xpath + "  page:" + p.toString(), e);
+                }
+            } else {
+                pageList.addAll(doXpath(p.toString(), xpath));
+            }
+        }
+        return pageList;
+    }
+    
+    private List doXpath(String page, String xpath) {    
+        List rlist = new ArrayList();
+        if (xpath.startsWith("json(")) {
+            String jsonPath = xpath.substring(5, xpath.length() - 1);
+            Object s = JsonPath.read(page, jsonPath);
+            if (s instanceof List) {
+                rlist.addAll((List)s);
+            } else {
+                rlist.add(s);
+            }
+            return rlist;
+        } else {
+            try {
+                TagNode node = pageAnalyzer.toTagNode(page);
+                return pageAnalyzer.getList(node, xpath);
+            } catch (Exception e) {
+                LOGGER.warn("xpath:" + xpath + "  page:" + page, e);
+                return new ArrayList();
+            }
+        }
+    }   
+    
+    public static List toList(Object page) {
+        if (page instanceof List) {
+            return (List) page;
+        } else {
+            List pages = new ArrayList();
+            pages.add(page);
+            return pages;
+        }
+    }
+    
+    /**
+     * 對從url中取得的內容做script處理
+     * @param pages
+     * @return 
+     */
+    public List doScript(List pages) {
+        if (StringUtils.isBlank(script)) {
+            return pages;
+        }
+        List list = new ArrayList();
+        templateParamMap.putAll(beeGather.getVars());
+        for (Object page : pages) {
+            try {
+                //templateParamMap.put("_page", page);
+                templateParamMap.put("it", page);
+                String res = template.expressCalcu(script, templateParamMap);
+                list.add(res);
+            } catch (Exception e) {
+                LOGGER.warn("template:" + script + "  page:" + page, e);
+            }
+        }
+        return list;
+    }
+    
+    /**
+     * 對從url中取得的內容做正則處理
+     * @param pages
+     * @return 
+     */
+    public List doRegex(List pages) {
+        String regex = (String) step.get("regex");
+        if (StringUtils.isNotBlank(regex)) {
+            List list = new ArrayList();
+            templateParamMap.putAll(beeGather.getVars());
+            for (Object page : pages) {
+                Pattern pattern = Pattern.compile(regex);
+                Matcher matcher = pattern.matcher(page.toString());
+                if (matcher.find()) {
+                    String value = matcher.group();
+                    list.add(value);
+                }
+            }
+            return list;
+        } else {
+            return pages;
+        }
+    }
+    /**
+     * 做一次gather.
+     * @param ourl 将rurl转换成需要处理的列表后的一条url。
+     */
+    public void onceGather(Object ourl) {
         withVarCurrent = ourl;
         if (withVar != null) {
             ourl = ((Map) ourl).get(rurl);
+            step.put("withVarCurrent", withVarCurrent);
         }
         try {
-            Object url = null;
-            if (ourl instanceof String) {
-                url = template.expressCalcu((String) ourl, null);
+            Object page = ourl;
+            if (needExpressCalcu(ourl)) {
+                ourl = template.expressCalcu((String) ourl, beeGather.getVars());
             } else if (ourl instanceof File) {
-                url = ((File)ourl).getAbsolutePath();
-            } else if (ourl instanceof Map) {
-                setProperties((Map) ourl, (Map) saveTo.get("property"));
-                toVar(toVar, ourl, ourl);
-                return;
-            } else {
-                //url = ourl.toString();
-                toVar(toVar, ourl, ourl);
-                return;
+                ourl = "file://" + ((File)ourl).getAbsolutePath();
             }
-            Object page = null;
-            if (direct != null && direct) {
-                page = url;
-            } else if (ourl instanceof File) {
-                String encoding = StringUtils.isBlank(charset) ? "gbk" : charset;
-                page = FileUtils.readFileToString((File) ourl, encoding);
-            } else if (download != null) { // download to file
-                String fileName = null;
-                if (withVar != null) {
-                    fileName = (String) ((Map) ourl).get(download.get("to"));
-                }
-                if (fileName == null) {
-                    fileName = (String) download.get("to");
-                }
-//                System.out.println("****************1downlod to :" + fileName);
-                fileName = template.expressCalcu(fileName, url, null);
-//                System.out.println("****************2downlod to :" + fileName);
-                httpTools.downloadFile(url.toString(), fileName);
-                String filenameToVar = (String) download.get("filename");
-                if (StringUtils.isNotBlank(filenameToVar)) {
-                    if (withVar != null) {
-                        ((Map) ourl).put(filenameToVar, fileName);
-                    } else {
-                        beeGather.getVar(filenameToVar).add(fileName);
+            templateParamMap.put("_this", ourl);
+            if (ourl instanceof String && ourl.toString().toLowerCase().contains(":")) {
+                try {
+                    BeeResource resource = beeGather.getResourceMng().getResource((String)ourl);
+                    if (resource != null) {
+                        page = resource.loadResource(step);
                     }
+                } catch (Exception e) {
+                    LOGGER.warn("unknown resource:" + ourl, e);
                 }
-                if (saveTo != null) {
-                    try {
-                        String format = (String) saveTo.get("format");
-                        if (format != null && format.trim().equalsIgnoreCase("text")) {
-                            String encod = getValue(saveTo, "encoding", StringUtils.isBlank(charset) ? "gbk" : charset);
-                            page = readTextFile(fileName, encod);
-                        } else if (format != null && format.trim().equalsIgnoreCase("excel")) {
-                            page = ExcelParser.parseExcel(new File(fileName), null);
-                        } else {
-                            page = parseFile2Text(fileName);
-                        }
-                    } catch (Exception e) {
-                        LOGGER.warn("parse file:" + fileName, e);
-                    }
-                }
-            } else if (url instanceof String && (url.toString().trim().toLowerCase().startsWith("http:") || url.toString().trim().toLowerCase().startsWith("https:"))) {
-                String postBody = (String) step.get("post");
-                if (StringUtils.isNotBlank(postBody)) {
-                    page = httpTools.doPost((String)url, postBody, heads);
-                    LOGGER.info("POST " + url + "\n" + page);
-                } else {
-                    //if ("gzip".equalsIgnoreCase(contentEncoding)) {
-                    //    page = httpTools.doGZipGet(url);
-                    //} else {
-                    page = httpTools.doGet((String)url, heads, charset);
-                    //}
-                    LOGGER.info("GET " + url + "\n" + page);
-                }
-            } else {
-                page = url;
             }
-            String tempXpath = xpath;
-            if (page != null && page instanceof String) {
-                if (StringUtils.isBlank(tempXpath)) { //如果没有xpath，整个页面放入变量
-                    toVar(toVar, doScript(page), ourl);
-                } else {
-                    List<String> pages = new ArrayList();
-                    pages.add((String)page);
-                    String[] pathList = tempXpath.split(";");
-                    if (pathList.length > 1) { //多步骤
-                        pages = narrowdown(Arrays.copyOf(pathList, pathList.length - 1), pages);
-                        tempXpath = pathList[pathList.length - 1];
-                    }
-                    for (String p : pages) {
-                        toVar(toVar, doXpath(p, tempXpath, (Map) saveTo.get("property")), ourl);
-                    }
-                }
-            } else if (page != null) {
-                toVar(toVar, page, page);
-            }
+            templateParamMap.put("_page", page);
+            List pages = toList(page);
+            pages = doXpath(pages);
+            pages = doRegex(pages);
+            pages = doScript(pages);
+            pages = setProperties(pages, ourl);
+            save(pages, ourl);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public Object doScript(Object page) throws Exception {
-        if (page == null) {
-            return page;
+    public Object doScript(Object it, Object page, Object ourl) throws Exception {
+        if (it == null) {
+            return it;
         }
-        if (StringUtils.isBlank(page.toString())) {
-            return page;
+        if (StringUtils.isBlank(it.toString())) {
+            return it;
         }
         String regex = (String)step.get("regex");
         if (StringUtils.isNotBlank(regex)) {
             Pattern pattern = Pattern.compile(regex);
-            Matcher matcher = pattern.matcher(page.toString());
+            Matcher matcher = pattern.matcher(it.toString());
             if (matcher.find()) {
-                page = matcher.group();
+                it = matcher.group();
             }
         }
-        String templete = beeGather.getScript(step);
-        if (StringUtils.isNotBlank(templete)) {
-            return template.expressCalcu(templete, page, null);
+        if (StringUtils.isNotBlank(script)) {
+            return template.expressCalcu(script, it, page, ourl, beeGather.getVars());
         } else {
-            return page;
+            return it;
         }
-    }
-    /*
-    public void filterAddVar(List toList, Object value) {
-        Object filter = saveTo.get("filter");
-        if (filter != null) {
-            try {
-                if (value instanceof Collection) {
-                    Map head = new HashMap();
-                    head.put("_count", count);
-                    for (Object v : (Collection)value) {
-                        String f = template.expressCalcu(filter.toString(), v, head);
-                        if (Boolean.valueOf(f)) {
-                            count++;
-                            toList.add(value);
-                        }
-                    }
-                } else if (value.getClass().isArray()) {
-                    Map head = new HashMap();
-                    head.put("_count", count);
-                    for (int i = 0; i < Array.getLength(value); i++) {
-                        Object v = Array.get(value, i);
-                        String f = template.expressCalcu(filter.toString(), v, head);
-                        if (Boolean.valueOf(f)) {
-                            count++;
-                            toList.add(value);
-                        }
-                    }
-                } else {
-                    String f = template.expressCalcu(filter.toString(), value, null);
-                    if (Boolean.valueOf(f)) {
-                        count++;
-                        toList.add(value);
-                    }
-                }
-            } catch (Exception e) {
-                LOGGER.warn("value:" + value + " filter:" + filter, e);
-            }
-        } else {
-            if (value instanceof Collection) {
-                count += ((Collection) value).size();
-                toList.addAll((Collection) value);
-            } else if (value.getClass().isArray()) {
-                count += Array.getLength(value);
-                for (int i = 0; i < Array.getLength(value); i++) {
-                    toList.add(Array.get(value, i));
-                }
-            } else {
-                count++;
-                toList.add(value);
-            }
-        }
-    }
-    */
-    public void filterAddOneVar(List toList, Object value) {
-        count++;
-        toList.add(value);
-//        Object filter = saveTo.get("filter");
-//        try {
-//            if (filter != null) {
-//                Map head = new HashMap();
-//                head.put("_count", count);
-//                String f = template.expressCalcu(filter.toString(), value, head);
-//                if (Boolean.valueOf(f)) {
-//                    toList.add(value);
-//                }
-//            } else {
-//                toList.add(value);
-//            }
-//        } catch (Exception e) {
-//            LOGGER.warn("value:" + value + " filter:" + filter, e);
-//        }
     }
 
-    public void toVar(String name, Object value, Object object) {
-        List toList = new ArrayList();
-        if (StringUtils.isBlank(name)) {
-            return;
-        }
-        if (withVar != null) {
-            if (object instanceof Map && !((Map) object).containsKey(name)) {
-                ((Map) object).put(name, toList);
-            }
-        }
-        if (value instanceof List && ((List) value).size() == 1 && ((List) value).get(0) instanceof List) {
-            for (Object v : (List) ((List) value).get(0)) {
-                filterAddOneVar(toList, v);
-            }
-            //toList.addAll((List) ((List) value).get(0));
-        } else if (value instanceof Collection) {
-            for (Object v : (Collection) value) {
-                filterAddOneVar(toList, v);
-            }
-            //toList.addAll((Collection) value);
-        } else if (value.getClass().isArray()) {
-            for (int i = 0; i < Array.getLength(value); i++) {
-                filterAddOneVar(toList, Array.get(value, i));
-            }
-        } else {
-            filterAddOneVar(toList, value);
-            //toList.add(value);
-        }
-        List toListVar = beeGather.getVar(name);
-        toListVar.addAll(toList);
-        // remove property
+    public void filterAddOneVar(String name, Object value) {
+        count++;
         List removePropertyList = (List) saveTo.get("removePropety");
-        if (removePropertyList != null && toList != null) {
-            for (Object record : toList) {
-                if (record instanceof Map) {
-                    for (Object key : removePropertyList) {
-                        ((Map) record).remove(key);
+        if (removePropertyList != null) {
+            if (value instanceof Map) {
+                for (Object key : removePropertyList) {
+                    ((Map) value).remove(key);
+                }
+            }
+        }
+        BeeResource resource = beeGather.getResourceMng().getResource(name);
+        if (resource != null) {
+            beeGather.getVars().remove(name);
+            resource.persist(null, value, saveTo);
+        } else {
+            List toList = beeGather.getVar(name);
+            toList.add(value);
+        }
+    }
+    
+    public void save(List pages, Object ourl) {
+        if (saveTo != null) {
+            String name = (String) saveTo.get("to");
+            if (StringUtils.isBlank(name)) {
+                return;
+            }
+            for (Object page : pages) {
+                templateParamMap.put("it", page);
+                if (needExpressCalcu(name)) {
+                    name = template.expressCalcu(name, templateParamMap);
+                }
+                List toList = beeGather.getVar(name);
+                if (withVar != null) {
+                    if (ourl instanceof Map && !((Map) ourl).containsKey(name)) {
+                        ((Map) ourl).put(name, toList);
                     }
                 }
+                filterAddOneVar(name, page);
             }
         }
     }
@@ -349,76 +314,12 @@ public class GatherStep {
         }
     }
 
-    protected Long getLongValue(Map map, String key) {
+    protected static Long getLongValue(Map map, String key) {
         Object oValue = map.get(key);
         if (oValue != null) {
             return Long.valueOf(oValue.toString());
         } else {
             return null;
-        }
-    }
-
-//    protected void download(String urlStr, Map step, Long limit) throws Exception {
-//        List urls = beeGather.getUrlsFromStepUrl(urlStr);
-//        Map saveTo = (Map) step.get("save");
-//        String file = (String) step.get("filename");
-//        String filenameto = (String) step.get("filenameto");
-//        List toFileNameList = null;
-//        if (StringUtils.isNotBlank(filenameto)) {
-//            toFileNameList = beeGather.getVar(filenameto);
-//        }
-//        int count = 0;
-//        for (Object ourl : urls) {
-//            if (++count > limit) {
-//                break;
-//            }
-//            try {
-//                String url = template.expressCalcu((String) ourl, null);
-//                String fileName = template.expressCalcu(file, url, null);
-//                httpTools.downloadFile(url, fileName);
-//                if (toFileNameList != null) {
-//                    toFileNameList.add(fileName);
-//                }
-//            } catch (Exception e) {
-//                LOGGER.warn("download " + urlStr, e);
-//            }
-//        }
-//    }
-
-    private List<String> narrowdown(String[] pathList, List<String> pages) throws Exception {
-        for (String path : pathList) {
-            pages = narrowdownOnce(path, pages);
-        }
-        return pages;
-    }
-
-    private List<String> narrowdownOnce(String path, List<String> pages) throws Exception {
-        List<String> rlist = new ArrayList();
-        for (String page : pages) {
-            List list = narrowdownOnceOnePage(path, page);
-            rlist.addAll(list);
-        }
-        return rlist;
-    }
-
-    private List<String> narrowdownOnceOnePage(String xpath, String page) throws Exception {
-        List<String> rlist = new ArrayList();
-        if (xpath.startsWith("json(")) {
-            String jsonPath = xpath.substring(5, xpath.length() - 1);
-            String s = JsonPath.read(page, jsonPath);
-            rlist.add(s);
-            return rlist;
-        } else if (xpath.startsWith("express(")) {
-            String express = xpath.substring(8, xpath.length() - 1);
-            Map ps = new HashMap();
-            ps.put("time", System.currentTimeMillis());
-            ps.put("page", page);
-            String r = template.expressCalcu(express, ps);
-            rlist.add(r);
-            return rlist;
-        } else {
-            TagNode node = pageAnalyzer.toTagNode(page);
-            return pageAnalyzer.getList(node, xpath);
         }
     }
 
@@ -434,197 +335,97 @@ public class GatherStep {
         }
     }
 
-    protected List doXpath(String page, String xpath, Map propertyMap) throws Exception {
-        Object obj = null;
-        if (xpath.startsWith("json(")) {
-            String jsonPath = xpath.substring(5, xpath.length() - 1);
-            Object js = JsonPath.read(page, jsonPath);
-            List list = new ArrayList();
-            if (js != null) {
-                if (js instanceof JSONArray) {
-                    list.addAll((JSONArray)js);
-                } else {
-                    list.add(js);
-                }
-            }
-            obj = list;
-//        } else if (xpath.startsWith("express(")) {
-//            String express = xpath.substring(8, xpath.length() - 1);
-//            Map ps = new HashMap();
-//            ps.put("time", System.currentTimeMillis());
-//            ps.put("page", page);
-//            obj = template.expressCalcu(express, ps);
-        } else { //xpath
-            TagNode node = pageAnalyzer.toTagNode(page);
-            obj = pageAnalyzer.getList(node, xpath);
-        }
-        List resultList = new ArrayList();
-        if (obj instanceof List) {
-            for (Object o : (List) obj) {
-                resultList.add(setProperties(page, doScript(o), propertyMap));
-            }
-        } else {
-            resultList.add(setProperties(page, doScript(obj), propertyMap));
-        }
-        return resultList;
-    }
 
-    protected Object setProperties(String page, Object value, Map<String, Object> propertyMap) throws Exception {
+    protected List setProperties(List its, Object ourl) {
+        Map propertyMap = (Map) saveTo.get("property");
         if (propertyMap == null || propertyMap.isEmpty()) {
-            return doScript(value);
+            return its;
+        } 
+        List returnList = new ArrayList();
+        for (Object it : its ) {
+            returnList.add(setPageProperties(it, ourl, propertyMap));
         }
+        return returnList;
+    }
+    
+    protected Map setPageProperties(Object it, Object ourl, Map propertyMap) {
         Map result;
-        if (Map.class.isAssignableFrom(value.getClass())) {
-            result = (Map) value;
+       if (Map.class.isAssignableFrom(it.getClass())) {
+            result = (Map) it;
         } else {
             result = new HashMap();
         }
-        for (String key : propertyMap.keySet()) {
-            Object thisValue = value;
+        for (Object key : propertyMap.keySet()) {
             Object ov = null;
             Object propValue = propertyMap.get(key);
+            
+            String type = null;
+            String propScript = null;
+            String scope = null;
             if (propValue instanceof Map) {
-                String scope = (String) ((Map)propValue).get("scope");
-                if (StringUtils.isNotBlank(scope)) {
-                    if ("global".equalsIgnoreCase(scope.trim())) {
-                        thisValue = page;
-                    } else if ("var".equalsIgnoreCase(scope.trim())) {
-                        thisValue = withVarCurrent;
-                    }
+                propScript = beeGather.getScript((Map) propValue);
+                type = (String) ((Map) propValue).get("type");
+                scope =  (String) ((Map) propValue).get("scope");
+            }
+            
+            Object aim = it;
+            if (StringUtils.isNotBlank(scope)) {
+                aim = templateParamMap.get(scope.trim());
+                if (aim == null) {
+                    aim = it;
                 }
             }
-            String script = null;
-            String type = null;
-            if (propValue instanceof Map) {
-                script = beeGather.getScript((Map) propValue);
-                type = (String) ((Map) propValue).get("type");
-            }
-            if (thisValue instanceof String) {
-                ov = xpathPropertyObj((String) thisValue, propValue);
-            } else if (thisValue instanceof TagNode) {
-                ov = xpathPropertyObj((TagNode) thisValue, propValue);
-            } else if (thisValue instanceof Map) {
-                ov = ((Map) thisValue).get(key);
+            
+            if (aim instanceof String) {
+                ov = xpathPropertyObj((String) aim, propValue);
+            } else if (aim instanceof TagNode) {
+                ov = xpathPropertyObj((TagNode) aim, propValue);
+            } else if (aim instanceof Map) {
+                ov = ((Map) aim).get(key);
             }
 //                ov = template.expressCalcu(script, thisValue, result);
             if (ov == null) {
-                ov = thisValue;
+                ov = aim;
             }
-            if (StringUtils.isNotBlank(script)) {
-                ov = template.expressCalcu(script, ov, page, withVarCurrent, result);
+            if (StringUtils.isNotBlank(propScript)) {
+                templateParamMap.put("it", ov);
+                //templateParamMap.put("_page", it);
+                //templateParamMap.put("_this", ourl);
+                ov = template.expressCalcu(propScript, templateParamMap);
             }
             if (StringUtils.isNotBlank(type) && ov != null) {
-                if ("date".equalsIgnoreCase(type)) {
-                    String format = getValue((Map) propValue, "format", "yyyy-MM-dd HH:mm:ss");
-                    SimpleDateFormat sdf = new SimpleDateFormat(format);
-                    if (StringUtils.isNotBlank(ov.toString())) {
-                        ov = sdf.parse(ov.toString());
-                    } else {
-                        ov = null;
+                try {
+                    if ("date".equalsIgnoreCase(type)) {
+                        String format = getValue((Map) propValue, "format", "yyyy-MM-dd HH:mm:ss");
+                        SimpleDateFormat sdf = new SimpleDateFormat(format);
+                        if (StringUtils.isNotBlank(ov.toString())) {
+                            ov = sdf.parse(ov.toString());
+                        } else {
+                            ov = null;
+                        }
+                    } else if ("String[]".equalsIgnoreCase(type)) {
+                        String split = getValue((Map) propValue, "split", ",");
+                        ov = ((String) ov).split(split);
+                    } else if ("int".equalsIgnoreCase(type) || "Integer".equalsIgnoreCase(type)) {
+                            ov = Integer.valueOf(ov.toString());
+                    } else if ("long".equalsIgnoreCase(type)) {
+                            ov = Long.valueOf(ov.toString());
+                    } else if ("double".equalsIgnoreCase(type)) {
+                            ov = Double.valueOf(ov.toString());
+                    } else if ("float".equalsIgnoreCase(type)) {
+                            ov = Float.valueOf(ov.toString());
                     }
-                } else if ("String[]".equalsIgnoreCase(type)) {
-                    String split = getValue((Map) propValue, "split", ",");
-                    ov = ((String) ov).split(split);
-                } else if ("int".equalsIgnoreCase(type) || "Integer".equalsIgnoreCase(type)) {
-                    try {
-                        ov = Integer.valueOf(ov.toString());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        ov = null;
-                    }
-                } else if ("long".equalsIgnoreCase(type)) {
-                    try {
-                        ov = Long.valueOf(ov.toString());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        ov = null;
-                    }
-                } else if ("double".equalsIgnoreCase(type)) {
-                    try {
-                        ov = Double.valueOf(ov.toString());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        ov = null;
-                    }
-                } else if ("float".equalsIgnoreCase(type)) {
-                    try {
-                        ov = Float.valueOf(ov.toString());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        ov = null;
-                    }
+                } catch (Exception e) {
+                    LOGGER.warn("page:" + it, e);
+                    ov = null;
                 }
             }
             result.put(key, ov);
-
         }
         return result;
     }
-
-    protected Object setProperties(Map value, Map<String, Object> propertyMap) throws Exception {
-        if (propertyMap == null || propertyMap.isEmpty()) {
-            return value;
-        }
-        for (String key : propertyMap.keySet()) {
-            Object ov = null;
-            Object propValue = propertyMap.get(key);
-            String script = null;
-            String type = null;
-            if (propValue instanceof Map) {
-                script = beeGather.getScript((Map) propValue);
-                type = (String) ((Map) propValue).get("type");
-            }
-            ov = value.get(key);
-            ov = template.expressCalcu(script, ov, value);
-            if (StringUtils.isNotBlank(type) && ov != null) {
-                if ("date".equalsIgnoreCase(type)) {
-                    String format = getValue((Map) propValue, "format", "yyyy-MM-dd HH:mm:ss");
-                    SimpleDateFormat sdf = new SimpleDateFormat(format);
-                    if (StringUtils.isNotBlank(ov.toString())) {
-                        ov = sdf.parse(ov.toString());
-                    } else {
-                        ov = null;
-                    }
-                } else if ("String[]".equalsIgnoreCase(type)) {
-                    String split = getValue((Map) propValue, "split", ",");
-                    ov = ((String) ov).split(split);
-                } else if ("int".equalsIgnoreCase(type) || "Integer".equalsIgnoreCase(type)) {
-                    try {
-                        ov = Integer.valueOf(ov.toString());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        ov = null;
-                    }
-                } else if ("long".equalsIgnoreCase(type)) {
-                    try {
-                        ov = Long.valueOf(ov.toString());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        ov = null;
-                    }
-                } else if ("double".equalsIgnoreCase(type)) {
-                    try {
-                        ov = Double.valueOf(ov.toString());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        ov = null;
-                    }
-                } else if ("float".equalsIgnoreCase(type)) {
-                    try {
-                        ov = Float.valueOf(ov.toString());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        ov = null;
-                    }
-                }
-            }
-            value.put(key, ov);
-
-        }
-        return value;
-    }
     
-    public Object xpathPropertyObj(String page, Object propertyParam) throws Exception {
+    public Object xpathPropertyObj(String page, Object propertyParam) {
             String value = null;
             try {
                 String path = null;
@@ -659,7 +460,7 @@ public class GatherStep {
             return null;
     }    
     
-    public Object xpathPropertyObj(TagNode tn, Object propertyParam) throws Exception {
+    public Object xpathPropertyObj(TagNode tn, Object propertyParam) {
             String value = null;
             try {
                 String path = null;
@@ -688,43 +489,4 @@ public class GatherStep {
             return null;
     }      
     
-    public Map xpathObj(TagNode tn, Map<String, Object> properMap) throws Exception {
-        Map map = new HashMap();
-        for (String key : properMap.keySet()) {
-            try {
-                String path = null;
-                String script = null;
-                Object opath = properMap.get(key);
-                if (opath instanceof Map) {
-                    path = (String) ((Map) opath).get("xpath");
-                    script = beeGather.getScript((Map) opath);
-                } else {
-                    path = opath.toString();
-                }
-                String value = pageAnalyzer.getText(tn, path);
-                if (StringUtils.isNoneBlank(script)) {
-                    value = template.expressCalcu(script, value, null);
-                }
-                //System.out.println("key:" + key + "    path=" + path + "    value=" + value);
-                map.put(key, value);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        return map;
-    }
-
-    private String parseFile2Text(String fileName) throws Exception {
-        AutoDetectParser parser = new AutoDetectParser();
-        BodyContentHandler handler = new BodyContentHandler();
-        Metadata metadata = new Metadata();
-        InputStream stream = new FileInputStream(new File(fileName));
-        parser.parse(stream, handler, metadata);
-        return handler.toString();
-    }
-
-    private String readTextFile(String fileName, String encoding) throws IOException {
-        return FileUtils.readFileToString(new File(fileName), encoding);
-    }
-
 }

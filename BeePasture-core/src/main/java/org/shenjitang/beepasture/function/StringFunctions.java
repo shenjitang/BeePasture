@@ -49,6 +49,10 @@ public class StringFunctions {
             return str;
         }
     }
+    
+    public static String replaceAll(String str, String src, String dest) {
+        return str.replaceAll(src, dest);
+    }
 
     public static int indexOf(String str, String indexOfStr) {
         return str.indexOf(indexOfStr);

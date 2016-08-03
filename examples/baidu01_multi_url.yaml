@@ -12,12 +12,13 @@ var:
 gather:
   - url: http://121.40.69.231:8080/informationWarning/company/getList?validate=true
     xpath: json($.data)
+    #jsonpath: "$.data"
     script: "http://news.baidu.com/ns?cl=2&rn=20&tn=news&word=${it}"
     save:
         to: companyurl
   - url: companyurl
     xpath: ".//*[@id]/h3"
-    sleep: 1000
+    sleep: 100
     save: 
           to: data
           property:

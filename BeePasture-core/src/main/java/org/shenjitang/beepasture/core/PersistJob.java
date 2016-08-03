@@ -13,6 +13,7 @@ import java.util.concurrent.LinkedTransferQueue;
  * @author xiaolie
  */
 public class PersistJob implements Runnable {
+    /*
     private Object step;
     private AsynBeeGather gather;
     private LinkedTransferQueue que;
@@ -23,7 +24,7 @@ public class PersistJob implements Runnable {
         this.gather = gather;
 
     }
-
+    */
     @Override
     public void run() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.

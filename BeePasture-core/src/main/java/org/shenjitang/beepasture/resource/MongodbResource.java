@@ -68,7 +68,7 @@ public class MongodbResource extends BeeResource {
 
 
     @Override
-    public void persist(String varName, Object obj, Map persistParams) throws Exception {
+    public void persist(String varName, Object obj, Map persistParams) {
         Map allParam = new HashMap();
         allParam.putAll(this.params);
         allParam.putAll(persistParams);

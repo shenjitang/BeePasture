@@ -6,6 +6,7 @@
 package org.shenjitang.beepasture.resource;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -22,13 +23,15 @@ public abstract class BeeResource {
     
     protected String url;
     protected URI uri;
-    protected Map params;
+    protected Map params = new HashMap();
     public void init(String url, Map param) throws Exception {
         this.url = url;
         this.uri = URI.create(url);
-        this.params = param;
+        if (param != null) {
+            this.params.putAll(param);
+        }
     }
-    abstract public void persist(String varName, Object obj, Map params) throws Exception;
+    abstract public void persist(String varName, Object obj, Map params);
     abstract public Object loadResource(Map loadParam) throws Exception;
 
     public Map getParams() {

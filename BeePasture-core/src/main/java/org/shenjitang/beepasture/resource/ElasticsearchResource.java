@@ -147,7 +147,7 @@ public class ElasticsearchResource extends BeeResource {
     }
 
     @Override
-    public void persist(String varName, Object obj, Map persistParams) throws Exception {
+    public void persist(String varName, Object obj, Map persistParams) {
         Map allParam = new HashMap();
         allParam.putAll(this.params);
         allParam.putAll(persistParams);
@@ -201,7 +201,11 @@ public class ElasticsearchResource extends BeeResource {
                 UpdateRequest updateRequest = new UpdateRequest(_index, _type, _id)
                         .doc(indexContent)
                         .upsert(indexRequest);
-                client.update(updateRequest).get();
+                try {
+                    client.update(updateRequest).get();
+                } catch (Exception ee) {
+                    ee.printStackTrace();
+                }
             }
         }    
     }

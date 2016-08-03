@@ -1,17 +1,30 @@
 resource: 
     camel:
-        url: "camelContext:camel-context.xml"
+        url: "camelContext:../examples/camel-context_log.xml"
+        gather: 
+            - url : "seda:beetest"
+              save:
+                  to: camel
+                  endpoint: "direct:beetest"
+            
 #        url: "camel:route"     
-    
+
 gather:
-    - url: "http://172.20.10.125:8080/bdsc-index/v2/search/page.serv?pageSize=100"
+    - url: "http://172.20.10.125:8080/bdsc-index/v2/search/page.serv?pageSize=2"
       xpath: json($.result)
       save: 
           to: camel
-          route: "direct:beetest"
+#          route: "direct:beetest"
+          endpoint: "seda:beetest"
           property: 
               publishTime: 
                   type: date
                   format: "yyyy-MM-dd HH:mm"
+                  
+#    - url: camel
+#      endpoint: "seda:beetest"
+#      save:
+#          to: camel
+#          route: "direct:beetest"
                   
             

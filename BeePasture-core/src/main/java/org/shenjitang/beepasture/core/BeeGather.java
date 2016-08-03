@@ -41,10 +41,15 @@ public class BeeGather {
     private String gather;
     private final ResourceMng resourceMng = new ResourceMng();
     private static final Log LOGGER = LogFactory.getLog(BeeGather.class);
+    private static BeeGather instance;
     
 
     public String getGather() {
         return gather;
+    }
+    
+    public static BeeGather getInstance() {
+        return instance;
     }
 
     public void setGather(String gather) {
@@ -78,14 +83,14 @@ public class BeeGather {
         }
         initVars(vars, resources);
         gatherStepList = (List)route.get("gather");
-        persistStep = (Map)route.get("persist");        
+        persistStep = (Map)route.get("persist");  
+        instance = this;
     }
      
     public boolean containsResource(String name) {
         return resources.containsKey(name);
     }
-     
-    
+
     protected List getUrlsFromStepUrl(String url, Map step) throws Exception {
         List urls = null;
         if (vars.containsKey(url)) {
@@ -131,7 +136,7 @@ public class BeeGather {
         for (Object stepObj : gatherStepList) {
             Map step = (Map) stepObj;
             MAIN_LOGGER.info("enter " + step.get("url"));
-            GatherStep gatherStep = new GatherStep(step, this);
+            GatherStep gatherStep = new GatherStep(step);
             gatherStep.execute();
             MAIN_LOGGER.info("level " + step.get("url"));
             gatherStep.sleep();
@@ -139,7 +144,7 @@ public class BeeGather {
         return vars;
     }
     
-    protected List getVar(String varName) {
+    public List getVar(String varName) {
         List var = (List) vars.get(varName);
         if (var == null) {
             var = new ArrayList();
@@ -176,7 +181,7 @@ public class BeeGather {
     public void saveVar(String varName, Object objPersist) throws Exception {
         String topVarName = varName.split("[.]")[0];
         if (objPersist instanceof String) {
-            String resourceStr = template.expressCalcu((String) objPersist, null);
+            String resourceStr = template.expressCalcu((String) objPersist, new HashMap());
             if (resourceStr.startsWith("file:\\\\")) {
                 resourceStr = "file://" + resourceStr.substring(7);
             }
@@ -282,7 +287,7 @@ public class BeeGather {
         }
     }
 
-    private List string2list1(String value, int idx) throws Exception {
+    private List string2list1(String value, int idx) {
         List list = new ArrayList();
         String s1 = value.substring(0, idx).trim();
         String s2 = value.substring(idx).trim();
@@ -298,7 +303,7 @@ public class BeeGather {
         return list;
     }
 
-    private List string2list2(String value, int idx) throws Exception {
+    private List string2list2(String value, int idx) {
         List list = new ArrayList();
         String s1 = value.substring(0, idx).trim();
         String s2 = value.substring(idx).trim();

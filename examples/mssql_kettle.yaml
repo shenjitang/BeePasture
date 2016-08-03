@@ -1,0 +1,26 @@
+resource: 
+    db1: 
+        url: "jdbc:jtds:sqlserver://120.55.88.26:1433/datacenter_jieshou"
+        username: sa
+        password: "rz@123"
+    kettleTemplate: 
+        url: "file://D:/workspace/锐云/resp/finance/倒库/kettle_template.xml"
+
+gather:
+    - url: db1
+#      limit: 2
+      param: 
+          sql: "select name from datacenter_jieshou..SysObjects where XType='U' and name like 'T_INDEX%'"
+      save: 
+          to: tables
+          
+    - url: kettleTemplate
+      save:
+          to: templateContent
+          
+    - url: tables
+      script: '${templateContent.replaceAll("__table_name__", it.name)}'
+      save:
+          to: "file://D:/workspace/锐云/resp/finance/倒库/dist/datacenter_jieshou_${_this.name}.xml"
+        
+

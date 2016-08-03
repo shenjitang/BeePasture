@@ -49,7 +49,7 @@ public class JdbcResource extends BeeResource{
     }
 
     @Override
-    public void persist(String varName, Object obj, Map persistParams) throws Exception {
+    public void persist(String varName, Object obj, Map persistParams) {
         String topVarName = varName.split("[.]")[0];
         String tailVarName = null;
         if (topVarName.length() < varName.length()) {
@@ -137,28 +137,32 @@ public class JdbcResource extends BeeResource{
         return list;
     }   
      
-    private void executeSql( List<String> sqlList) throws Exception {
-        Connection conn = ds.getConnection();
+    private void executeSql( List<String> sqlList) {
         try {
-            Statement stmt = conn.createStatement();
+            Connection conn = ds.getConnection();
             try {
-                LOGGER.debug("batch to db begin ......");
-                for (String sql : sqlList) {
-                    if (StringUtils.isNotBlank(sql)) {
-                        LOGGER.info(sql);
-                        stmt.addBatch(sql);
+                Statement stmt = conn.createStatement();
+                try {
+                    LOGGER.debug("batch to db begin ......");
+                    for (String sql : sqlList) {
+                        if (StringUtils.isNotBlank(sql)) {
+                            LOGGER.info(sql);
+                            stmt.addBatch(sql);
+                        }
                     }
+                    stmt.executeBatch();
+                } catch (Exception e) {
+                    LOGGER.warn("", e);
+                } finally {
+                    stmt.close();
                 }
-                stmt.executeBatch();
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (Exception ex) {
+                LOGGER.warn("", ex);
             } finally {
-                stmt.close();
+                conn.close();
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        } finally {
-            conn.close();
+        } catch (Exception e) {
+            LOGGER.warn("connect database", e);
         }
     }    
     

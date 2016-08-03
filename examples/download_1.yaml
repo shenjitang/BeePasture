@@ -2,6 +2,7 @@ var:
 
 gather:
   - url: 'http://www.neeq.cc/controller/GetDisclosureannouncementPage?type=1&company_cd=&key=&subType=0&startDate=${dateAdd(-30),dateFormat="yyyy-MM-dd"}&endDate=${date(),"yyyy-MM-dd"}&queryParams=0&page=1&_=1458623068768'
+    method: post
     xpath: json($.disclosureInfos)
     save: 
       to: infos

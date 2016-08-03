@@ -16,13 +16,13 @@ gather:
       to: stockList
       property: 
           print_date: 
-              scope: global
-              xpath: json($.print_date)
-#              type: date
-#              format: "yyyyMMdd HH:mm:ss"
+              scope: _page
+              xpath: "json($.print_date)"
+              type: date
+              format: "yyyyMMdd HH:mm:ss"
 
 #保存
 persist:
     stockList: 
         resource: db1
-        sql: "insert into tstock (VARNAME, WRTWGHTS, print_date) values ('${stockList.VARNAME}', '${stockList.WRTWGHTS}', '${stockList.print_date}')"
+        sql: "insert into tstock (VARNAME, WRTWGHTS, print_date) values ('${stockList.VARNAME}', '${stockList.WRTWGHTS}', '${stockList.print_date, \"yyyy-MM-dd HH:mm:ss\"}')"
