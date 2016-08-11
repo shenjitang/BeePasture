@@ -52,6 +52,7 @@ public class ScriptTemplateExecuter {
             gt.registerFunctionPackage("sys", System.class);
             gt.registerFunctionPackage("str", StringFunctions.class);
             gt.registerFunction("dateAdd", new DateAddFunction());
+            gt.registerFunction("smartDate", new SmartDateFunction());
             //gt.registerFunctionPackage("it", it);
             for (Object key : params.keySet()) {
                 Object o = params.get(key);

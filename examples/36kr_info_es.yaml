@@ -1,0 +1,55 @@
+resource: 
+#    es1:
+#        url: "elasticsearch://xxx.xxx.xxx.150:9300,xxx.xxx.xxx.119:9300/ry_szb_info_test/ry_szb_info?cluster=ruiyun_es_cluster"
+gather:
+    - url: "http://36kr.com/newsflashes"
+      extract:
+          - xpath: "//body/script[4]"
+          - script: "${it.substring(10)}"
+          - script: '${it.replaceAll("[|]", "")}'
+          - jsonpath: "$.newsflashListnewsflash"
+#      xpath: "//ul[@class='sameday_list']/li[@id]"
+#      xpath: 
+#        - "//body/script[4]"
+#        - "json($.newsflashList|newsflash)"
+      save: 
+          to: info
+          property: 
+              _id:
+                  script:"36kr_7x24h__${it.id}"
+              publishTime: 
+                  script: "${it.published_at}"
+              ruiyunInfoSource:
+                  script: "36kr"
+              channel:
+                  script: "7x24h快讯"
+              channelUrl:
+                  script: "http://36kr.com/newsflashes"
+              infoType:
+                  script: "1"
+              url:
+                  script: "${it.news_url}"
+              abstract:
+                  script: "${it.description}"
+          removePropety: [id, column_id, is_top, pin, catch_title, description, cover, news_url_type, news_url, user_id, published_at, created_at, updated_at, column, user]
+#            - id
+#            - column_id
+#            - is_top
+#            - pin
+#            - catch_title
+#            - description
+#            - cover
+#            - news_url_type
+#            - news_url
+#            - user_id
+#            - published_at
+#            - created_at
+#            - updated_at
+#            - column
+#            - user
+              
+persist:
+    info: "file://36kr.info"
+#     info:
+#         resource: es1
+#         _id: id

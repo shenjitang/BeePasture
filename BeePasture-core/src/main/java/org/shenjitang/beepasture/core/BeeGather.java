@@ -7,7 +7,6 @@ package org.shenjitang.beepasture.core;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,10 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ho.yaml.Yaml;
-import org.htmlcleaner.HtmlCleaner;
 import org.shenjitang.beepasture.function.ScriptTemplateExecuter;
-import org.shenjitang.beepasture.http.HttpTools;
-import org.shenjitang.beepasture.http.PageAnalyzer;
 import org.shenjitang.beepasture.resource.BeeResource;
 import org.shenjitang.beepasture.resource.ResourceMng;
 
@@ -30,10 +26,7 @@ import org.shenjitang.beepasture.resource.ResourceMng;
  */
 public class BeeGather {
     public static Log MAIN_LOGGER = LogFactory.getLog("org.shenjitang.beepasture.core.Main");
-    private final HtmlCleaner cleaner = new  HtmlCleaner();  
-    private final HttpTools httpTools;
     private final ScriptTemplateExecuter template = new ScriptTemplateExecuter();
-    private final PageAnalyzer pageAnalyzer;
     private Map vars;
     private List gatherStepList;
     private Map persistStep; 
@@ -57,17 +50,14 @@ public class BeeGather {
     }
 
     public BeeGather() {
-        httpTools = new HttpTools();
-        pageAnalyzer = new PageAnalyzer();
     }
 
     public BeeGather(String yamlString) {
         this.gather = yamlString;
-        httpTools = new HttpTools();
-        pageAnalyzer = new PageAnalyzer();
     }
 
      public void init() throws Exception {
+        
         Map route = (Map)Yaml.load(gather);
         LOGGER.debug(route);
         resources = (Map)route.get("resource");
@@ -89,44 +79,6 @@ public class BeeGather {
      
     public boolean containsResource(String name) {
         return resources.containsKey(name);
-    }
-
-    protected List getUrlsFromStepUrl(String url, Map step) throws Exception {
-        List urls = null;
-        if (vars.containsKey(url)) {
-            urls = (List)vars.get(url);
-        } else if (containsResource(url)) {
-            urls = loadResource(url, step);
-        } else {
-            urls = new ArrayList();
-            urls.add(url);
-        }
-        return urls;
-    }
-    
-    protected List loadResource(String url, Map step) throws Exception {
-        BeeResource beeResource = resourceMng.getResource(url);
-        //资源装载的params里的参数，如果是对vars的引用，就要替换成vars立的值。
-        Map loadParam = new HashMap();
-        if (step.get("param") != null) {
-            Map map = (Map) step.get("param");
-            for (Object key : map.keySet()) {
-                Object value = map.get(key);
-                if (vars.containsKey(value)) {
-                    loadParam.put(key, vars.get(value));
-                } else {
-                    loadParam.put(key, value);
-                }
-            }
-        }
-        Object value = beeResource.loadResource(loadParam);
-        List list = new ArrayList();
-        if (value instanceof Collection) {
-            list.addAll((Collection) value);
-        } else {
-            list.add(value);
-        }
-        return list;
     }
     
     public Map doGather() throws Exception {
