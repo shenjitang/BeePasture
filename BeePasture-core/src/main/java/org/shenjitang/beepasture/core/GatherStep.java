@@ -100,15 +100,18 @@ public class GatherStep {
         BeeResource beeResource = beeGather.getResourceMng().getResource(url);
         //资源装载的params里的参数，如果是对vars的引用，就要替换成vars立的值。
         Map loadParam = new HashMap();
+        Map map = null;
         if (step.get("param") != null) {
-            Map map = (Map) step.get("param");
-            for (Object key : map.keySet()) {
-                Object value = map.get(key);
-                if (beeGather.getVars().containsKey(value)) {
-                    loadParam.put(key, beeGather.getVar((String)value));
-                } else {
-                    loadParam.put(key, value);
-                }
+            map = (Map) step.get("param");
+        } else {
+            map = step;
+        }
+        for (Object key : map.keySet()) {
+            Object value = map.get(key);
+            if (beeGather.getVars().containsKey(value)) {
+                loadParam.put(key, beeGather.getVar((String) value));
+            } else {
+                loadParam.put(key, value);
             }
         }
         Object value = beeResource.loadResource(loadParam);
@@ -147,7 +150,7 @@ public class GatherStep {
         return page;
     }
     
-    protected List doXpath(List page, String xpath) {    
+    public List doXpath(List page, String xpath) {    
         List pageList = new ArrayList();
         for (Object p : (List)page) {
             if (p instanceof TagNode) {
@@ -163,7 +166,7 @@ public class GatherStep {
         return pageList;
     }
     
-    private List doXpath(String page, String xpath) {    
+    public List doXpath(String page, String xpath) {    
         List rlist = new ArrayList();
         if (xpath.startsWith("json(")) {
             String jsonPath = xpath.substring(5, xpath.length() - 1);
@@ -214,7 +217,7 @@ public class GatherStep {
         }
     }  
     
-    protected List doJsonpath(List page, String jsonPath) {    
+    public List doJsonpath(List page, String jsonPath) {    
         List pageList = new ArrayList();
         for (Object p : (List)page) {
             pageList.addAll(doJsonpath(p.toString(), jsonPath));
@@ -222,7 +225,7 @@ public class GatherStep {
         return pageList;
     }
     
-    private List doJsonpath(String page, String jsonPath) {    
+    public List doJsonpath(String page, String jsonPath) {    
         List rlist = new ArrayList();
         Object s = JsonPath.read(page, jsonPath);
         if (s instanceof List) {
@@ -273,6 +276,7 @@ public class GatherStep {
     /**
      * 對從url中取得的內容做正則處理
      * @param pages
+     * @param regex
      * @return 
      */
     public List doRegex(List pages, String regex) {
@@ -280,17 +284,24 @@ public class GatherStep {
             List list = new ArrayList();
             templateParamMap.putAll(beeGather.getVars());
             for (Object page : pages) {
-                Pattern pattern = Pattern.compile(regex);
-                Matcher matcher = pattern.matcher(page.toString());
-                if (matcher.find()) {
-                    String value = matcher.group();
-                    list.add(value);
+                String v = doRegex(page.toString(), regex);
+                if (v != null) {
+                    list.add(v);
                 }
             }
             return list;
         } else {
             return pages;
         }
+    }
+    
+    public String doRegex(String page, String regex) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(page);
+        if (matcher.find()) {
+            return matcher.group();
+        }
+        return null;
     }
     
     protected List extract(Map extract, List pages) {
@@ -308,6 +319,38 @@ public class GatherStep {
         return pages;
     }
     
+    protected Object propertyExtract(Map extract, Object it) {
+        try {
+            for (Object key: extract.keySet()) {
+                String express = (String)extract.get(key);
+                if ("xpath".equalsIgnoreCase(key.toString())) {
+                    TagNode node = null;
+                    if (it instanceof TagNode) {
+                        node = (TagNode)it;
+                    } else {
+                        node = pageAnalyzer.toTagNode(it.toString());
+                    }
+                    return pageAnalyzer.getText(node, express);
+                } else if ("jsonpath".equalsIgnoreCase(key.toString())) {
+                    return JsonPath.read(it, express);
+                } else if ("script".equalsIgnoreCase(key.toString())) {
+                    templateParamMap.put("it", it);
+                    //templateParamMap.put("_page", it);
+                    //templateParamMap.put("_this", ourl);
+                    return template.expressCalcu(express, templateParamMap);
+                } else if ("regex".equalsIgnoreCase(key.toString())) {
+                    Pattern pattern = Pattern.compile(express);
+                    Matcher matcher = pattern.matcher(it.toString());
+                    if (matcher.find()) {
+                        return matcher.group();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warn(it, e);
+        }
+        return "";
+    }
     /**
      * 做一次gather.
      * @param ourl 将rurl转换成需要处理的列表后的一条url。
@@ -478,37 +521,49 @@ public class GatherStep {
             
             String type = null;
             String propScript = null;
-            String scope = null;
-            if (propValue instanceof Map) {
-                propScript = beeGather.getScript((Map) propValue);
-                type = (String) ((Map) propValue).get("type");
-                scope =  (String) ((Map) propValue).get("scope");
-            }
-            
-            Object aim = it;
-            if (StringUtils.isNotBlank(scope)) {
-                aim = templateParamMap.get(scope.trim());
-                if (aim == null) {
-                    aim = it;
+//            String scope = null;
+            if (propValue instanceof String) {
+                Map m1 = new HashMap();
+                if (((String)propValue).contains("/")) {
+                    m1.put("xpath", propValue);
+                } else if (((String)propValue).startsWith("$.") || ((String)propValue).startsWith("$[")){
+                    m1.put("jsonpath", propValue);
+                } else {
+                    m1.put("script", propValue);
                 }
+                propValue = m1;
             }
+
+                type = (String) ((Map) propValue).get("type");
             
-            if (aim instanceof String) {
-                ov = xpathPropertyObj((String) aim, propValue);
-            } else if (aim instanceof TagNode) {
-                ov = xpathPropertyObj((TagNode) aim, propValue);
-            } else if (aim instanceof Map) {
-                ov = ((Map) aim).get(key);
-            }
-//                ov = template.expressCalcu(script, thisValue, result);
-            if (ov == null) {
-                ov = aim;
-            }
-            if (StringUtils.isNotBlank(propScript)) {
-                templateParamMap.put("it", ov);
-                //templateParamMap.put("_page", it);
-                //templateParamMap.put("_this", ourl);
-                ov = template.expressCalcu(propScript, templateParamMap);
+            List extractList = (List)((Map) propValue).get("extract");
+            if (extractList != null) {
+                for (Object extract : extractList) {
+                    ov = it;
+                    ov = propertyExtract((Map)extract, ov);
+                    templateParamMap.put("it", ov);
+                    GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
+                }
+            } else {
+                propScript = beeGather.getScript((Map) propValue);
+                Object aim = it;
+                if (aim instanceof String) {
+                    ov = xpathPropertyObj((String) aim, propValue);
+                } else if (aim instanceof TagNode) {
+                    ov = xpathPropertyObj((TagNode) aim, propValue);
+                } else if (aim instanceof Map) {
+                    ov = ((Map) aim).get(key);
+                }
+    //                ov = template.expressCalcu(script, thisValue, result);
+                if (ov == null) {
+                    ov = aim;
+                }
+                if (StringUtils.isNotBlank(propScript)) {
+                    templateParamMap.put("it", ov);
+                    //templateParamMap.put("_page", it);
+                    //templateParamMap.put("_this", ourl);
+                    ov = template.expressCalcu(propScript, templateParamMap);
+                }
             }
             if (StringUtils.isNotBlank(type) && ov != null) {
                 try {
