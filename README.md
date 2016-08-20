@@ -118,11 +118,11 @@ h3. gather命令结构
 		* [key] 这个key直接写property的名称，也就是map的key名。他的值就是key的value。可以直接写xpath表达式（缺省）。 
 			* scope _this 或 _page 或 it。 缺省: it
 			* script value用脚本来运算得出。 
-		* regex 正则表达式，针对当前变量。
-		* script 脚本 变量说明
-			* it 经过xpath定位后的网页内容
-			* _page 通过url采集下来的原始网页
-			* _this url的内容，如果有with语句，就是with指定的变量。
+		        * regex 正则表达式，针对当前变量。
+		        * script 脚本 变量说明
+			    * it 经过xpath定位后的网页内容
+			    * _page 通过url采集下来的原始网页
+			    * _this url的内容，如果有with语句，就是with指定的变量。
 	* encoding 编码 
 * with 指定缺省变量，如果指定了缺省变量，那么这个步骤中可以直接使用这个变量的property名。 
 

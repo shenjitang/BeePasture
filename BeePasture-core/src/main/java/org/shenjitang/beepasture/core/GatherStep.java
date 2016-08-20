@@ -437,6 +437,8 @@ public class GatherStep {
         if (resource != null) {
             beeGather.getVars().remove(name);
             resource.persist(null, value, saveTo);
+        } else if ("_this".equalsIgnoreCase(name)) {
+            ((Map)withVarCurrent).putAll((Map)value);
         } else {
             List toList = beeGather.getVar(name);
             toList.add(value);
@@ -454,12 +456,12 @@ public class GatherStep {
                 if (needExpressCalcu(name)) {
                     name = template.expressCalcu(name, templateParamMap);
                 }
-                List toList = beeGather.getVar(name);
-                if (withVar != null) {
-                    if (ourl instanceof Map && !((Map) ourl).containsKey(name)) {
-                        ((Map) ourl).put(name, toList);
-                    }
-                }
+//                List toList = beeGather.getVar(name);
+//                if (withVar != null) {
+//                    if (ourl instanceof Map && !((Map) ourl).containsKey(name)) {
+//                        ((Map) ourl).put(name, toList);
+//                    }
+//                }
                 filterAddOneVar(name, page);
             }
         }
@@ -517,82 +519,88 @@ public class GatherStep {
         }
         for (Object key : propertyMap.keySet()) {
             Object ov = null;
-            Object propValue = propertyMap.get(key);
-            
-            String type = null;
-            String propScript = null;
-//            String scope = null;
-            if (propValue instanceof String) {
-                Map m1 = new HashMap();
-                if (((String)propValue).contains("/")) {
-                    m1.put("xpath", propValue);
-                } else if (((String)propValue).startsWith("$.") || ((String)propValue).startsWith("$[")){
-                    m1.put("jsonpath", propValue);
-                } else {
-                    m1.put("script", propValue);
-                }
-                propValue = m1;
-            }
+            try {
+                Object propValue = propertyMap.get(key);
 
-                type = (String) ((Map) propValue).get("type");
-            
-            List extractList = (List)((Map) propValue).get("extract");
-            if (extractList != null) {
-                for (Object extract : extractList) {
-                    ov = it;
-                    ov = propertyExtract((Map)extract, ov);
-                    templateParamMap.put("it", ov);
-                    GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
-                }
-            } else {
-                propScript = beeGather.getScript((Map) propValue);
-                Object aim = it;
-                if (aim instanceof String) {
-                    ov = xpathPropertyObj((String) aim, propValue);
-                } else if (aim instanceof TagNode) {
-                    ov = xpathPropertyObj((TagNode) aim, propValue);
-                } else if (aim instanceof Map) {
-                    ov = ((Map) aim).get(key);
-                }
-    //                ov = template.expressCalcu(script, thisValue, result);
-                if (ov == null) {
-                    ov = aim;
-                }
-                if (StringUtils.isNotBlank(propScript)) {
-                    templateParamMap.put("it", ov);
-                    //templateParamMap.put("_page", it);
-                    //templateParamMap.put("_this", ourl);
-                    ov = template.expressCalcu(propScript, templateParamMap);
-                }
-            }
-            if (StringUtils.isNotBlank(type) && ov != null) {
-                try {
-                    if ("date".equalsIgnoreCase(type)) {
-                        String format = getValue((Map) propValue, "format", "yyyy-MM-dd HH:mm:ss");
-                        SimpleDateFormat sdf = new SimpleDateFormat(format);
-                        if (StringUtils.isNotBlank(ov.toString())) {
-                            ov = sdf.parse(ov.toString());
-                        } else {
-                            ov = null;
-                        }
-                    } else if ("String[]".equalsIgnoreCase(type)) {
-                        String split = getValue((Map) propValue, "split", ",");
-                        ov = ((String) ov).split(split);
-                    } else if ("int".equalsIgnoreCase(type) || "Integer".equalsIgnoreCase(type)) {
-                            ov = Integer.valueOf(ov.toString());
-                    } else if ("long".equalsIgnoreCase(type)) {
-                            ov = Long.valueOf(ov.toString());
-                    } else if ("double".equalsIgnoreCase(type)) {
-                            ov = Double.valueOf(ov.toString());
-                    } else if ("float".equalsIgnoreCase(type)) {
-                            ov = Float.valueOf(ov.toString());
+                String type = null;
+                String propScript = null;
+    //            String scope = null;
+                if (propValue instanceof String) {
+                    Map m1 = new HashMap();
+                    if (((String)propValue).contains("/")) {
+                        m1.put("xpath", propValue);
+                    } else if (((String)propValue).startsWith("$.") || ((String)propValue).startsWith("$[")){
+                        m1.put("jsonpath", propValue);
+                    } else {
+                        m1.put("script", propValue);
                     }
-                } catch (Exception e) {
-                    LOGGER.warn("page:" + it, e);
-                    ov = null;
+                    propValue = m1;
                 }
+
+                    type = (String) ((Map) propValue).get("type");
+
+                List extractList = (List)((Map) propValue).get("extract");
+                if (extractList != null) {
+                    ov = it;
+                    for (Object extract : extractList) {
+                        ov = propertyExtract((Map)extract, ov);
+                        templateParamMap.put("it", ov);
+                        GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
+                    }
+                } else {
+                    propScript = beeGather.getScript((Map) propValue);
+                    Object aim = it;
+                    if (aim instanceof String) {
+                        ov = xpathPropertyObj((String) aim, propValue);
+                    } else if (aim instanceof TagNode) {
+                        ov = xpathPropertyObj((TagNode) aim, propValue);
+                    } else if (aim instanceof Map) {
+                        ov = ((Map) aim).get(key);
+                    }
+        //                ov = template.expressCalcu(script, thisValue, result);
+                    if (ov == null) {
+                        ov = aim;
+                    }
+                    if (StringUtils.isNotBlank(propScript)) {
+                        templateParamMap.put("it", ov);
+                        //templateParamMap.put("_page", it);
+                        //templateParamMap.put("_this", ourl);
+                        ov = template.expressCalcu(propScript, templateParamMap);
+                    }
+                }
+                if (StringUtils.isNotBlank(type) && ov != null) {
+                    try {
+                        if ("date".equalsIgnoreCase(type)) {
+                            String format = getValue((Map) propValue, "format", "yyyy-MM-dd HH:mm:ss");
+                            SimpleDateFormat sdf = new SimpleDateFormat(format);
+                            if (StringUtils.isNotBlank(ov.toString())) {
+                                ov = sdf.parse(correctDateStr(ov.toString()));
+                            } else {
+                                ov = null;
+                            }
+                        } else if ("String[]".equalsIgnoreCase(type)) {
+                            String split = getValue((Map) propValue, "split", ",");
+                            ov = ((String) ov).split(split);
+                        } else if ("bool".equalsIgnoreCase(type) || "Boolean".equalsIgnoreCase(type)) {
+                            ov = Boolean.valueOf(ov.toString());
+                        } else if ("int".equalsIgnoreCase(type) || "Integer".equalsIgnoreCase(type)) {
+                                ov = Integer.valueOf(ov.toString());
+                        } else if ("long".equalsIgnoreCase(type)) {
+                                ov = Long.valueOf(ov.toString());
+                        } else if ("double".equalsIgnoreCase(type)) {
+                                ov = Double.valueOf(ov.toString());
+                        } else if ("float".equalsIgnoreCase(type)) {
+                                ov = Float.valueOf(ov.toString());
+                        }
+                    } catch (Exception e) {
+                        LOGGER.warn("page:" + it, e);
+                        ov = null;
+                    }
+                }
+                result.put(key, ov);
+            } catch (Exception e) {
+                LOGGER.warn("提取字段：" + key + " 出现异常", e);
             }
-            result.put(key, ov);
             GatherDebug.debug(this, "提取字段：" + key + " = " + ov);
         }
         return result;
@@ -665,5 +673,32 @@ public class GatherStep {
     public Map getTemplateParamMap() {
         return templateParamMap;
     }
+
+    public static String correctDateStr(String str) {
+        StringBuilder sb = new StringBuilder();
+        int numCount = 0;
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (c >= '0' && c <= '9') { //是数字
+                numCount++;
+            } else { //是字符
+                if (numCount == 1) {
+                    sb.insert(sb.length() - 1, '0');
+                }
+                numCount = 0;
+            }
+            sb.append(c);
+        }
+        if (numCount == 1) {
+            sb.insert(sb.length() - 1, '0');
+        }
+        return sb.toString();
+    }
     
+    public static void main(String[] args) {
+        System.out.println(correctDateStr("2013-7-23 8:12:5"));
+        System.out.println(correctDateStr("a2013-7-23 8:12:5"));
+        System.out.println(correctDateStr("a2013-7-23 8:12:5b"));
+         System.out.println(correctDateStr("a2013-7-23 8:12:53b"));
+    }
 }

@@ -89,11 +89,17 @@ public class GatherDebug {
                 } else if (cmd.toLowerCase().startsWith("q")) {
                     System.exit(-2);
                 } else if (cmd.toLowerCase().startsWith("p")) {
-                    String[] vars = cmd.substring(1).trim().split(" ");
-                    for (String varName :vars) {
-                        Object o = gatherStep.getTemplateParamMap().get(varName);
-                        System.out.println(varName);
+                    if (cmd.trim().length() == 1) {
+                        Object o = gatherStep.getTemplateParamMap().get("it");
+                        System.out.println("it");
                         System.out.println(JSON.toJSONString(o));
+                    } else {
+                        String[] vars = cmd.substring(1).trim().split(" ");
+                        for (String varName :vars) {
+                            Object o = gatherStep.getTemplateParamMap().get(varName);
+                            System.out.println(varName);
+                            System.out.println(JSON.toJSONString(o));
+                        }
                     }
                     
                 } else if (cmd.toLowerCase().startsWith("s")) {

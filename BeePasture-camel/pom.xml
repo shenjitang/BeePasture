@@ -107,6 +107,11 @@
             <artifactId>camel-xstream</artifactId>
             <version>${camel.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-stomp</artifactId>
+            <version>${camel.version}</version>
+        </dependency>
       <dependency>
           <groupId>org.apache.camel</groupId>
           <artifactId>camel-groovy</artifactId>
@@ -128,6 +133,17 @@
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-ali-ons</artifactId>
             <version>2.16.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.espertech</groupId>
+            <artifactId>esper</artifactId>
+            <version>5.2.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.antlr</groupId>
+                    <artifactId>antlr4-runtime</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
     <build>

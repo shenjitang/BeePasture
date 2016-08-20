@@ -6,6 +6,7 @@
 package org.shenjitang.beepasture.core;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -40,26 +41,30 @@ public class Main {
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\baidu01_multi_url.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\baidu_base.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\mssql_kettle.yaml";
-        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\36kr_info_es.yaml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\bjx_info_es.yaml";
         if (args.length > 0) {
             fileName = args[0];
         }
         MAIN_LOGGER.info("start fileEncoding=" + fileEncoding + " script=" + fileName);
-        File file = new File(fileName);
-        String yaml = FileUtils.readFileToString(file, fileEncoding);
-        BeeGather webGather = new BeeGather(yaml);
-        webGather.init();
-        webGather.doGather();
-        webGather.saveTo();
-        MAIN_LOGGER.info("finish fileEncoding=" + fileEncoding + " script=" + fileName);
-        if (args.length > 1 && "-d".equalsIgnoreCase(args[1])) {
-            while(Boolean.TRUE) {
-                try {
-                    Thread.sleep(60000L);
-                } catch (Exception e) {}
+        try {
+            File file = new File(fileName);
+            String yaml = FileUtils.readFileToString(file, fileEncoding);
+            BeeGather webGather = new BeeGather(yaml);
+            webGather.init();
+            webGather.doGather();
+            webGather.saveTo();
+            MAIN_LOGGER.info("finish fileEncoding=" + fileEncoding + " script=" + fileName);
+            if (args.length > 1 && "-d".equalsIgnoreCase(args[1])) {
+                while(Boolean.TRUE) {
+                    try {
+                        Thread.sleep(60000L);
+                    } catch (Exception e) {}
+                }
+            } else {
+                System.exit(0);
             }
-        } else {
-            System.exit(0);
+        } catch (FileNotFoundException e) {
+            MAIN_LOGGER.warn(fileName + " 文件不存在！");
         }
     }
     
