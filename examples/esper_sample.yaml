@@ -1,0 +1,54 @@
+resource: 
+    camel01:
+        url: "camelContext:../examples/camel-context_esper.xml"
+    
+    esper01:
+        url: "esper:null"
+        eventType:
+            Quote:
+                code: String
+                datetime: String
+                date: String
+                time: String
+                tradePrice: Double
+                tradeVolume: Long
+                tradeValue: Double
+        epl: 
+            - "create context qouteCode partition by code from Quote"
+            - "context qouteCode select context.id, context.name, context.key1, code, date, time, avg(tradePrice) from Quote(code in ('510050', '510020', '000001', '000002')).win:length_batch(3)"
+        save:
+            to: camel01
+            endpoint: "seda:streamOut"
+            header: ["id", "name", "key1"]
+            body: ["code", "date", "time", "avg(tradePrice)"]            
+                
+flow:                
+#      - url: "stomp:queue:quote.sec.sh?brokerURL=tcp://121.40.133.133:61614&host=infobroker&login=admin&passcode=password"
+      - url: "mqtt://infobroker?host=tcp://121.40.133.133:61613&subscribeTopicName=quote.sec.sh&userName=admin&password=password"
+        direct : true
+        type: java.lang.String
+        with: camel01
+        save:
+            to: esper01
+            unmarshal: 
+                type: csv
+                split: ","
+            eventType: Quote
+            removePropety: []
+            property:
+                code: "${it.f2}"
+                date: "${str.substring(it.f0, 0, 8)}"
+                time: "${str.substring(it.f0, 8, 12)}"
+                datetime: "${it.f0}"
+                tradePrice: 
+                    script: "${it.f11}"
+                    type: double
+                tradeVolume: 
+                    script: "${it.f4}"
+                    type: long
+                tradeValue: 
+                    script: "${it.f5}"
+                    type: double
+
+                  
+            

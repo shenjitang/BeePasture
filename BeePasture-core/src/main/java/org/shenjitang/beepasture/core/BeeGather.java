@@ -27,6 +27,7 @@ import org.shenjitang.beepasture.resource.ResourceMng;
 public class BeeGather {
     public static Log MAIN_LOGGER = LogFactory.getLog("org.shenjitang.beepasture.core.Main");
     private final ScriptTemplateExecuter template = new ScriptTemplateExecuter();
+    private Map program;
     private Map vars;
     private List gatherStepList;
     private Map persistStep; 
@@ -35,6 +36,10 @@ public class BeeGather {
     private final ResourceMng resourceMng = new ResourceMng();
     private static final Log LOGGER = LogFactory.getLog(BeeGather.class);
     private static BeeGather instance;
+
+    public Map getProgram() {
+        return program;
+    }
     
 
     public String getGather() {
@@ -57,24 +62,23 @@ public class BeeGather {
     }
 
      public void init() throws Exception {
-        
-        Map route = (Map)Yaml.load(gather);
-        LOGGER.debug(route);
-        resources = (Map)route.get("resource");
+        instance = this;
+        program = (Map)Yaml.load(gather);
+        LOGGER.debug(program);
+        resources = (Map)program.get("resource");
         if (resources != null) {
             resourceMng.init(resources);
         } else {
             resources = new HashMap();
         }
-        vars = (Map)route.get("var");
+        vars = (Map)program.get("var");
         if (vars == null) {
             vars = new HashMap();
-            route.put("var", vars);
+            program.put("var", vars);
         }
         initVars(vars, resources);
-        gatherStepList = (List)route.get("gather");
-        persistStep = (Map)route.get("persist");  
-        instance = this;
+        gatherStepList = (List)program.get("gather");
+        persistStep = (Map)program.get("persist");  
     }
      
     public boolean containsResource(String name) {

@@ -21,6 +21,7 @@ public abstract class BeeResource {
     public BeeResource() {
     }
     
+    protected String name;
     protected String url;
     protected URI uri;
     protected Map params = new HashMap();
@@ -40,6 +41,14 @@ public abstract class BeeResource {
 
     public void setParams(Map params) {
         this.params = params;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
 }

@@ -24,6 +24,7 @@ import org.shenjitang.beepasture.debug.GatherDebug;
 import org.shenjitang.beepasture.function.ScriptTemplateExecuter;
 import org.shenjitang.beepasture.http.PageAnalyzer;
 import org.shenjitang.beepasture.resource.BeeResource;
+import org.shenjitang.beepasture.resource.util.ResourceUtils;
 
 /**
  *
@@ -54,7 +55,9 @@ public class GatherStep {
         this.beeGather = BeeGather.getInstance();
         String withVarName = (String) getValue(step, "with", (String) null);
         if (StringUtils.isNotBlank(withVarName)) {
-            withVar = (List) beeGather.getVar(withVarName);
+            if (beeGather.getResourceMng().getResource(withVarName) == null) {
+                withVar = (List) beeGather.getVars().get(withVarName);
+            }
         }
         rurl = (String) step.get("url");
         limit = GatherStep.getLongValue(step, "limit");
@@ -363,23 +366,26 @@ public class GatherStep {
         }
         try {
             Object page = ourl;
-            if (needExpressCalcu(ourl)) {
-                ourl = template.expressCalcu((String) ourl, beeGather.getVars());
-            } else if (ourl instanceof File) {
-                ourl = "file://" + ((File)ourl).getAbsolutePath();
-            }
-            templateParamMap.put("_this", ourl);
-            if (ourl instanceof String && ourl.toString().toLowerCase().contains(":")) {
-                try {
-                    GatherDebug.debug(this, "准备加载资源：" + ourl);
-                    BeeResource resource = beeGather.getResourceMng().getResource((String)ourl);
-                    if (resource != null) {
-                        page = resource.loadResource(step);
-                        templateParamMap.put("_page", page);
-                        GatherDebug.debug(this, "加载资源：" + ourl);
+            Boolean direct = Boolean.valueOf(ResourceUtils.get(step, "direct", "false"));
+            if (!direct) {
+                if (needExpressCalcu(ourl)) {
+                    ourl = template.expressCalcu((String) ourl, beeGather.getVars());
+                } else if (ourl instanceof File) {
+                    ourl = "file://" + ((File)ourl).getAbsolutePath();
+                }
+                templateParamMap.put("_this", ourl);
+                if (ourl instanceof String && ourl.toString().toLowerCase().contains(":")) {
+                    try {
+                        GatherDebug.debug(this, "准备加载资源：" + ourl);
+                        BeeResource resource = beeGather.getResourceMng().getResource((String)ourl);
+                        if (resource != null) {
+                            page = resource.loadResource(step);
+                            templateParamMap.put("_page", page);
+                            GatherDebug.debug(this, "加载资源：" + ourl);
+                        }
+                    } catch (Exception e) {
+                        LOGGER.warn("unknown resource:" + ourl, e);
                     }
-                } catch (Exception e) {
-                    LOGGER.warn("unknown resource:" + ourl, e);
                 }
             }
             templateParamMap.put("_page", page);
@@ -427,6 +433,16 @@ public class GatherStep {
         count++;
         List removePropertyList = (List) saveTo.get("removePropety");
         if (removePropertyList != null) {
+            if (removePropertyList.isEmpty()) { //如果 removePropety: [] 表示删除property中没有提到的
+                Map propMap = (Map)saveTo.get("property");
+                if (value instanceof Map) {
+                    for (Object key : ((Map) value).keySet()) {
+                        if (!propMap.containsKey(key)) {
+                            removePropertyList.add(key);
+                        }
+                    }
+                }
+            }
             if (value instanceof Map) {
                 for (Object key : removePropertyList) {
                     ((Map) value).remove(key);
@@ -505,6 +521,10 @@ public class GatherStep {
         } 
         List returnList = new ArrayList();
         for (Object it : its ) {
+            Map unmarshalMap = (Map)saveTo.get("unmarshal");
+            if (unmarshalMap != null) {
+                it = unmarshal(it, unmarshalMap);
+            }
             returnList.add(setPageProperties(it, ourl, propertyMap));
         }
         return returnList;
@@ -700,5 +720,20 @@ public class GatherStep {
         System.out.println(correctDateStr("a2013-7-23 8:12:5"));
         System.out.println(correctDateStr("a2013-7-23 8:12:5b"));
          System.out.println(correctDateStr("a2013-7-23 8:12:53b"));
+    }
+
+    private Map unmarshal(Object page, Map get) {
+        String type = (String) get.get("type");
+        if ("csv".equalsIgnoreCase(type)) {
+            String split = ResourceUtils.get(get, "split", ",");
+            Map map = new HashMap();
+            String[] ps = page.toString().split(split);
+            for (int i = 0; i < ps.length; i++) {
+                map.put("f" + i, ps[i]);
+            }
+            return map;
+        } else {
+            throw new RuntimeException("not support unmarshal type: " + type);
+        }
     }
 }

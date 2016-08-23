@@ -13,11 +13,11 @@ import java.util.Map;
  */
 public class ResourceUtils {
     public static String get(Map map, String key, String def) {
-        String value = (String)map.get(key);
+        Object value = map.get(key);
         if (value == null) {
             value = def;
         }
-        return value;
+        return value.toString();
     }
     
     public static String substringHead(String str, String chars) {

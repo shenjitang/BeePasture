@@ -5,6 +5,8 @@
  */
 package org.shenjitang.beepasture.resource;
 
+import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.camel.CamelContext;
@@ -15,6 +17,7 @@ import org.apache.camel.impl.DefaultCamelContext;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.shenjitang.beepasture.core.BeeGather;
 import org.shenjitang.beepasture.core.GatherStep;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
@@ -30,7 +33,7 @@ public class CamelContextResource extends BeeResource {
     private CamelContext camelContext;
     private ProducerTemplate camelProducer;
     private ConsumerTemplate camelConsumer;
-    private List<Map> processList;
+    private List<Map> flowList;
     private static int threadNo = 1;
 
     @Override
@@ -38,7 +41,7 @@ public class CamelContextResource extends BeeResource {
         super.init(url, param);
         String part = uri.getSchemeSpecificPart();
         LOGGER.debug("******part: " + part);
-        if (StringUtils.isNotBlank(part)) {
+        if (StringUtils.isNotBlank(part) && (!"null".equalsIgnoreCase(part))) {
             springContext = new FileSystemXmlApplicationContext(part);
             camelContext = springContext.getBean(CamelContext.class);
         } else {
@@ -46,23 +49,38 @@ public class CamelContextResource extends BeeResource {
         }
         camelProducer = camelContext.createProducerTemplate();
         camelConsumer = camelContext.createConsumerTemplate();
-        processList = (List<Map>)param.get("gather");
-        if (processList != null) {
-            for (Map processMap : processList) {
-                startProcess(processMap);
+        BeeGather beeGather = BeeGather.getInstance();
+        flowList = (List)beeGather.getProgram().get("flow");//(List<Map>)param.get("gather");
+        if (flowList != null) {
+            for (Map processMap : flowList) {
+                String with = (String)processMap.get("with");
+                if (StringUtils.isBlank(with) || name.equalsIgnoreCase(with)) {
+                    startProcess(processMap);
+                }
             }
         }
     }
     
-    protected void startProcess(final Map processMap) {
+    protected void startProcess(final Map processMap) throws ClassNotFoundException {
         final String url = (String)processMap.get("url");
+        final String bodyType = (String)processMap.get("type");
+        final Class clazz = bodyType == null?null:Class.forName(bodyType);
         Thread th = new Thread(new Runnable() {
             @Override
             public void run() {
-                Exchange exchange = camelConsumer.receive(url);
-                Object body = exchange.getOut().getBody();
-                Map<String, Object> headers = exchange.getOut().getHeaders();
-                doProcess(processMap, body, headers);
+                while(true) {
+                    Exchange exchange = camelConsumer.receive(url);
+                    Object body = clazz == null? exchange.getIn().getBody() : exchange.getIn().getBody(clazz);
+                    if (body instanceof org.fusesource.hawtbuf.Buffer) {
+                        try {
+                            body = new String(((org.fusesource.hawtbuf.Buffer)body).getData(), "utf8");
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    Map<String, Object> headers = exchange.getOut().getHeaders();
+                    doProcess(processMap, body, headers);
+                }
             }
 
         }, "bee-camel-process-" + threadNo++);
@@ -96,9 +114,10 @@ public class CamelContextResource extends BeeResource {
 //        String url = "camelContext:cameltest.xml";
 //        CamelContextResource resource = new CamelContextResource();
 //        resource.init(url, null);
-        org.shenjitang.beepasture.core.Main.main(new String[] {"../examples/szb_info_camel_asyn.yaml"});
+        //org.shenjitang.beepasture.core.Main.main(new String[] {"../examples/szb_info_camel_asyn.yaml"});
         //org.shenjitang.beepasture.core.Main.main(new String[] {"../examples/szb_info_camel.yaml"});
         //org.shenjitang.beepasture.core.Main.main(new String[] {"../examples/camel_only.yaml", "-d"});
+        org.shenjitang.beepasture.core.Main.main(new String[] {"../examples/esper_sample.yaml", "-d"});
         
     }
 
@@ -108,17 +127,20 @@ public class CamelContextResource extends BeeResource {
         if (to == null) {
             to = (String)params.get("endpoint");
         }
+        List headFields = (List)params.get("header");
+        List bodyFields = (List)params.get("body");
+        
         if (obj instanceof List) {
             for (Object item : (List)obj) {
                 try {
-                    camelProducer.requestBody(to, item);
+                    camelProducer.requestBodyAndHeaders(to, subBodyMap(item, bodyFields), subHeaderMap(item, headFields));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         } else {
             try {
-                camelProducer.requestBody(to, obj);
+                camelProducer.requestBodyAndHeaders(to, subBodyMap(obj, bodyFields), subHeaderMap(obj, headFields));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -134,4 +156,29 @@ public class CamelContextResource extends BeeResource {
         return obj;
     }
     
+    protected Object subBodyMap(Object item, List fields) throws Exception {
+        if (fields == null) {
+            return item;
+        }
+        Map resultMap = new HashMap();
+        Method method = item.getClass().getMethod("get", String.class);
+        for (Object name : fields) {
+            Object value = method.invoke(item, (String)name);
+            resultMap.put(name, value);
+        }
+        return resultMap;
+    }
+
+    protected Map subHeaderMap(Object item, List fields) throws Exception {
+        Map resultMap = new HashMap();
+        if (fields == null) {
+            return resultMap;
+        }
+        Method method = item.getClass().getMethod("get", String.class);
+        for (Object name : fields) {
+            Object value = method.invoke(item, (String)name);
+            resultMap.put(name, value);
+        }
+        return resultMap;
+    }    
 }

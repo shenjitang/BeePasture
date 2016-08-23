@@ -1,13 +1,19 @@
 resource: 
     camel:
         url: "camelContext:../examples/camel-context_log.xml"
-        gather: 
-            - url : "seda:beetest"
-              save:
-                  to: camel
-                  endpoint: "direct:beetest"
+#        gather: 
+#            - url : "seda:beetest"
+#              save:
+#                  to: camel
+#                  endpoint: "direct:beetest"
             
 #        url: "camel:route"     
+flow:
+    - url : "seda:beetest"
+      with: camel
+      save:
+          to: camel
+          endpoint: "direct:beetest"
 
 gather:
     - url: "http://172.20.10.125:8080/bdsc-index/v2/search/page.serv?pageSize=2"
