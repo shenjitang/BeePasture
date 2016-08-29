@@ -11,8 +11,10 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -431,7 +433,7 @@ public class GatherStep {
 
     public void filterAddOneVar(String name, Object value) {
         count++;
-        List removePropertyList = (List) saveTo.get("removePropety");
+        List removePropertyList = (List) saveTo.get("removeProperty");
         if (removePropertyList != null) {
             if (removePropertyList.isEmpty()) { //如果 removePropety: [] 表示删除property中没有提到的
                 Map propMap = (Map)saveTo.get("property");
@@ -592,7 +594,25 @@ public class GatherStep {
                     try {
                         if ("date".equalsIgnoreCase(type)) {
                             String format = getValue((Map) propValue, "format", "yyyy-MM-dd HH:mm:ss");
-                            SimpleDateFormat sdf = new SimpleDateFormat(format);
+                            String locate = (String)((Map) propValue).get("locate");
+                            SimpleDateFormat sdf = null;
+                            if (StringUtils.isBlank(locate) && ov != null) {
+                                if (ov.toString().contains("MMM")) {
+                                    locate = "ENGLISH";
+                                }
+                            }
+                            if (StringUtils.isBlank(locate)) {
+                                sdf = new SimpleDateFormat(format);
+                            } else {
+                                sdf = new SimpleDateFormat(format, Locale.forLanguageTag(locate));
+//                                if ("ENGLISH".equalsIgnoreCase(locate)) {
+//                                    sdf = new SimpleDateFormat(format, Locale.ENGLISH);
+//                                } else if ("CHINESE".equalsIgnoreCase(locate)) {
+//                                    sdf = new SimpleDateFormat(format, Locale.CHINESE);
+//                                } else if () {
+//                                    sdf = new SimpleDateFormat(format, Locale.);
+//                                }
+                            }
                             if (StringUtils.isNotBlank(ov.toString())) {
                                 ov = sdf.parse(correctDateStr(ov.toString()));
                             } else {
@@ -715,11 +735,16 @@ public class GatherStep {
         return sb.toString();
     }
     
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+        /*
         System.out.println(correctDateStr("2013-7-23 8:12:5"));
         System.out.println(correctDateStr("a2013-7-23 8:12:5"));
         System.out.println(correctDateStr("a2013-7-23 8:12:5b"));
          System.out.println(correctDateStr("a2013-7-23 8:12:53b"));
+*/
+        SimpleDateFormat format = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z", Locale.ENGLISH);
+        Date d = format.parse(correctDateStr("05/Aug/2016:03:00:28 +0800"));
+        System.out.println(d);
     }
 
     private Map unmarshal(Object page, Map get) {

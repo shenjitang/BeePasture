@@ -69,17 +69,21 @@ public class CamelContextResource extends BeeResource {
             @Override
             public void run() {
                 while(true) {
-                    Exchange exchange = camelConsumer.receive(url);
-                    Object body = clazz == null? exchange.getIn().getBody() : exchange.getIn().getBody(clazz);
-                    if (body instanceof org.fusesource.hawtbuf.Buffer) {
-                        try {
-                            body = new String(((org.fusesource.hawtbuf.Buffer)body).getData(), "utf8");
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                    try {
+                        Exchange exchange = camelConsumer.receive(url);
+                        Object body = clazz == null? exchange.getIn().getBody() : exchange.getIn().getBody(clazz);
+                        if (body instanceof org.fusesource.hawtbuf.Buffer) {
+                            try {
+                                body = new String(((org.fusesource.hawtbuf.Buffer)body).getData(), "utf8");
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
+                        Map<String, Object> headers = exchange.getOut().getHeaders();
+                        doProcess(processMap, body, headers);
+                    } catch (Throwable th) {
+                        th.printStackTrace();
                     }
-                    Map<String, Object> headers = exchange.getOut().getHeaders();
-                    doProcess(processMap, body, headers);
                 }
             }
 
@@ -117,7 +121,7 @@ public class CamelContextResource extends BeeResource {
         //org.shenjitang.beepasture.core.Main.main(new String[] {"../examples/szb_info_camel_asyn.yaml"});
         //org.shenjitang.beepasture.core.Main.main(new String[] {"../examples/szb_info_camel.yaml"});
         //org.shenjitang.beepasture.core.Main.main(new String[] {"../examples/camel_only.yaml", "-d"});
-        org.shenjitang.beepasture.core.Main.main(new String[] {"../examples/esper_sample.yaml", "-d"});
+        org.shenjitang.beepasture.core.Main.main(new String[] {"../examples/esper_accesslog.yaml", "-d"});
         
     }
 

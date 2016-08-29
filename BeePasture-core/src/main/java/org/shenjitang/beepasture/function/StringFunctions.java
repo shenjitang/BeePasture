@@ -163,4 +163,15 @@ public class StringFunctions {
         }
     }
     
+    public static String[] split(String str) {
+        return str.split(" ");
+    }
+    
+    public static String[] split(String str, String regex) {
+        return str.split(regex);
+    }
+
+    public static String[] split(String str, String regex, int limit) {
+        return str.split(regex, limit);
+    }
 }

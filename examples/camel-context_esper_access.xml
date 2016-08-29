@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+    http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd"
+       default-autowire="byName" default-init-method="init">
+
+    <bean id="serializer" class="org.springframework.data.redis.serializer.StringRedisSerializer" />
+
+    <camelContext id="camelContext" xmlns="http://camel.apache.org/schema/spring" typeConverterStatisticsEnabled="true">
+
+        <route>
+            <from uri="stomp:queue:log.access?brokerURL=tcp://121.40.133.133:61614&amp;host=infobroker&amp;login=admin&amp;passcode=password"></from>
+            <convertBodyTo type="java.lang.String" />
+            <to uri="seda:access.log" />
+        </route>
+<!--
+        <route>
+            <from uri="spring-redis://172.20.10.114:6379?channels=test:cmd:quote:sec:sz&amp;command=PSUBSCRIBE&amp;serializer=#serializer"></from>
+            <setHeader headerName="streamIn.name" ><constant>szquote</constant></setHeader>
+            <split>
+                <tokenize token="[|]" />
+                <bean ref="esperProcess" method="streamIn" />
+            </split>
+        </route>-->
+
+        <route>
+            <from uri="seda:streamOut"></from>
+            <marshal>
+                <json></json>
+            </marshal>
+            <log message="${body}" />
+<!--            <to uri="log:epl.result" />-->
+        </route>
+
+        <!-- 模拟数据 -->
+
+
+<!--        <route>
+            <from uri="stomp:queue:quote.sec.sz?brokerURL=tcp://121.40.133.133:61614&amp;host=infobroker&amp;login=admin&amp;passcode=password"></from>
+            <log message="======@@@@@@@@@: ${body}"/>
+        </route>-->
+
+<!--        <route>
+            <from uri="timer://mocksz?period=1000&amp;repeatCount=100"></from>
+            <setHeader headerName="CamelRedis.Channel" ><constant>test:cmd:quote:sec:sz</constant></setHeader>
+            <setHeader headerName="CamelRedis.Message">
+                <constant>20150717150527,null,510050,平安银行,1.68063766E8,2.30499934203E9,13.6,13.66,62288.0,13.94,13.53,13.82,null,10.01,0.0,0.22,0.0,0.0,13.81,373303.0,13.82,275629.0,13.8,722500.0,13.83,271538.0,13.79,135000.0,13.84,509928.0,13.78,165400.0,13.85,482562.0,13.77,128300.0,13.86,218760.0,null,null,null, null|20150717150527,null,510020,万  科Ａ,2.55267315E8,3.79781466846E9,14.7,14.77,115393.0,15.21,14.62,15.07,null,10.57,0.0,0.37,0.0,0.0,15.07,2373270.0,15.08,1238208.0,15.06,508199.0,15.09,678580.0,15.05,532967.0,15.1,1183720.0,15.04,119600.0,15.11,263800.0,15.03,110200.0,15.12,479645.0,null,null,null, null|20150717150527,null,510040,国农科技,6893685.0,2.2428223154E8,30.69,31.0,15234.0,33.49,30.7,32.21,null,644.2,0.0,1.52,-0.73,0.0,32.21,38051.0,32.5,1200.0,32.2,2400.0,32.53,700.0,32.18,800.0,32.67,1600.0,32.17,30800.0,32.8,300.0,32.15,100.0,32.86,600.0,null,null,null, null</constant>
+            </setHeader>
+            <to uri="spring-redis://172.20.10.114:6379?command=PUBLISH&amp;serializer=#serializer" />
+        </route>-->
+
+    </camelContext>
+</beans>
+
