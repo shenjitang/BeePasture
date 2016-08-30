@@ -559,7 +559,7 @@ public class GatherStep {
                     propValue = m1;
                 }
 
-                    type = (String) ((Map) propValue).get("type");
+                type = (String) ((Map) propValue).get("type");
 
                 List extractList = (List)((Map) propValue).get("extract");
                 if (extractList != null) {

@@ -41,7 +41,7 @@ public class Main {
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\baidu01_multi_url.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\baidu_base.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\mssql_kettle.yaml";
-        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\bjx_info_es.yaml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\mssql2mongodb.yaml";
         if (args.length > 0) {
             fileName = args[0];
         }

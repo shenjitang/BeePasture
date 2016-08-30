@@ -5,6 +5,8 @@
  */
 package org.shenjitang.beepasture.resource;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +39,8 @@ public class MongodbResource extends BeeResource {
         if (StringUtils.isNoneBlank(path) && path.length() > 1) {
             databaseName = path.substring(1);
         }
-        mongoClient = new MongoClient(ip, port);
+        MongoClientURI clientUri = new MongoClientURI(url);
+        mongoClient = new MongoClient(clientUri);
         mongoDbOperater = new MongoDbOperater();
         mongoDbOperater.setMongoClient(mongoClient);
     }
@@ -83,11 +86,24 @@ public class MongodbResource extends BeeResource {
         }
         if (obj instanceof List) {
             for (Object item : (List)obj) {
-                mongoDbOperater.insert(dbName, colName, (Map)item);
+                mongoDbOperater.insert(dbName, colName, convertMap((Map)item));
             }
         } else {
-            mongoDbOperater.insert(dbName, colName, (Map)obj);
+            mongoDbOperater.insert(dbName, colName, convertMap((Map)obj));
         }
+    }
+    
+    private Map convertMap(Map item) {
+        Map map = new HashMap();
+        for (Object key : item.keySet()) {
+            Object value = item.get(key);
+            if (value instanceof BigDecimal) {
+                map.put(key, ((BigDecimal) value).doubleValue());
+            } else {
+                map.put(key, value);
+            }
+        }
+        return map;
     }
 
     @Override

@@ -81,6 +81,17 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>MongoDBUtils</artifactId>
       <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.mongodb</groupId>
+          <artifactId>mongo-java-driver</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+        <groupId>org.mongodb</groupId>
+        <artifactId>mongo-java-driver</artifactId>
+        <version>3.3.0</version>
     </dependency>
     <dependency>
       <groupId>log4j</groupId>
