@@ -86,7 +86,13 @@ public class GatherStep {
             if (step.containsKey("iterator")) {
                onceFlow(ourl); 
             } else {
+                if (step.containsKey("exit")) {
+                    sleep();
+                    Integer code = (Integer)step.get("exit");
+                    System.exit(code);
+                }
                 onceGather(ourl);
+                sleep();
             }
             if (limit != null && ++count >= limit) {
                 break;
@@ -706,9 +712,23 @@ public class GatherStep {
     }
 
     protected void sleep() {
+        Long sleep = 0L;
         Object oSleep = step.get("sleep");
         if (oSleep != null) {
-            Long sleep = Long.valueOf(oSleep.toString());
+            if (oSleep instanceof String) {
+                String sSleep = ((String)oSleep).trim().toLowerCase();
+                if (sSleep.endsWith("ms")) {
+                    sleep = Long.valueOf(sSleep.substring(0, sSleep.indexOf("ms")));
+                } else if (sSleep.endsWith("s")) {
+                    sleep = Long.valueOf(sSleep.substring(0, sSleep.indexOf("s")));
+                    sleep = sleep*1000L;
+                } else if (sSleep.endsWith("m")) {
+                    sleep = Long.valueOf(sSleep.substring(0, sSleep.indexOf("m")));
+                    sleep = sleep*60L*1000L;
+                }
+            } else {
+                sleep = Long.valueOf(oSleep.toString());
+            }
             try {
                 Thread.sleep(sleep);
             } catch (InterruptedException e) {
@@ -1013,9 +1033,10 @@ public class GatherStep {
     }
 
     private String marshal(Object page, Map get) throws Exception {
+        String result = null;
         String type = (String) get.get("type");
         if ("json".equalsIgnoreCase(type)) {
-            return JSON.toJSONString(page);
+            result = JSON.toJSONString(page);
         } else if ("csv".equalsIgnoreCase(type)) {
             CSVFormat format = CSVFormat.DEFAULT;
             if (get.containsKey("delimiter")) {
@@ -1023,10 +1044,18 @@ public class GatherStep {
             }
             List headList = (List)get.get("head");
             Object[] values = CSVUtils.getValues(headList, page);
-            return format.format(values);
+            result = format.format(values);
         } else {
             throw new RuntimeException("not support m"
                     + "arshal type: " + type);
         }
+        if (get.containsKey("newline")) {
+            if ("head".equalsIgnoreCase((String)get.get("newline"))) {
+                result = "\n" + result;
+            } else {
+                result += "\n";
+            }
+        }
+        return result;
     }
 }

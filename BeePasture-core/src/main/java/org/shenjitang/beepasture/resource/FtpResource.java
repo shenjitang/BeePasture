@@ -163,12 +163,16 @@ public class FtpResource extends BeeResource {
 
     @Override
     public Iterator<Object> iterate(Map param) throws Exception {
-        String filename = (String)param.get("filename");
+        String filename = getFilename(param);//(String)param.get("filename");
         if (!ftpClient.isConnected()) {
             connect();
         }
         String encoding = ResourceUtils.get(param, "encoding", "GBK");
-        InputStream stream = ftpClient.retrieveFileStream(name);
+        InputStream stream = ftpClient.retrieveFileStream(filename);
+        if (stream == null) {
+            System.out.println("retriveFilee:" + filename + " 可能不存在，检查是否是绝对路径 returncode:" + ftpClient.getReplyCode() + " message:" + ftpClient.getReplyString());
+            System.exit(-1);
+        }
         return new StreamLineIterator(stream, encoding);
     }
     

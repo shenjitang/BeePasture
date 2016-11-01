@@ -46,9 +46,9 @@ public class ScriptTemplateExecuter {
             Long time = System.currentTimeMillis();
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(time);
-            if (!params.containsKey("time")) {
-                params.put("time", time);
-            }
+            //if (!params.containsKey("time")) {
+            params.put("time", time);
+            //}
             gt.registerFunctionPackage("sys", System.class);
             gt.registerFunctionPackage("str", StringFunctions.class);
             gt.registerFunction("dateAdd", new DateAddFunction());

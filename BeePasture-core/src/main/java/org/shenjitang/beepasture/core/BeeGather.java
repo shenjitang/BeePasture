@@ -100,7 +100,7 @@ public class BeeGather {
             GatherStep gatherStep = new GatherStep(step);
             gatherStep.execute();
             MAIN_LOGGER.info("level " + step.get("url"));
-            gatherStep.sleep();
+//            gatherStep.sleep();
         }
         return vars;
     }

@@ -168,13 +168,15 @@ public class FlowGather extends BeeGather {
 
     public static void main( String[] args ) throws Exception {
         String fileEncoding = System.getProperty("fileEncoding", "utf8");
+        Long waitBeforeExit = Long.valueOf(System.getProperty("waitBeforeExit", "1000"));
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\filter_sample.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\dfa_sample_obj_js.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\esper_sample.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\esper_accesslog_new.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\nagao_sample.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\dce_03.yaml";
-        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\100ppi_info_es.yaml";
+        //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\100ppi_info_es.yaml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\ftp_sample_asyn_1.yaml";
         if (args.length > 0) {
             fileName = args[0];
         }
@@ -190,10 +192,11 @@ public class FlowGather extends BeeGather {
             if (args.length > 1 && "-d".equalsIgnoreCase(args[1])) {
                 while(Boolean.TRUE) {
                     try {
-                        Thread.sleep(60000L);
+                        Thread.sleep(waitBeforeExit);
                     } catch (Exception e) {}
                 }
             } else {
+                Thread.sleep(1000L);
                 System.exit(0);
             }
         } catch (FileNotFoundException e) {
