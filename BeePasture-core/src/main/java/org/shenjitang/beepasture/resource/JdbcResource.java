@@ -5,29 +5,27 @@
  */
 package org.shenjitang.beepasture.resource;
 
-import java.net.URI;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.sql.DataSource;
 import org.apache.commons.dbcp.BasicDataSourceFactory;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.shenjitang.beepasture.function.ScriptTemplateExecuter;
 
 /**
  *
  * @author xiaolie
  */
-public class JdbcResource extends BeeResource{
-    private static final Log LOGGER = LogFactory.getLog(JdbcResource.class);
+public class JdbcResource extends BeeResource {
     private DataSource ds;
     private Integer batchExecuteCount = 100;
             
@@ -108,7 +106,7 @@ public class JdbcResource extends BeeResource{
             } catch (Exception ex) {
                     ex.printStackTrace();
             }
-            throw new RuntimeException("目前只支持List入库，obj:" + obj);
+//            throw new RuntimeException("目前只支持List入库，obj:" + obj);
         }
     }
     
@@ -200,4 +198,68 @@ public class JdbcResource extends BeeResource{
             return null;
         }
     }    
+
+    @Override
+    public Iterator<Object> iterate(Map loadParam) throws Exception {
+        return new RecordIterator(loadParam);
+    }
+    
+    public class RecordIterator implements Iterator<Object> {
+        private final Connection conn;
+        private final Statement stmt;
+        private final ResultSet rs;
+        private final ResultSetMetaData meta;
+
+        public RecordIterator(Map loadParam) throws Exception {
+            String sql = (String)loadParam.get("sql");
+            conn = ds.getConnection();
+            stmt = conn.createStatement();
+            rs = stmt.executeQuery(sql);
+            meta = rs.getMetaData();
+        }
+
+        @Override
+        public boolean hasNext() {
+            boolean next = false;
+            try {
+                next = rs.next();
+                if (!next) {
+                    try {
+                        rs.close();
+                    } catch (Exception e) {}
+                    try {
+                        stmt.close();
+                    } catch (Exception e) {}
+                    try {
+                        conn.close();
+                    } catch (Exception e) {}
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException("", e);
+            }
+            return next;
+        }
+
+        @Override
+        public Object next() {
+            Map record = new HashMap();
+            try {
+                for (int i = 1; i <= meta.getColumnCount(); i++) {
+                    String key = meta.getColumnName(i);
+                    int type = meta.getColumnType(i);
+                    record.put(key, rs.getObject(i));
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            return record;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+        
+    }
+
 }

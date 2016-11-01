@@ -1,7 +1,5 @@
+camel: "file:../examples/camel-context_esper_access.xml"
 resource: 
-    camel01:
-        url: "camelContext:../examples/camel-context_esper_access.xml"
-    
     esper01:
         url: "esper:null"
         eventType:
@@ -18,7 +16,6 @@ resource:
 #            - "context ipConatext select context.id, context.name, context.key1, method, url, logtime, returnCode, count(*) from AccessLog.win:time(1 minute)  "
             - "context ipConatext select context.id, context.name, context.key1, method, url, logtime, returnCode, count(*) as count from AccessLog.win:time(10 sec)  having count(*) > 10"
         save:
-            to: camel01
             endpoint: "seda:streamOut" 
             body: ["key1", "method", "url", "logtime", "count"]            
                 

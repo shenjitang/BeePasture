@@ -6,6 +6,7 @@
 package org.shenjitang.beepasture.resource;
 
 import java.io.File;
+import java.util.Iterator;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -57,5 +58,10 @@ public class EsperResource extends BeeResource {
     public Object loadResource(Map loadParam) throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
+    @Override
+    public Iterator<Object> iterate(Map param) throws Exception {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
 }

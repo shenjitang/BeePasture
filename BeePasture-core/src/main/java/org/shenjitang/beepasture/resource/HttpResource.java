@@ -5,6 +5,7 @@
  */
 package org.shenjitang.beepasture.resource;
 
+import java.util.Iterator;
 import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -92,5 +93,11 @@ public class HttpResource extends BeeResource {
         //fileName = template.expressCalcu(fileName, url, null);
         return fileName;
     }
+
+    @Override
+    public Iterator<Object> iterate(Map param) throws Exception {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
     
 }

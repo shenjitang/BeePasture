@@ -1,0 +1,24 @@
+var:
+    city: 
+        - name: beijin
+          level: 1
+          desc: "capital city"
+        - name: shanghai
+          level: 1
+          desc: "bigest city"
+    
+resource: 
+    mongo1:
+        url: mongodb://192.168.1.203:27017/test
+        
+
+gather:
+
+
+#保存
+persist:
+    city: 
+        resource: mongo1
+#        database: test
+#        collection: shopClass1
+

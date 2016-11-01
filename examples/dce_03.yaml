@@ -1,0 +1,24 @@
+resource: 
+    db1: 
+        url: "jdbc:mysql://localhost:3306/test"
+        username: root
+        password: "12345678"
+gather:
+  - url: "http://www.dce.com.cn/PublicWeb/MainServlet?action=Pu00161_result&Pu00161_Input.variety=all&Pu00161_Input.gen_date=20160909"
+    xpath: "//table//table//tr"
+    save: 
+          to: 
+              - resource: db1
+                filter: '${str.length(it.p1) > 0}'
+                sql: "insert into dce_03 (p1,p2) values('${it.p1}','${it.p2}');"
+          property:
+              p1: 
+                xpath: "td[1]/text()"
+#                script: '${it.replaceAll("n", "")}'
+              p2: 
+                xpath: "td[2]/text()"
+ #               script: '${it.replaceAll("n", "")}'        
+#persist:
+#    data: 
+#        resource: db1
+#        sql: "insert into dce_03 (p1,p2,p3,p4,p5,p6,p7,p8) values('${data.p1}','${data.p2}','${data.p3}','${data.p4}','${data.p5}','${data.p6}','${data.p7}','${data.p8}');"

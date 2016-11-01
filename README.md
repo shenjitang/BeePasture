@@ -95,7 +95,7 @@ var：
 脚本执行的主体，定义处理步骤，每一个步骤都是数组中的一员，步骤按顺序执行（2.0版中，变量将变成队列，每一个步骤将会是同时执行，队列中有数据就拿出来处理），可以使用xpath, jsonpath, 脚本（beetl）
 h3. gather命令结构
 * url 采集的url地址，可以包含脚本比如：${date(), "yyyy-MM-dd"}表示当前日期，${dateAdd(-30),dateFormat="yyyy-MM-dd"}表示三十天前的日期。 
-* exract 清洗语句，其value为数组，数组成员为一对key:value。key为处理方式：xpath, jsonpath, regex, script。value是其值。
+* extract 清洗语句，其value为数组，数组成员为一对key:value。key为处理方式：xpath, jsonpath, regex, script。value是其值。
         * xpath: xpath表达式
         * jsonpath: jsonpath表达式
         * regex: regex表达式

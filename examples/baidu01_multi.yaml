@@ -27,7 +27,7 @@ gather:
           property:
               title: "/a/text()"
               url: "/a/@href/text()"
-              content: "../div//text()"
+              summary: "../div//text()"
               site:
                   xpath: "../div/p/text()"
                   script: '${it.substring(0, it.indexOf("&"))}'
@@ -39,6 +39,12 @@ gather:
               companyName: 
                   scope: var
                   script: "${it.name}"
+  - with: data
+    url: url
+    save:
+        to: _this
+        property:
+            content: "//body/text()"
         
 persist:
     data: file:\\baidu01.txt?encoding=utf8&format=yaml

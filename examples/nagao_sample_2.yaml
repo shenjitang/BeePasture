@@ -1,0 +1,50 @@
+resource: 
+    es01:
+        url: "elasticsearch://120.26.232.150:9300/test/test?cluster=ruiyun_es_cluster"
+    nagao01:
+        url: "nagao:null"
+        stopwords: "file:../examples/stopword.dic?format=line"
+        N: 5
+        threshold: [20,3,3,5]
+    mongo01:
+        url: mongodb://root:Richeninfo2014@dds-bp189470d9c37e742.mongodb.rds.aliyuncs.com:3717/admin
+flow: 
+      - url: "seda:nagao"
+        save: 
+            to: nagao01
+      - resource: nagao01
+        save: 
+            to: 
+                resource: mongo01
+                database: test
+                collection: alpha_keyword
+            property:
+                createTime: '${date(), "yyyy-MM-dd HH-mm-ss"}'
+                type: date
+                format: "yyyy-MM-dd HH-mm-ss"
+gather:   
+      - url: "__start__"
+        save:
+            to:
+                resource: nagao01
+      - url: "es01"
+        sql: "select title, content from ry_szb_info"
+        iterator: 
+        save:
+            resourec: nagao01
+            marshal: 
+                type: csv
+                split: ","
+      - url: "__end__"
+        save:
+            to:
+                resource: nagao01
+            
+
+
+        
+
+
+
+                  
+            

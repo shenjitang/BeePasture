@@ -7,7 +7,9 @@ package org.shenjitang.beepasture.resource;
 
 import java.net.URI;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
 
@@ -16,18 +18,22 @@ import org.apache.commons.lang3.StringUtils;
  * @author xiaolie
  */
 public class ResourceMng {
-    private Map resourceDefine;
+    //private Map resourceDefine;
     private final Map<String, BeeResource> resourceMap = new HashMap();
+    private final static Pattern RESOURCE_PATTERN = Pattern.compile("^[a-zA-z]{2,18}:[^\\s]*");
     
 
     public ResourceMng() {
     }
     
     public BeeResource getResource(String name) {
+        if (StringUtils.isBlank(name)) {
+            name = "camel";
+        }
         try {
             BeeResource beeResurce = resourceMap.get(name);
             if (beeResurce == null) {
-                if (name.contains(":")) {
+                if (maybeResource(name)) {
                     Map params = new HashMap();
                     params.put("url", name);
                     beeResurce = initOneResource(name, params);
@@ -43,38 +49,20 @@ public class ResourceMng {
         return null;
     }
     
-//    public String getResourceScheme(String resourceName) {
-//        String url = (String)((Map)resourceDefine.get(resourceName)).get("url");
-//        URI uri = URI.create(url);
-//        return uri.getScheme();
-//    }
-    
-    public Map getResourceParam(String resourceName) {
-        return (Map)resourceDefine.get(resourceName);
-    }
-    
-    public void initCamelResource(String name, Map params) {
-        String url = (String) params.get("url");
-        URI uri = URI.create(url);
-        String scheme = uri.getScheme();
-        if ("camelContext".equalsIgnoreCase(scheme)) {
-            initOneResource(name, params);
-        }
-    }
-    
-    public void initOtherResource(String name, Map params) {
-        String url = (String) params.get("url");
-        URI uri = URI.create(url);
-        String scheme = uri.getScheme();
-        if (!"camelContext".equalsIgnoreCase(scheme)) {
-            initOneResource(name, params);
-        }
+    public BeeResource addResource(String name, BeeResource resource) {
+        resourceMap.put(name, resource);
+        return resource;
     }
 
     public BeeResource initOneResource(String name, Map params) {
         String url = (String) params.get("url");
-        URI uri = URI.create(url);
-        String scheme = uri.getScheme();
+        String scheme = null;
+        try {
+            URI uri = URI.create(url);
+            scheme = uri.getScheme();
+        } catch (IllegalArgumentException e) {
+            scheme = url.substring(0, url.indexOf(":"));
+        }
         try {
             String resourceClassname = "org.shenjitang.beepasture.resource." + StringUtils.capitalize(scheme) + "Resource";
             BeeResource resource = (BeeResource) Class.forName(resourceClassname).newInstance();
@@ -86,48 +74,37 @@ public class ResourceMng {
             throw new RuntimeException("Don't know resource :" + url, e);
         }
     }
+    
+    public void init(List resources) {
+        for (Object oone : resources) {
+            Map one = (Map)oone;
+            String name = (String)one.get("name");
+            if (StringUtils.isBlank(name)) {
+                name = (String)one.get("url");
+            }
+            initOneResource(name, one);
+        }
+    }
 
     public void init(Map resources) {
-        this.resourceDefine = resources;
+//        this.resourceDefine = resources;
         try {
-            // init camel resource
             for (Object key : resources.keySet() ) {
-                initCamelResource((String)key, (Map)resources.get(key));
-            }
-            // init other resource
-            for (Object key : resources.keySet() ) {
-                initOtherResource((String)key, (Map)resources.get(key));
+                initOneResource((String)key, (Map)resources.get(key));
             }
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(-1);
         }
     }
+
+    public Map<String, BeeResource> getResourceMap() {
+        return resourceMap;
+    }
     
+    static public final boolean maybeResource(String str) {
+        return RESOURCE_PATTERN.matcher(str).find();
+    }
 
-
-//    public Object loadResource(Map resource) throws Exception {
-//        Map params = new HashMap();
-//        String urlStr = (String)resource.get("url");
-//        URI uri = URI.create(urlStr);
-//        
-//        String fileName = uri.getAuthority() + uri.getPath();
-//        String query  = uri.getQuery();
-//        List<NameValuePair> queryPair = URLEncodedUtils.parse(query, Charset.forName("UTF-8"));
-//        if (queryPair != null) {
-//            for (NameValuePair nvp : queryPair) {
-//                params.put(nvp.getName(), nvp.getValue());
-//            }
-//        }
-//
-//        String encoding = ResourceUtils.get(params, "encoding", "GBK");
-//        String format = ResourceUtils.get(params, "format", "yaml");
-//        if ("plantext".equalsIgnoreCase(format) || "planttext".equalsIgnoreCase(format)) {
-//            return FileUtils.readFileToString(new File(fileName), encoding);
-//        } else if ("line".equalsIgnoreCase(format)) {
-//            return FileUtils.readLines(new File(fileName), encoding);
-//        } else { //default = yaml
-//            return Yaml.load(FileUtils.readFileToString(new File(fileName), encoding));
-//        }
-//    }
+    
 }

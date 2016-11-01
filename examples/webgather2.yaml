@@ -1,22 +1,22 @@
 var:
-  # 城市列表
-  cityList: []
   # 更多城市列表的url
-  cityUrlList: 
-    - "http://www.dianping.com/ajax/json/index/citylist/getCitylist?_nr_force=${time}&do=getByPY&firstPY=A"
-    - "http://www.dianping.com/ajax/json/index/citylist/getCitylist?_nr_force=${time}&do=getByPY&firstPY=B"
-    - "http://www.dianping.com/ajax/json/index/citylist/getCitylist?_nr_force=${time}&do=getByPY&firstPY=C"
-    - "http://www.dianping.com/ajax/json/index/citylist/getCitylist?_nr_force=${time}&do=getByPY&firstPY=D"
-    - "http://www.dianping.com/ajax/json/index/citylist/getCitylist?_nr_force=${time}&do=getByPY&firstPY=E"
+  cityUrlList: "A..Z http://www.dianping.com/ajax/json/index/citylist/getCitylist?_nr_force=${time}&do=getByPY&firstPY=${i}"
 gather:
 # 获取城市列表 更多
   - url: cityUrlList
-    xpath: json($.msg.html);//a
+    extract: 
+      - jsonpath: $.msg.html
+      - xpath: //a
     save:
-      to: cityList
+      to: 
+        - var: cityList2
+          filter: '${str.length(it.name) <= 2}'
+        - var: cityList3
+          filter: '${str.length(it.name) > 2}'
       property:
           name: //text()
           url: @href
 #保存
 persist:
-    cityList: "file://d:/temp/cityList.txt?encoding=utf8"
+    cityList2: "file://d:/temp/cityList2.txt?encoding=utf8"
+    cityList3: "file://d:/temp/cityList3.txt?encoding=utf8"

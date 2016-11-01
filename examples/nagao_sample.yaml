@@ -1,0 +1,48 @@
+resource: 
+    nagao01:
+        url: "nagao:null"
+#        stopzi: "file://stopword.dic"
+        stopwords: "file://../examples/stopword.dic?format=line"
+        N: 5
+        threshold: [20,3,3,5]
+    mongo01:
+        url: mongodb://www.shenjitang.org:27017/test
+        database: test
+        collection: newwordcal
+flow: 
+      - resource: nagao01
+        save: 
+#            endpoint: "log:nagao.term.vector"
+            resource: mongo01
+            property:
+                createTime:
+                    script: '${date(), "yyyy-MM-dd HH-mm-ss"}'
+                    type: date
+                    format: "yyyy-MM-dd HH-mm-ss"
+                calId:
+                    script: "${calId}"
+gather:   
+      - url: null
+        script:  "${str.uuid()}"
+        save:
+            var: calId
+      - url: "__start__"
+        save:
+            resource: nagao01
+      - url: "file://d:/temp/wordanalysis/shenyou.txt?format=line"
+        iterator: 
+        save:
+            to:
+                resource: nagao01
+      - url: "__end__"
+        save:
+            to: nagao01
+            
+
+
+        
+
+
+
+                  
+            

@@ -1,0 +1,18 @@
+var: 
+    urllist:
+        - "http://cn.bing.com/search?q=%E8%8A%9C%E6%B9%96%262015%26%E8%B4%A2%E6%94%BF%E7%BB%93%E7%AE%97%E6%8A%A5%E5%91%8A&qs=HS&pq=%E8%8A%9C%E6%B9%96%262015%26&sc=8-8&sp=1&cvid=A8B3DEB33BE44F26929A1103B45E2CAD&FORM=QBRE"
+        - "http://cn.bing.com/search?q=%E6%B9%96%E5%B7%9E+%E7%BB%9F%E8%AE%A1%E5%85%AC%E6%8A%A5&qs=n&form=QBRE&pq=%E6%B9%96%E5%B7%9E+%E7%BB%9F%E8%AE%A1%E5%85%AC%E6%8A%A5&sc=2-7&sp=-1&sk=&cvid=1998ED68018B417E95E033EEE25CB00F"
+        - "http://cn.bing.com/search?q=%E5%94%90%E5%B1%B1+2015+%E8%B4%A2%E6%94%BF%E7%BB%93%E7%AE%97%E6%8A%A5%E5%91%8A&qs=n&form=QBRE&pq=%E5%94%90%E5%B1%B1+2015+%E8%B4%A2%E6%94%BF%E7%BB%93%E7%AE%97%E6%8A%A5%E5%91%8A&sc=1-14&sp=-1&sk=&cvid=2ECD2C982CEB4976BB91D71E91AA59D7"
+resource:
+gather:
+  - url: urllist
+    xpath: '//div[@id="b_content"]//h2/a/@href'
+    save:
+        to: hr
+  - url: hr
+    xpath: "//text()"
+    sleep: 1000
+#    limit: 3
+    save:
+        to: 
+            resource: "file://result_${time}.text"

@@ -1,0 +1,7 @@
+gather:
+    - url: http://finance.sina.com.cn/stock/hkstock/hkgg/2016-09-13/doc-ifxvukhx5031430.shtml
+      charset: utf-8
+      save:
+          to: aaa
+persist:
+    aaa: "file://sinafin.txt"

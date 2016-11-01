@@ -9,6 +9,7 @@ import com.mongodb.MongoClientURI;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
@@ -115,5 +116,10 @@ public class MongodbResource extends BeeResource {
         String sql = (String) params.get("sql");
         return mongoDbOperater.find(dbName, sql);
     }
-    
+
+    @Override
+    public Iterator<Object> iterate(Map param) throws Exception {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
 }

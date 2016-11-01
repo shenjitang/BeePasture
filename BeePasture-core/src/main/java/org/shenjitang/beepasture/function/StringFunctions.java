@@ -13,6 +13,7 @@ import java.net.URLEncoder;
 import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,6 +28,13 @@ public class StringFunctions {
         } else {
             return str;
         }
+    }
+    
+    public static Integer length(String str) {
+        if (str != null) {
+            return str.length();
+        }
+        return 0;
     }
     
     public static String now(String pattern) {
@@ -150,7 +158,7 @@ public class StringFunctions {
         if (matcher.find()) {
             return matcher.group(n);
         } else {
-            return str;
+            return "";
         }        
     }
     public static String regex(String str, String regex) {
@@ -159,7 +167,7 @@ public class StringFunctions {
         if (matcher.find()) {
             return matcher.group();
         } else {
-            return str;
+            return "";
         }
     }
     
@@ -173,5 +181,9 @@ public class StringFunctions {
 
     public static String[] split(String str, String regex, int limit) {
         return str.split(regex, limit);
+    }
+    
+    public static String uuid() {
+        return UUID.randomUUID().toString();
     }
 }

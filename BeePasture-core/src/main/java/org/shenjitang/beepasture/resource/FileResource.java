@@ -9,11 +9,17 @@ import org.shenjitang.beepasture.resource.util.ResourceUtils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializeConfig;
 import com.alibaba.fastjson.serializer.SimpleDateFormatSerializer;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.beanutils.PropertyUtils;
@@ -40,16 +46,19 @@ public class FileResource extends BeeResource {
     public void init(String url, Map param) throws Exception {
         super.init(url, param); //To change body of generated methods, choose Tools | Templates.
         String fileName = uri.getAuthority() + uri.getPath();
-        file = new File(fileName);
-        String query  = uri.getQuery();
-        if (StringUtils.isNotBlank(query)) {
-            List<NameValuePair> queryPair = URLEncodedUtils.parse(query, Charset.forName("UTF-8"));
-            if (queryPair != null) {
-                for (NameValuePair nvp : queryPair) {
-                    params.put(nvp.getName(), nvp.getValue());
-                }
-            }
+        if (fileName == null) {
+            fileName = uri.getSchemeSpecificPart();
         }
+        file = new File(fileName);
+//        String query  = uri.getQuery();
+//        if (StringUtils.isNotBlank(query)) {
+//            List<NameValuePair> queryPair = URLEncodedUtils.parse(query, Charset.forName("UTF-8"));
+//            if (queryPair != null) {
+//                for (NameValuePair nvp : queryPair) {
+//                    params.put(nvp.getName(), nvp.getValue());
+//                }
+//            }
+//        }
     }
 
     @Override
@@ -57,27 +66,7 @@ public class FileResource extends BeeResource {
         Map allParam = new HashMap();
         allParam.putAll(this.params);
         allParam.putAll(persistParams);
-        if (StringUtils.isNotBlank(varName)) {
-            String topVarName = varName.split("[.]")[0];
-            String tailVarName = null;
-            if (topVarName.length() < varName.length()) {
-                tailVarName = varName.substring(topVarName.length() + 1);
-                if (obj instanceof List) {
-                    if (((List)obj).size() == 1) {
-                        obj = ((List)obj).get(0);
-                    }
-                }
-                if (obj instanceof Map) {
-                    obj = ((Map)obj).get(tailVarName);
-                } else {
-                    try {
-                        obj = PropertyUtils.getProperty(obj, tailVarName);
-                    } catch (Exception e) {
-                        LOGGER.warn("persist:" + varName, e);
-                    }
-                }
-            }
-        }
+        obj = getValue(varName, obj);
         try {
             String encoding = ResourceUtils.get(allParam, "encoding", "GBK");
             String format = ResourceUtils.get(allParam, "format", "plant");
@@ -128,9 +117,13 @@ public class FileResource extends BeeResource {
                 }
             }
         }
-
+        
         String encoding = ResourceUtils.get(iparams, "encoding", "GBK");
         String format = ResourceUtils.get(iparams, "format", "plant");
+        return readFile(file, encoding, format);
+    }
+    
+    public static Object readFile(File file, String encoding, String format) throws Exception {
         if ("yaml".equalsIgnoreCase(format)) {
             return Yaml.load(FileUtils.readFileToString(file, encoding));
         } else if ("line".equalsIgnoreCase(format)) {
@@ -143,6 +136,58 @@ public class FileResource extends BeeResource {
         } else { //default = plant
             return FileUtils.readFileToString(file, encoding);
         }    
+    }
+
+    @Override
+    public Iterator<Object> iterate(Map loadParam) throws Exception {
+        Map iparams = new HashMap();
+        
+        String query  = uri.getQuery();
+        if (query != null) {
+            List<NameValuePair> queryPair = URLEncodedUtils.parse(query, Charset.forName("UTF-8"));
+            if (queryPair != null) {
+                for (NameValuePair nvp : queryPair) {
+                    iparams.put(nvp.getName(), nvp.getValue());
+                }
+            }
+        }
+        iparams.putAll(this.params);
+        iparams.putAll(loadParam);
+        return new FileLIneIterator(iparams);
+    }
+    
+    public class FileLIneIterator implements Iterator<Object> {
+        String encoding;
+        String format;
+        BufferedReader reader;
+        String line = null;
+        public FileLIneIterator(Map loadParam) throws FileNotFoundException, UnsupportedEncodingException {
+            String encoding = ResourceUtils.get(loadParam, "encoding", "GBK");
+            String format = ResourceUtils.get(loadParam, "format", "line");
+            reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), encoding));
+        }
+
+        @Override
+        public boolean hasNext() {
+            try {
+                line = reader.readLine();
+                return line != null;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+
+        @Override
+        public Object next() {
+            return line;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+        
     }
     
 }

@@ -66,9 +66,12 @@ public class ScriptTemplateExecuter {
             }
             Template t = gt.getTemplate(str);
             t.binding(params);
-            return t.render();
+            String result = t.render();
+            params.remove("time");
+            return result;
         } catch (Exception e) {
             LOGGER.warn(str, e);
+            params.remove("time");
             return str;
         }
     }

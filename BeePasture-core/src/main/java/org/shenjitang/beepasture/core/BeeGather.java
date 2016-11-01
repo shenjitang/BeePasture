@@ -26,16 +26,17 @@ import org.shenjitang.beepasture.resource.ResourceMng;
  */
 public class BeeGather {
     public static Log MAIN_LOGGER = LogFactory.getLog("org.shenjitang.beepasture.core.Main");
-    private final ScriptTemplateExecuter template = new ScriptTemplateExecuter();
-    private Map program;
-    private Map vars;
-    private List gatherStepList;
-    private Map persistStep; 
-    private Map resources;
-    private String gather;
-    private final ResourceMng resourceMng = new ResourceMng();
-    private static final Log LOGGER = LogFactory.getLog(BeeGather.class);
-    private static BeeGather instance;
+    protected final ScriptTemplateExecuter template = new ScriptTemplateExecuter();
+    protected Map program;
+    protected Map vars;
+    protected List gatherStepList;
+    protected Map persistStep; 
+    protected Map resources;
+    protected List resourcesList;
+    protected String gather;
+    protected final ResourceMng resourceMng = new ResourceMng();
+    protected static final Log LOGGER = LogFactory.getLog(BeeGather.class);
+    protected static BeeGather instance;
 
     public Map getProgram() {
         return program;
@@ -65,9 +66,13 @@ public class BeeGather {
         instance = this;
         program = (Map)Yaml.load(gather);
         LOGGER.debug(program);
-        resources = (Map)program.get("resource");
+        loadResources();//(Map)program.get("resource");
         if (resources != null) {
-            resourceMng.init(resources);
+            if (resourcesList == null) {
+                resourceMng.init(resources);
+            } else {
+                resourceMng.init(resourcesList);
+            }
         } else {
             resources = new HashMap();
         }
@@ -178,7 +183,23 @@ public class BeeGather {
         return resourceMng;
     }
     
-    
+    protected void loadResources() {
+        Object res = program.get("resource");
+        if (res instanceof List) {
+            resourcesList = (List)res;
+            resources = new HashMap();
+            for (Object one : resourcesList) {
+                resources.put(((Map)one).get("name"), one);
+            }
+        } else if(res instanceof Map) { 
+            resources = (Map)res;
+//            resourcesList = new ArrayList();
+//            for (Object key : resources.keySet()) {
+//                Map value = (Map)resources.get(key);
+//                resourcesList.add(value);
+//            }
+        }
+    }
  
     public Map getVars() {
         return vars;
@@ -189,7 +210,7 @@ public class BeeGather {
     private Pattern DPATTERN1 =  Pattern.compile("[0-9]+\\.\\.[0-9]+");
     private Pattern DPATTERN2 =  Pattern.compile("[a-zA-Z]\\.\\.[a-zA-Z]");
 
-    private Map initVars(Map vars, Map resources) throws Exception{
+    protected Map initVars(Map vars, Map resources) throws Exception{
         replaceByArray(vars);
         return vars;
     }

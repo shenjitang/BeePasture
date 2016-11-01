@@ -3,7 +3,7 @@ var:
     
 resource: 
     mongo1:
-        url: mongodb://localhost:27017/test
+        url: mongodb://192.168.1.203:27017/test
         
 
 gather:

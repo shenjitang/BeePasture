@@ -14,6 +14,29 @@
             <convertBodyTo type="java.lang.String" />
             <to uri="seda:access.log" />
         </route>
+        <!--
+        <route>
+            <from uri="timer://mock1?period=200&amp;repeatCount=100"></from>
+            <setBody>
+                <constant>202.109.75.174 - - [29/Jul/2016:15:19:00 +0800] "GET /futureAnalysis/HomePage/home?callback=callback&amp;callback=callback&amp;_=1469776737581 HTTP/1.1" 500 10505</constant>
+            </setBody>   
+            <to uri="seda:access.log" />         
+        </route>
+        <route>
+            <from uri="timer://mock2?period=50&amp;repeatCount=100"></from>
+            <setBody>
+                <constant>202.109.75.177 - - [29/Jul/2016:15:19:08 +0800] "GET /futureAnalysis HTTP/1.1" 302 -</constant>
+            </setBody>   
+            <to uri="seda:access.log" />         
+        </route>
+        <route>
+            <from uri="timer://mock3?period=10&amp;repeatCount=100"></from>
+            <setBody>
+                <constant>202.109.75.178 - - [29/Jul/2016:15:19:08 +0800] "GET /futureAnalysis HTTP/1.1" 302 -</constant>
+            </setBody>   
+            <to uri="seda:access.log" />         
+        </route>
+        -->
 <!--
         <route>
             <from uri="spring-redis://172.20.10.114:6379?channels=test:cmd:quote:sec:sz&amp;command=PSUBSCRIBE&amp;serializer=#serializer"></from>
@@ -29,7 +52,7 @@
             <marshal>
                 <json></json>
             </marshal>
-            <log message="${body}" />
+            <log message=">>>>>>>>>>  ${body}" />
 <!--            <to uri="log:epl.result" />-->
         </route>
 

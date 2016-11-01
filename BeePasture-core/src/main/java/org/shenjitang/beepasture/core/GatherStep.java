@@ -10,23 +10,26 @@ import com.jayway.jsonpath.JsonPath;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.htmlcleaner.TagNode;
 import org.shenjitang.beepasture.debug.GatherDebug;
+import org.shenjitang.beepasture.function.JavaScriptExecuter;
 import org.shenjitang.beepasture.function.ScriptTemplateExecuter;
 import org.shenjitang.beepasture.http.PageAnalyzer;
 import org.shenjitang.beepasture.resource.BeeResource;
+import org.shenjitang.beepasture.resource.ResourceMng;
 import org.shenjitang.beepasture.resource.util.ResourceUtils;
+import org.shenjitang.commons.csv.CSVUtils;
 
 /**
  *
@@ -35,21 +38,21 @@ import org.shenjitang.beepasture.resource.util.ResourceUtils;
 public class GatherStep {
 
     public static Log MAIN_LOGGER = LogFactory.getLog("org.shenjitang.beepasture.core.Main");
-    private final Map step;
-    private final BeeGather beeGather;
-    private final ScriptTemplateExecuter template = new ScriptTemplateExecuter();
-    private final PageAnalyzer pageAnalyzer;
-    private static final Log LOGGER = LogFactory.getLog(GatherStep.class);
-    private List withVar;
-    private Object withVarCurrent;
-    private Long count = 0L;
-    private final String rurl; //yamel中url的值（脚本中的源句）
-    private final Long limit;
-    private final Map saveTo;
-    private final Object xpath;
-    private Map heads;
-    private final Map templateParamMap = new HashMap();
-    private String script; //yamel中script或template的值（脚本中的源句）
+    protected final Map step;
+    protected final BeeGather beeGather;
+    protected final ScriptTemplateExecuter template = new ScriptTemplateExecuter();
+    protected final PageAnalyzer pageAnalyzer;
+    protected static final Log LOGGER = LogFactory.getLog(GatherStep.class);
+    protected List withVar;
+    protected Object withVarCurrent;
+    protected Long count = 0L;
+    protected final String rurl; //yamel中url的值（脚本中的源句）
+    protected final Long limit;
+    protected final Map save;
+    protected final Object xpath;
+    protected Map heads;
+    protected final Map templateParamMap = new HashMap();
+    protected final String script; //yamel中script或template的值（脚本中的源句）
 
     public GatherStep(Map step) {
         pageAnalyzer = new PageAnalyzer();
@@ -63,7 +66,7 @@ public class GatherStep {
         }
         rurl = (String) step.get("url");
         limit = GatherStep.getLongValue(step, "limit");
-        saveTo = (Map) step.get("save");
+        save = (Map) step.get("save");
         xpath = step.get("xpath");
         heads = (Map) step.get("head");
         if (heads == null) {
@@ -77,10 +80,14 @@ public class GatherStep {
         if (withVar != null) {
             urls = withVar;
         } else {
-            urls = getUrlsFromStepUrl(rurl, step); //如果是资源，也是从这里加载了
+            urls = getUrlsFromStepUrl(rurl, step); 
         }
         for (Object ourl : urls) {
-            onceGather(ourl);
+            if (step.containsKey("iterator")) {
+               onceFlow(ourl); 
+            } else {
+                onceGather(ourl);
+            }
             if (limit != null && ++count >= limit) {
                 break;
             }
@@ -91,26 +98,17 @@ public class GatherStep {
         List urls = null;
         if (beeGather.getVars().containsKey(url)) {
             urls = (List)beeGather.getVar(url);//   vars.get(url);
-        } else if (beeGather.containsResource(url)) {
-            urls = loadResource(url, step);
         } else {
             urls = new ArrayList();
             urls.add(url);
         }
         return urls;
     }
-    
-    protected List loadResource(String url, Map step) throws Exception {
-        GatherDebug.debug(this, "加载资源：" + url);
-        BeeResource beeResource = beeGather.getResourceMng().getResource(url);
+   
+    protected Map getLoadParam() {
         //资源装载的params里的参数，如果是对vars的引用，就要替换成vars立的值。
         Map loadParam = new HashMap();
-        Map map = null;
-        if (step.get("param") != null) {
-            map = (Map) step.get("param");
-        } else {
-            map = step;
-        }
+        Map map = step.get("param") == null ? step : (Map) step.get("param");
         for (Object key : map.keySet()) {
             Object value = map.get(key);
             if (beeGather.getVars().containsKey(value)) {
@@ -119,14 +117,13 @@ public class GatherStep {
                 loadParam.put(key, value);
             }
         }
-        Object value = beeResource.loadResource(loadParam);
-        List list = new ArrayList();
-        if (value instanceof Collection) {
-            list.addAll((Collection) value);
-        } else {
-            list.add(value);
-        }
-        return list;
+        return loadParam;
+    }
+    
+    protected Object loadResource(String url) throws Exception {
+        GatherDebug.debug(this, "加载资源：" + url);
+        BeeResource beeResource = beeGather.getResourceMng().getResource(url);
+        return beeResource.loadResource(getLoadParam());
     }
     
     public boolean needExpressCalcu(Object str) {
@@ -251,6 +248,28 @@ public class GatherStep {
         }
     }
     
+    public List doJavaScript(List pages, String ascript) {
+        if (StringUtils.isBlank(ascript)) {
+            return pages;
+        }
+        List list = new ArrayList();
+        templateParamMap.putAll(beeGather.getVars());
+        for (Object page : pages) {
+            try {
+                //templateParamMap.put("_page", page);
+                if (page instanceof TagNode) {
+                    page = ((TagNode)page).getText();
+                }
+                templateParamMap.put("it", page);
+                Object res = JavaScriptExecuter.exec(ascript, templateParamMap);
+                list.add(res);
+            } catch (Exception e) {
+                LOGGER.warn("template:" + ascript + "  page:" + page, e);
+            }
+        }
+        return list;
+    }
+    
     /**
      * 對從url中取得的內容做script處理
      * @param pages
@@ -309,16 +328,50 @@ public class GatherStep {
         return null;
     }
     
+    public List doFilter(List obj, String filterStr) {
+        if (StringUtils.isBlank(filterStr)) {
+            return obj;
+        }
+        List resList = new ArrayList();
+        if (obj instanceof List) {
+            for (Object page : (List)obj) {
+                if (doFilterOnce("script", filterStr, page)) {
+                    resList.add(page);
+                }
+            }
+        } else {
+            if (doFilterOnce("script", filterStr, obj)) {
+                resList.add(obj);
+            }
+        }
+        return resList;
+    }
+    
     protected List extract(Map extract, List pages) {
         for (Object key: extract.keySet()) {
-            if ("xpath".equalsIgnoreCase(key.toString())) {
+            if ("filter".equalsIgnoreCase(key.toString())) {
+                return (List)doFilter(pages, (String)extract.get(key));
+//                List resList = new ArrayList();
+//                for (Object page : pages) {
+//                    if (doFilterOnce((String)extract.get(key), page)) {
+//                        resList.add(page);
+//                    }
+//                }
+//                return resList;
+            } else if ("xpath".equalsIgnoreCase(key.toString())) {
                 return doXpath(pages, (String)extract.get(key));
             } else if ("jsonpath".equalsIgnoreCase(key.toString())) {
                 return doJsonpath(pages, (String)extract.get(key));
+            } else if ("javascript".equalsIgnoreCase(key.toString())) {
+                return doJavaScript(pages,(String)extract.get(key));
             } else if ("script".equalsIgnoreCase(key.toString())) {
                 return doScript(pages,(String)extract.get(key));
             } else if ("regex".equalsIgnoreCase(key.toString())) {
                 return doRegex(pages, (String)extract.get(key));
+            } else if ("marshal".equalsIgnoreCase(key.toString())) {
+                return doMarshal(pages, (Map)extract.get("marshal"));
+            } else if ("unmarshal".equalsIgnoreCase(key.toString())) {
+                return doUnmarshal(pages, (Map)extract.get("unmarshal"));
             }
         }
         return pages;
@@ -338,6 +391,9 @@ public class GatherStep {
                     return pageAnalyzer.getText(node, express);
                 } else if ("jsonpath".equalsIgnoreCase(key.toString())) {
                     return JsonPath.read(it, express);
+                } else if ("javascript".equalsIgnoreCase(key.toString())) {
+                    templateParamMap.put("it", it);
+                    return JavaScriptExecuter.exec(express, templateParamMap);
                 } else if ("script".equalsIgnoreCase(key.toString())) {
                     templateParamMap.put("it", it);
                     //templateParamMap.put("_page", it);
@@ -356,11 +412,13 @@ public class GatherStep {
         }
         return "";
     }
+    
     /**
      * 做一次gather.
      * @param ourl 将rurl转换成需要处理的列表后的一条url。
      */
     public void onceGather(Object ourl) {
+        templateParamMap.putAll(beeGather.getVars());
         withVarCurrent = ourl;
         if (withVar != null) {
             ourl = ((Map) ourl).get(rurl);
@@ -368,7 +426,7 @@ public class GatherStep {
         }
         try {
             Object page = ourl;
-            Boolean direct = Boolean.valueOf(ResourceUtils.get(step, "direct", "false"));
+            Boolean direct = ResourceUtils.get(step, "direct", false);
             if (!direct) {
                 if (needExpressCalcu(ourl)) {
                     ourl = template.expressCalcu((String) ourl, beeGather.getVars());
@@ -376,38 +434,92 @@ public class GatherStep {
                     ourl = "file://" + ((File)ourl).getAbsolutePath();
                 }
                 templateParamMap.put("_this", ourl);
-                if (ourl instanceof String && ourl.toString().toLowerCase().contains(":")) {
-                    try {
-                        GatherDebug.debug(this, "准备加载资源：" + ourl);
-                        BeeResource resource = beeGather.getResourceMng().getResource((String)ourl);
-                        if (resource != null) {
-                            page = resource.loadResource(step);
-                            templateParamMap.put("_page", page);
-                            GatherDebug.debug(this, "加载资源：" + ourl);
+                if (ourl instanceof String) {
+                    if (beeGather.containsResource((String)ourl) || ResourceMng.maybeResource(ourl.toString())) {
+                        try {
+                            page = loadResource((String)ourl);
+                        } catch (Exception e) {
+                            LOGGER.warn("unknown resource:" + ourl, e);
                         }
-                    } catch (Exception e) {
-                        LOGGER.warn("unknown resource:" + ourl, e);
                     }
                 }
             }
             templateParamMap.put("_page", page);
             List pages = toList(page);
-            List extractList = (List)step.get("extract");
-            if (extractList != null) {
-                for (Object extract : extractList) {
-                    pages = extract((Map)extract, pages);
-                    GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
+            try {
+                List extractList = (List)step.get("extract");
+                if (extractList != null) {
+                    for (Object extract : extractList) {
+                        pages = extract((Map)extract, pages);
+                        GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
+                    }
                 }
+            } catch (ClassCastException e) {
+                throw new RuntimeException("关键字extract的值必须是数组，不可以是map或别的类型！", e);
             }
+            pages = doFilter(pages, (String) step.get("filter"));
             pages = doXpath(pages);
             pages = doRegex(pages, (String) step.get("regex"));
             pages = doScript(pages, script);
+            pages = doJavaScript(pages, (String) step.get("javascript"));
+            pages = doMarshal(pages, (Map)step.get("marshal"));
+            pages = doUnmarshal(pages, (Map)step.get("unmarshal"));
             pages = setProperties(pages, ourl);
             save(pages, ourl);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+    
+    public void onceFlow(Object ourl) {
+        try {
+            if (needExpressCalcu(ourl)) {
+                ourl = template.expressCalcu((String) ourl, beeGather.getVars());
+            } else if (ourl instanceof File) {
+                ourl = "file://" + ((File) ourl).getAbsolutePath();
+            }
+            templateParamMap.put("_this", ourl);
+            if (ourl instanceof String) {
+                String url = (String)ourl;
+                if (beeGather.containsResource(url) || ResourceMng.maybeResource(url)) {
+                    try {
+                        Map loadParam = getLoadParam();
+                        BeeResource beeResource = beeGather.getResourceMng().getResource(url);
+                        Iterator ite = beeResource.iterate(loadParam);
+                        while(ite.hasNext()) {
+                            Object page = ite.next();
+                            templateParamMap.put("_page", page);
+                            List pages = toList(page);
+                            List extractList = (List)step.get("extract");
+                            if (extractList != null) {
+                                for (Object extract : extractList) {
+                                    pages = extract((Map)extract, pages);
+                                    GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
+                                }
+                            }
+                            pages = doFilter(pages, (String) step.get("filter"));
+                            pages = doXpath(pages);
+                            pages = doRegex(pages, (String) step.get("regex"));
+                            pages = doScript(pages, script);
+                            pages = doJavaScript(pages, (String) step.get("javascript"));
+                            pages = doMarshal(pages, (Map)step.get("marshal"));
+                            pages = doUnmarshal(pages, (Map)step.get("unmarshal"));
+                            pages = setProperties(pages, ourl);
+                            save(pages, ourl);
+                        }
+                    } catch (Exception e) {
+                        LOGGER.warn("unknown resource:" + ourl, e);
+                    }
+                } else {
+                    LOGGER.warn("url->flow the url mast be resource! not cuttent this url:" + ourl);
+                }
+            } else {
+                LOGGER.warn("url->flow the url mast be resource! not cuttent this url:" + ourl);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }    
 
     public Object doScript(Object it, Object page, Object ourl) throws Exception {
         if (it == null) {
@@ -430,13 +542,127 @@ public class GatherStep {
             return it;
         }
     }
-
-    public void filterAddOneVar(String name, Object value) {
-        count++;
-        List removePropertyList = (List) saveTo.get("removeProperty");
+    
+    public Map saveStr2map(Object srcTo) {
+        Map toMap = new HashMap();
+        toMap.putAll(save);
+        if (srcTo == null && !toMap.containsKey("resource")) {
+            toMap.put("resource", "camel");
+            //toMap.putAll(save);
+        } else if (srcTo instanceof String) {
+            toMap.put("to", srcTo);
+            //toMap.putAll(save);
+        } else if (srcTo instanceof Map) {
+            if (((Map)srcTo).containsKey("endpoint")) {
+                ((Map)srcTo).put("resource", "camel");
+            }
+            toMap.putAll((Map)srcTo);
+        }
+        return toMap;
+        
+//        Object to = save.get("to");
+//        if (to == null) {
+//            toMap.put("to", "camel");
+//        } else if (to instanceof String) {
+//            String toStr = (String)save.get("to");
+//            if (StringUtils.isNotBlank(toStr)) {
+//                toMap.put("to", toStr);
+//            } else {
+//                toMap.put("to", "camel");
+//            }
+//        } else {
+//            return (Map)srcTo;
+//        }
+//        if (srcTo instanceof Map) {
+//            toMap.putAll(srcTo);
+//        }
+//        return toMap;
+    }
+    
+    public void save(List pages, Object ourl) {
+        Object to = save.get("to");
+        if (to instanceof List) {
+            for (Object saveDef : (List)to) {
+                Map toMap = saveStr2map(saveDef);
+                save(toMap, pages, ourl);
+            }
+        } else {
+            Map toMap = saveStr2map(to);
+            save(toMap, pages, ourl);
+        }
+    }
+    
+    protected Boolean doFilterOnce(String key, String filterExpress, Object page) {
+        if ("script".equalsIgnoreCase(key)) {
+            String res = doScript(filterExpress, page);
+            return Boolean.valueOf(res);
+        } else {
+            throw new RuntimeException("不支持的filter检查方式：" + key);
+        }
+    }
+    
+    protected void save(Map saveDefMap, List pages, Object ourl) {
+        for (Object page : pages) {
+            removeProperties(page);
+            String filterExpress = (String)saveDefMap.get("filter");
+            if (StringUtils.isNotBlank(filterExpress) && !doFilterOnce("script", filterExpress, page)) {
+                continue;
+            }
+            String varName = (String)saveDefMap.get("var");
+            if (StringUtils.isNotBlank(varName)) {
+                saveToVar(varName, page, ourl);
+            } else {
+                String resourceName = (String)saveDefMap.get("resource");
+                if (StringUtils.isNotBlank(resourceName)) {
+                    resourceName = doScript(resourceName, page);
+                    saveToResource(resourceName, page, ourl, saveDefMap);
+                } else {
+                    String name = (String)saveDefMap.get("to");
+                    if (StringUtils.isNotBlank(name)) {
+                        smartSaveTo(name, page, ourl, saveDefMap);
+                    } else if (saveDefMap.containsKey("endpoint")) {
+                        saveToResource("camel", page, ourl, saveDefMap);                        
+                    }
+                }
+            }
+        }
+    }
+    
+    protected void saveToVar(String varName, Object page, Object ourl) {
+        varName = doScript(varName, page);
+        if ("_this".equalsIgnoreCase(varName)) {
+            ((Map) withVarCurrent).putAll((Map) page);
+        } else {
+            List toList = beeGather.getVar(varName);
+            toList.add(page);
+        }
+    }
+    
+    protected void saveToResource(String name, Object page, Object ourl, Map saveDefMap) {
+        BeeResource resource = beeGather.getResourceMng().getResource(name);
+        if (resource != null) {
+            beeGather.getVars().remove(name);
+            resource.persist("it", page, saveDefMap);
+        } else {
+           throw new RuntimeException("can not find resource: " + name);
+        }
+    }
+    
+    protected void smartSaveTo(String name, Object page, Object ourl, Map saveDefMap) {
+        BeeResource resource = beeGather.getResourceMng().getResource(name);
+        if (resource != null) {
+            beeGather.getVars().remove(name);
+            resource.persist(null, page, saveDefMap);
+        } else {
+           saveToVar(name, page, ourl);
+        }
+    }
+    
+    protected void removeProperties(Object value) {
+        List removePropertyList = (List) save.get("removeProperty");
         if (removePropertyList != null) {
             if (removePropertyList.isEmpty()) { //如果 removePropety: [] 表示删除property中没有提到的
-                Map propMap = (Map)saveTo.get("property");
+                Map propMap = (Map)save.get("property");
                 if (value instanceof Map) {
                     for (Object key : ((Map) value).keySet()) {
                         if (!propMap.containsKey(key)) {
@@ -451,41 +677,17 @@ public class GatherStep {
                 }
             }
         }
-        BeeResource resource = beeGather.getResourceMng().getResource(name);
-        if (resource != null) {
-            beeGather.getVars().remove(name);
-            resource.persist(null, value, saveTo);
-        } else if ("_this".equalsIgnoreCase(name)) {
-            ((Map)withVarCurrent).putAll((Map)value);
-        } else {
-            List toList = beeGather.getVar(name);
-            toList.add(value);
-        }
     }
     
-    public void save(List pages, Object ourl) {
-        if (saveTo != null) {
-            String name = (String) saveTo.get("to");
-            if (StringUtils.isBlank(name)) {
-                return;
-            }
-            for (Object page : pages) {
-                templateParamMap.put("it", page);
-                if (needExpressCalcu(name)) {
-                    name = template.expressCalcu(name, templateParamMap);
-                }
-//                List toList = beeGather.getVar(name);
-//                if (withVar != null) {
-//                    if (ourl instanceof Map && !((Map) ourl).containsKey(name)) {
-//                        ((Map) ourl).put(name, toList);
-//                    }
-//                }
-                filterAddOneVar(name, page);
-            }
+    public String doScript(String script, Object it) {
+        templateParamMap.put("it", it);
+        if (needExpressCalcu(script)) {
+            return template.expressCalcu(script, templateParamMap);
         }
+        return script;
     }
 
-    protected <T> T getValue(Map map, String key, T defaultValue) {
+    final protected <T> T getValue(Map map, String key, T defaultValue) {
         T value = (T) map.get(key);
         if (value == null) {
             return defaultValue;
@@ -514,19 +716,42 @@ public class GatherStep {
             }
         }
     }
+    
+    protected List doUnmarshal(List its, Map unmarshalMap) {
+//        Map unmarshalMap = (Map)save.get("unmarshal");
+        if (unmarshalMap != null) {
+            List returnList = new ArrayList();
+            for (Object it : its ) {
+                returnList.add(unmarshal(it, unmarshalMap));
+            }
+            return returnList;
+        }        
+        return its;
+    }
 
+    protected List doMarshal(List its, Map marshalMap) {
+//        Map marshalMap = (Map)save.get("unmarshal");
+        if (marshalMap != null) {
+            List returnList = new ArrayList();
+            for (Object it : its ) {
+                try {
+                    returnList.add(marshal(it, marshalMap));
+                } catch (Exception e) {
+                    LOGGER.warn("marshal fail", e);
+                }
+            }
+            return returnList;
+        }        
+        return its;
+    }
 
     protected List setProperties(List its, Object ourl) {
-        Map propertyMap = (Map) saveTo.get("property");
+        Map propertyMap = (Map) save.get("property");
         if (propertyMap == null || propertyMap.isEmpty()) {
             return its;
         } 
         List returnList = new ArrayList();
         for (Object it : its ) {
-            Map unmarshalMap = (Map)saveTo.get("unmarshal");
-            if (unmarshalMap != null) {
-                it = unmarshal(it, unmarshalMap);
-            }
             returnList.add(setPageProperties(it, ourl, propertyMap));
         }
         return returnList;
@@ -542,36 +767,47 @@ public class GatherStep {
         for (Object key : propertyMap.keySet()) {
             Object ov = null;
             try {
-                Object propValue = propertyMap.get(key);
+                Object propertyPropDef = propertyMap.get(key);
 
                 String type = null;
                 String propScript = null;
     //            String scope = null;
-                if (propValue instanceof String) {
+                if (propertyPropDef instanceof String) {
                     Map m1 = new HashMap();
-                    if (((String)propValue).contains("/")) {
-                        m1.put("xpath", propValue);
-                    } else if (((String)propValue).startsWith("$.") || ((String)propValue).startsWith("$[")){
-                        m1.put("jsonpath", propValue);
+                    if (((String)propertyPropDef).contains("/")) {
+                        m1.put("xpath", propertyPropDef);
+                    } else if (((String)propertyPropDef).startsWith("$.") || ((String)propertyPropDef).startsWith("$[")){
+                        m1.put("jsonpath", propertyPropDef);
                     } else {
-                        m1.put("script", propValue);
+                        m1.put("script", propertyPropDef);
                     }
-                    propValue = m1;
+                    propertyPropDef = m1;
                 }
+                Map propValue = (Map)propertyPropDef;
+                type = (String) propValue.get("type");
 
-                type = (String) ((Map) propValue).get("type");
-
-                List extractList = (List)((Map) propValue).get("extract");
+                List extractList = (List)propValue.get("extract");
                 if (extractList != null) {
-                    ov = it;
+                    if ("_page".equalsIgnoreCase((String)propValue.get("with"))) {
+                        ov = templateParamMap.get("_page");
+                    } else if ("_this".equalsIgnoreCase((String)propValue.get("with"))) {
+                        ov = templateParamMap.get("_this");
+                    } else {
+                        ov = it;
+                    }
                     for (Object extract : extractList) {
                         ov = propertyExtract((Map)extract, ov);
                         templateParamMap.put("it", ov);
                         GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
                     }
                 } else {
-                    propScript = beeGather.getScript((Map) propValue);
+                    propScript = beeGather.getScript(propValue);
                     Object aim = it;
+                    if ("_page".equalsIgnoreCase((String)propValue.get("with"))) {
+                        aim = templateParamMap.get("_page");
+                    } else if ("_this".equalsIgnoreCase((String)propValue.get("with"))) {
+                        aim = templateParamMap.get("_this");
+                    }
                     if (aim instanceof String) {
                         ov = xpathPropertyObj((String) aim, propValue);
                     } else if (aim instanceof TagNode) {
@@ -580,7 +816,7 @@ public class GatherStep {
                         ov = ((Map) aim).get(key);
                     }
         //                ov = template.expressCalcu(script, thisValue, result);
-                    if (ov == null) {
+                    if (ov == null && aim instanceof String) {
                         ov = aim;
                     }
                     if (StringUtils.isNotBlank(propScript)) {
@@ -589,12 +825,17 @@ public class GatherStep {
                         //templateParamMap.put("_this", ourl);
                         ov = template.expressCalcu(propScript, templateParamMap);
                     }
+                    String javaScriptExpress = (String)propValue.get("javascript");
+                    if (StringUtils.isNotBlank(javaScriptExpress)) {
+                        templateParamMap.put("it", ov);
+                        ov = JavaScriptExecuter.exec(javaScriptExpress, templateParamMap);
+                    }
                 }
                 if (StringUtils.isNotBlank(type) && ov != null) {
                     try {
                         if ("date".equalsIgnoreCase(type)) {
-                            String format = getValue((Map) propValue, "format", "yyyy-MM-dd HH:mm:ss");
-                            String locate = (String)((Map) propValue).get("locate");
+                            String format = getValue(propValue, "format", "yyyy-MM-dd HH:mm:ss");
+                            String locate = (String)(propValue).get("locate");
                             SimpleDateFormat sdf = null;
                             if (StringUtils.isBlank(locate) && ov != null) {
                                 if (ov.toString().contains("MMM")) {
@@ -619,7 +860,7 @@ public class GatherStep {
                                 ov = null;
                             }
                         } else if ("String[]".equalsIgnoreCase(type)) {
-                            String split = getValue((Map) propValue, "split", ",");
+                            String split = getValue(propValue, "split", ",");
                             ov = ((String) ov).split(split);
                         } else if ("bool".equalsIgnoreCase(type) || "Boolean".equalsIgnoreCase(type)) {
                             ov = Boolean.valueOf(ov.toString());
@@ -631,6 +872,15 @@ public class GatherStep {
                                 ov = Double.valueOf(ov.toString());
                         } else if ("float".equalsIgnoreCase(type)) {
                                 ov = Float.valueOf(ov.toString());
+                        } else if ("number".equalsIgnoreCase(type)) {
+                                String format = getValue(propValue, "format", null);
+                                java.text.DecimalFormat df = new java.text.DecimalFormat(format);
+                                try {
+                                    ov = df.parse(ov.toString());
+                                } catch (java.text.ParseException e) {
+                                    LOGGER.warn("非法字符不能转Number类型 :" + ov.toString());
+                                    ov = null;
+                                }
                         }
                     } catch (Exception e) {
                         LOGGER.warn("page:" + it, e);
@@ -741,10 +991,10 @@ public class GatherStep {
         System.out.println(correctDateStr("a2013-7-23 8:12:5"));
         System.out.println(correctDateStr("a2013-7-23 8:12:5b"));
          System.out.println(correctDateStr("a2013-7-23 8:12:53b"));
-*/
         SimpleDateFormat format = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z", Locale.ENGLISH);
         Date d = format.parse(correctDateStr("05/Aug/2016:03:00:28 +0800"));
         System.out.println(d);
+*/
     }
 
     private Map unmarshal(Object page, Map get) {
@@ -759,6 +1009,24 @@ public class GatherStep {
             return map;
         } else {
             throw new RuntimeException("not support unmarshal type: " + type);
+        }
+    }
+
+    private String marshal(Object page, Map get) throws Exception {
+        String type = (String) get.get("type");
+        if ("json".equalsIgnoreCase(type)) {
+            return JSON.toJSONString(page);
+        } else if ("csv".equalsIgnoreCase(type)) {
+            CSVFormat format = CSVFormat.DEFAULT;
+            if (get.containsKey("delimiter")) {
+                format = CSVFormat.newFormat(((String)get.get("delimiter")).trim().charAt(0));
+            }
+            List headList = (List)get.get("head");
+            Object[] values = CSVUtils.getValues(headList, page);
+            return format.format(values);
+        } else {
+            throw new RuntimeException("not support m"
+                    + "arshal type: " + type);
         }
     }
 }

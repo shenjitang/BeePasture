@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+    http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd"
+       default-autowire="byName" default-init-method="init">
+
+    <camelContext id="camelContext" xmlns="http://camel.apache.org/schema/spring" typeConverterStatisticsEnabled="true">
+        <!-- 模拟数据 -->
+        <route>
+            <from uri="timer://mocksh?period=1000&amp;repeatCount=10"></from>
+            <setBody>
+                <constant>铜和玻璃还有油菜籽了个傻逼真儿啊:小毛贼也就这样了，油菜籽啊油菜籽，傻逼就是傻逼</constant>
+            </setBody>            
+                <to uri="mqtt://infobroker?host=tcp://121.40.133.133:61613&amp;publishTopicName=test.dfa&amp;userName=admin&amp;password=password"/>
+        </route>
+        <route>
+            <from uri="timer://mockxx?period=2000&amp;repeatCount=10"></from>
+            <setBody>
+                <constant>信春哥，得永生，胯下草泥马，手中机关枪。不信春哥，被专政，被人胯下骑，枪决啪啪啪</constant>
+            </setBody>            
+<!--            <to uri="stomp:queue:quote.sec.sh?brokerURL=tcp://121.40.133.133:61614&amp;host=infobroker&amp;login=admin&amp;passcode=password" />-->
+                <to uri="mqtt://infobroker?host=tcp://121.40.133.133:61613&amp;publishTopicName=test.dfa2&amp;userName=admin&amp;password=password"/>
+        </route>
+    </camelContext>
+</beans>
+

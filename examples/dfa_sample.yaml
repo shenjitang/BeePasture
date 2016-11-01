@@ -1,0 +1,40 @@
+camel: "file:../examples/camel-context_dfa.xml"
+resource: 
+    dfa01:
+        url: "dfa:null"
+        words: ["傻逼","傻叉","毛贼","毛贼洞"]
+        save:
+            to: camel
+            endpoint: "log:algo.dfa.result?level=INFO"     
+                
+    dfa02:
+        url: "dfa:null"
+        words: ["草泥马","春哥","胯下"]  
+flow:                
+#      - url: "stomp:queue:quote.sec.sh?brokerURL=tcp://121.40.133.133:61614&host=infobroker&login=admin&passcode=password"
+      - url: "mqtt://infobroker?host=tcp://121.40.133.133:61613&subscribeTopicName=test.dfa&userName=admin&password=password"
+#      - url: "seda:aaa"
+        direct : true
+        type: java.lang.String
+        save:
+            to: dfa01
+      - url: "mqtt://infobroker?host=tcp://121.40.133.133:61613&subscribeTopicName=test.dfa2&userName=admin&password=password"
+        direct : true
+        type: java.lang.String
+        save:
+#            endpoint: "log:mqtt.dfa02.result?level=INFO"     
+            to: dfa02
+            
+      - resource: dfa02
+        save:
+            endpoint: "log:algo.dfa02.result?level=INFO"     
+#      - url: "timer://mocksh?period=500&repeatCount=10"
+#        script: "他了个傻逼真儿啊，小毛贼也就这样了"
+#        with: camel01
+#        save:
+#            to: camel01
+#            endpoint: "seda:aaa"
+
+
+                  
+            

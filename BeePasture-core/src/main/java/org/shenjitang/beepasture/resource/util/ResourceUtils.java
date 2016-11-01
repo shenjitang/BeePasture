@@ -12,12 +12,21 @@ import java.util.Map;
  * @author xiaolie
  */
 public class ResourceUtils {
-    public static String get(Map map, String key, String def) {
+//    public static String get(Map map, String key, String def) {
+//        Object value = map.get(key);
+//        if (value == null) {
+//            value = def;
+//        }
+//        return value.toString();
+//    }
+    
+    public static <T> T get(Map map, String key, T def) {
         Object value = map.get(key);
         if (value == null) {
-            value = def;
+            return def;
+        } else {
+            return (T)value;
         }
-        return value.toString();
     }
     
     public static String substringHead(String str, String chars) {

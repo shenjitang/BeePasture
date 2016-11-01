@@ -1,0 +1,45 @@
+camel: "file:../examples/camel-context_esper_access.xml"
+resource: 
+    esper01:
+        url: "esper:null"
+        eventType:
+            AccessLog:
+                clientIp: String
+                method: String
+                url: String
+                logtime: String
+                returnCode: String
+                host: String
+                path: String
+        extract: 
+            - "create context ipConatext partition by clientIp from AccessLog"
+            - "context ipConatext select context.id, context.name, context.key1, method, url, logtime, returnCode, count(*) as count from AccessLog.win:time(10 sec)  having count(*) > 10"
+            - save: 
+                endpoint: "seda:streamOut" 
+                body: ["key1", "method", "url", "logtime", "count"]       
+                
+flow:                
+      - url: "seda:access.log"
+#      - url: "stomp:queue:log.access?brokerURL=tcp://121.40.133.133:61614&host=infobroker&login=admin&passcode=password"
+#      - url: "mqtt://infobroker?host=tcp://121.40.133.133:61613&subscribeTopicName=quote.sec.sh&userName=admin&password=password"
+        direct : true
+        extract:
+            - regex: "[{].*[}]"
+            - jsonpath: "$"
+        save:
+            to: esper01
+            eventType: AccessLog
+            removeProperty: ["message", "@version"]
+            property:
+                clientIp: '${str.split(it.message)[0]}'
+                method: '${str.regex(it.message, "([A-Z][A-Z][A-Z])\\s", 1)}'
+                url: '${str.regex(it.message, "[\"].*[\"]")}'
+                logtime: 
+                    script: '${str.regex(it.message, "\\[(.*?)\\]", 1)}'
+                    type: date
+                    locate: ENGLISH
+                    format: "dd/MMM/yyyy:HH:mm:ss Z"
+                returnCode: '${str.regex(it.message, "\\s([0-9][0-9][0-9])\\s", 1)}'
+
+                  
+            

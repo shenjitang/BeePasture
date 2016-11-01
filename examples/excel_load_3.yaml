@@ -1,0 +1,13 @@
+gather:
+    - url: "excel://D:/workspace/兴业研究/地方政府指标.xlsx"
+      save: 
+          to: data
+    - with: data
+      url: BASIC_MEASURES
+      save:
+          to: data1
+        
+persist:
+#    data1.BASIC_MEASURES: file:\\exce3.txt?encoding=utf8&format=yaml
+    data1: file:\\exce3.txt?encoding=utf8&format=yaml
+

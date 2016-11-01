@@ -123,6 +123,12 @@
         <artifactId>elasticsearch</artifactId>
       <version>2.2.0</version>
     </dependency>
+<!--    <dependency>
+        <groupId>org.wltea.ik-analyzer</groupId>
+        <artifactId>ik-analyzer</artifactId>
+        <version>2012</version>
+        <classifier>ffu1</classifier>
+    </dependency>-->
     <dependency>
         <groupId>org.apache.activemq</groupId>
         <artifactId>activemq-all</artifactId>
@@ -133,6 +139,17 @@
         <artifactId>commons-httpclient</artifactId>
       <version>3.1</version>
     </dependency>
+    <dependency>
+        <groupId>commons-net</groupId>
+        <artifactId>commons-net</artifactId>
+      <version>3.5</version>
+      <type>jar</type>
+    </dependency>
+<!--    <dependency>
+        <groupId>org.wltea.ik-analyzer</groupId>
+        <artifactId>ik-analyzer</artifactId>
+      <version>5.2</version>
+    </dependency>-->
 </dependencies>
 <repositories> 
   <repository> 

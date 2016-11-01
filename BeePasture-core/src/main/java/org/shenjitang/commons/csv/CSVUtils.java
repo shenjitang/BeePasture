@@ -68,6 +68,20 @@ public class CSVUtils {
         return values;
     }
     
+    public static Object[] getValues(List heads, Object record) throws Exception {
+        Object[] values = new Object[heads.size()];
+        if (record instanceof Map) {
+            Map map = (Map)record;
+            for (int i = 0; i < heads.size(); i++) {
+                values[i] = map.get(heads.get(i));
+            }
+        } else {
+            for (int i = 0; i < heads.size(); i++) {
+                values[i] = PropertyUtils.getProperty(record, (String)heads.get(i));
+            }
+        }
+        return values;
+    }
     
     public static void main(String[] args) throws Exception {
         List list = new ArrayList();
