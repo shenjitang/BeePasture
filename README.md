@@ -1,4 +1,4 @@
-BeePasture
+BeePasture （蜜蜂牧场）
 ==========
 蜜蜂牧场是一个简单易用的脚本形式的数据ETL工具和数据采集工具。一开始是网页数据采集清洗入库，后来发展成异步模式，支持各种etl操作。支持各种传统的关系型数据库比如mysql, oracle, sqlserver，mongodb等nosql数据库，网页数据抓取，文件。支持json,xml,html等数据格式，支持xpath, jsonpath, beetl脚本模板。脚本是通过简单的yaml编写的。<br>
 request: jdk1.7<br>
