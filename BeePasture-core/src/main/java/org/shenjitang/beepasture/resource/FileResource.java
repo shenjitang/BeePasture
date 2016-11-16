@@ -117,7 +117,7 @@ public class FileResource extends BeeResource {
                 }
             }
         }
-        
+        iparams.putAll(loadParam);
         String encoding = ResourceUtils.get(iparams, "encoding", "GBK");
         String format = ResourceUtils.get(iparams, "format", "plant");
         return readFile(file, encoding, format);

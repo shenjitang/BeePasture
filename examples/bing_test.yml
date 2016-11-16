@@ -10,7 +10,7 @@ gather:
     save:
         to: hr
   - url: hr
-    xpath: "//text()"
+#    xpath: "//text()"
     sleep: 1000
 #    limit: 3
     save:

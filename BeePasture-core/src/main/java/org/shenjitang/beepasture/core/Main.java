@@ -49,8 +49,8 @@ public class Main {
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\mongodb_test.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\shfe_03.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\dfcfw.yaml";
-        //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\bing_test.yml";
-        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\xyyj_ftp_log.yaml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\bing_test.yml";
+        //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\xyyj_ftp_log.yaml";
         if (args.length > 0) {
             fileName = args[0];
         }
