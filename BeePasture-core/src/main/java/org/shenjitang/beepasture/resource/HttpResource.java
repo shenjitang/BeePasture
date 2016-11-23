@@ -20,9 +20,9 @@ import org.shenjitang.beepasture.http.HttpTools;
  * @author xiaolie
  */
 public class HttpResource extends BeeResource {
-    private static final Log LOGGER = LogFactory.getLog(HttpResource.class);
+    protected static final Log LOGGER = LogFactory.getLog(HttpResource.class);
     //private ScriptTemplateExecuter template = new ScriptTemplateExecuter();
-    private final HttpTools httpTools;
+    protected HttpTools httpTools;
     
     public HttpResource() {
         httpTools = new HttpTools();

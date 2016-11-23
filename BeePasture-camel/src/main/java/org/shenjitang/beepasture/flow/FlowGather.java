@@ -37,9 +37,14 @@ public class FlowGather extends BeeGather {
     private List<Map> flowList;
     private static int threadNo = 1;
     private CamelContextResource camelResource;
+    private Long waitBeforeExit;
 
     public FlowGather() {
         super();
+    }
+
+    public void setWaitBeforeExit(Long waitBeforeExit) {
+        this.waitBeforeExit = waitBeforeExit;
     }
 
     public FlowGather(String yamlString) {
@@ -51,6 +56,10 @@ public class FlowGather extends BeeGather {
         instance = this;
         program = (Map)Yaml.load(gather);
         LOGGER.debug(program);
+        String oWaitTime = (String)program.get("exit");
+        if (StringUtils.isNotBlank(oWaitTime)) {
+            waitBeforeExit = getTimeLong(oWaitTime);
+        }
         String springContextUrl = (String)program.get("camel");
         if (StringUtils.isNotBlank(springContextUrl)) {
             URI uri = URI.create(springContextUrl);
@@ -176,7 +185,7 @@ public class FlowGather extends BeeGather {
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\nagao_sample.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\dce_03.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\100ppi_info_es.yaml";
-        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\ftp_sample_asyn_1.yaml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\xyyj_ftp_log_asyn_ua.yaml";
         if (args.length > 0) {
             fileName = args[0];
         }
@@ -185,6 +194,7 @@ public class FlowGather extends BeeGather {
             File file = new File(fileName);
             String yaml = FileUtils.readFileToString(file, fileEncoding);
             FlowGather flowGather = new FlowGather(yaml);
+            flowGather.setWaitBeforeExit(waitBeforeExit);
             flowGather.init();
             flowGather.doGather();
             flowGather.saveTo();
@@ -192,15 +202,15 @@ public class FlowGather extends BeeGather {
             if (args.length > 1 && "-d".equalsIgnoreCase(args[1])) {
                 while(Boolean.TRUE) {
                     try {
-                        Thread.sleep(waitBeforeExit);
+                        Thread.sleep(1000);
                     } catch (Exception e) {}
                 }
             } else {
+                flowGather.exit();
                 Thread.sleep(1000L);
-                System.exit(0);
             }
         } catch (FileNotFoundException e) {
-            MAIN_LOGGER.warn(fileName + " 文件不存在！");
+            MAIN_LOGGER.warn(fileName + " not exist 文件不存在！");
         }
     }
     
@@ -213,6 +223,33 @@ public class FlowGather extends BeeGather {
             }
         }
         return set;
+    }
+
+    private void exit() {
+        while (System.currentTimeMillis() - GatherStep.activeTime < waitBeforeExit) {
+            try {
+                Thread.sleep(waitBeforeExit);
+            } catch (Exception e) {}
+        }
+        System.out.println("system exit.");
+        System.exit(0);
+    }
+
+    private Long getTimeLong(String oSleep) {
+        Long sleep;
+        String sSleep = oSleep.trim().toLowerCase();
+        if (sSleep.endsWith("ms")) {
+            sleep = Long.valueOf(sSleep.substring(0, sSleep.indexOf("ms")));
+        } else if (sSleep.endsWith("s")) {
+            sleep = Long.valueOf(sSleep.substring(0, sSleep.indexOf("s")));
+            sleep = sleep * 1000L;
+        } else if (sSleep.endsWith("m")) {
+            sleep = Long.valueOf(sSleep.substring(0, sSleep.indexOf("m")));
+            sleep = sleep * 60L * 1000L;
+        } else {
+            sleep = Long.valueOf(sSleep);
+        }
+        return sleep;
     }
   
 }

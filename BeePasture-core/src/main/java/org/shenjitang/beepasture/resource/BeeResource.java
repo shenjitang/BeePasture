@@ -71,6 +71,10 @@ public abstract class BeeResource {
     abstract public void persist(String varName, Object obj, Map params);
     abstract public Object loadResource(Map loadParam) throws Exception;
     abstract public Iterator<Object> iterate(Map param) throws Exception;
+    
+    public void afterIterate() {
+        
+    }
 
     public Map getParams() {
         return params;

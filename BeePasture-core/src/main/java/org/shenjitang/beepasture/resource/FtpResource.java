@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.HashMap;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -27,6 +28,8 @@ import org.shenjitang.beepasture.resource.util.ResourceUtils;
  * @author xiaolie
  */
 public class FtpResource extends BeeResource {
+    private static Map<String, FTPClient> ftpClientMap = new HashMap();
+    
     private static final Log LOGGER = LogFactory.getLog(FtpResource.class);
     private FTPClient ftpClient;
     private String host;
@@ -34,23 +37,32 @@ public class FtpResource extends BeeResource {
     private String username;
     private String password;
     private Boolean longConnected;
+    private String serverType;
     private String path;
 
     public FtpResource() {
-        this.ftpClient = new FTPClient();
+        //this.ftpClient = new FTPClient();
+    }
+    
+    public void createFTPClient() throws Exception {
+        String key = username + "@" + host + ":" + port;
+        ftpClient = ftpClientMap.get(key);
+        if (ftpClient == null) {
+            ftpClient = new FTPClient();
+            FTPClientConfig config = StringUtils.isBlank(serverType)? new FTPClientConfig() : new FTPClientConfig(serverType);
+            ftpClient.configure(config);
+            connect();
+            ftpClientMap.put(key, ftpClient);
+        }
+        if (!ftpClient.isConnected()) {
+            connect();
+        }
     }
     
     @Override
     public void init(String url, Map param) throws Exception {
         super.init(url, param);
-        FTPClientConfig config = new FTPClientConfig();
-        if (param.containsKey("serverType")) {
-            config = new FTPClientConfig((String)param.get("serverType"));
-        } else {
-            config = new FTPClientConfig();
-        }
-        ftpClient.configure(config);
-        
+        serverType = (String)param.get("serverType");
         path = uri.getPath();
         host = uri.getHost();
         port = uri.getPort();
@@ -59,29 +71,26 @@ public class FtpResource extends BeeResource {
         }
         username = ResourceUtils.get(param, "username", uri.getRawUserInfo());
         password = (String)params.get("password");//ResourceUtils.get(param, "password", (String)null);
-        longConnected =  ResourceUtils.get(param, "longConnected", Boolean.FALSE);
-        if (longConnected) {
-            connect();
-        }
-        
+        createFTPClient();
     }
     
     private void connect() throws Exception {
         ftpClient.setControlKeepAliveReplyTimeout(10000);
-            if (port != null) {
-                ftpClient.connect(host, port);
-            } else {
-                ftpClient.connect(host);            
+        if (port != null) {
+            ftpClient.connect(host, port);
+        } else {
+            ftpClient.connect(host);
+        }
+        int reply = ftpClient.getReplyCode();
+        System.out.println("connect :" + reply);
+        if (StringUtils.isNotBlank(username)) {
+            if (!ftpClient.login(username, password)) {
+                System.out.println("登录失败！");
+                System.exit(-1);
             }
-            int reply = ftpClient.getReplyCode();
-            System.out.println("connect :" + reply);
-            if (StringUtils.isNotBlank(username)) {
-                if (!ftpClient.login(username, password)) {
-                    System.out.println("登录失败！");
-                    System.exit(-1);
-                }
-            }
-            ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+        }
+        ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+//        ftpClient.setControlKeepAliveTimeout(10000); 
     }
 
     @Override
@@ -96,9 +105,9 @@ public class FtpResource extends BeeResource {
             }
         }
         try {
-            if (!ftpClient.isConnected()) {
-                connect();
-            }
+//            if (!ftpClient.isConnected()) {
+//                connect();
+//            }
             InputStream is = new FileInputStream(new File(localfile));            
             ftpClient.storeFile(filename, is);
         } catch (Exception e) {
@@ -147,9 +156,9 @@ public class FtpResource extends BeeResource {
         System.out.println("ftp down:" + filename + " result:" + result + " code;" + replyCode + ftpClient.getReplyString());
         localOutputStream.flush();
         localOutputStream.close();
-        if (!longConnected) {
-            ftpClient.disconnect();
-        }
+//        if (!longConnected) {
+//            ftpClient.disconnect();
+//        }
 //        String encoding = getParam(localParam, "encoding", "GBK");
 //        String format = getParam(localParam, "format", "plant");
 //        File file = new File(localfile);
@@ -168,12 +177,27 @@ public class FtpResource extends BeeResource {
             connect();
         }
         String encoding = ResourceUtils.get(param, "encoding", "GBK");
+        System.out.println("ftp begin:" + filename);
         InputStream stream = ftpClient.retrieveFileStream(filename);
         if (stream == null) {
             System.out.println("retriveFilee:" + filename + " 可能不存在，检查是否是绝对路径 returncode:" + ftpClient.getReplyCode() + " message:" + ftpClient.getReplyString());
-            System.exit(-1);
+            return null;
+        } else {
+            return new StreamLineIterator(stream, encoding);
         }
-        return new StreamLineIterator(stream, encoding);
+    }
+    
+    @Override
+    public void afterIterate() {
+        try {
+            if(!ftpClient.completePendingCommand()) {
+                ftpClient.logout();
+                ftpClient.disconnect();
+                System.err.println("File transfer failed.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
     
     public static void main(String[] args) {

@@ -20,20 +20,31 @@ import org.shenjitang.beepasture.resource.util.ResourceUtils;
  * @author xiaolie
  */
 public class StreamLineIterator implements Iterator<Object> {
+        InputStream stream;
         BufferedReader reader;
         String line = null;
         
         public StreamLineIterator(InputStream stream, String encoding) throws FileNotFoundException, UnsupportedEncodingException {
+            this.stream = stream;
             reader = new BufferedReader(new InputStreamReader(stream, encoding));
         }
-
+        
         @Override
         public boolean hasNext() {
             try {
                 line = reader.readLine();
-                return line != null;
+                if (line == null) {
+                    stream.close();
+                    return false;
+                }
+                return true;
             } catch (Exception e) {
                 e.printStackTrace();
+                try {
+                    stream.close();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
                 return false;
             }
         }

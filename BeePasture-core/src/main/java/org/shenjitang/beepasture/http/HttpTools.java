@@ -47,6 +47,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.htmlcleaner.TagNode;
 /**
  *
  * @author xiaolie
@@ -62,6 +63,14 @@ public class HttpTools {
         httpClient.getParams().setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.BROWSER_COMPATIBILITY);
     }
     
+    public HttpTools(Boolean ssl) throws Exception {
+        if (ssl) {
+            httpClient = new SSLClient();
+        } else {
+            httpClient = new DefaultHttpClient();
+        }
+        httpClient.getParams().setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.BROWSER_COMPATIBILITY);
+    }
     public void downloadFile(String url, String dir) throws IOException {  
         HttpGet httpget = new HttpGet(url);  
         HttpResponse response = httpClient.execute(httpget);  
@@ -183,6 +192,9 @@ public class HttpTools {
                 httpget.setHeader(key.toString(), heads.get(key).toString());
             }
         }
+        if (heads == null || !heads.containsKey("User-Agent")) {
+            httpget.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:49.0) Gecko/20100101 Firefox/49.0");
+        }
         String responseBody = httpClient.execute(httpget, new ResponseHandler<String> () {
 
             @Override
@@ -253,13 +265,74 @@ public class HttpTools {
                     }
                     return out.toString(charset);
                 } else {
-                    BufferedReader reader = new BufferedReader(charset==null? new InputStreamReader(entity.getContent()): new InputStreamReader(entity.getContent(), charset));   
-                    StringBuilder sb = new StringBuilder();   
-                    String line = null;   
-                    while ((line = reader.readLine()) != null) {   
-                        sb.append(line + "/n");
+                    if (StringUtils.isBlank(charset)) {
+                        charset = encod;
                     }
-                    return sb.toString();
+                    if (StringUtils.isNotBlank(charset)) {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent(), charset));   
+                        StringBuilder sb = new StringBuilder();   
+                        String line = null;   
+                        while ((line = reader.readLine()) != null) {   
+                            sb.append(line + "/n");
+                        }
+                        return sb.toString();
+                    } else {
+                        byte[] bytes = new byte[contentLength];
+                        int off = 0;
+                        int len = contentLength < 1024?contentLength:1024;
+                        while(true) {
+                            int llen = entity.getContent().read(bytes, off, len);
+                            if (llen > 0) {
+                                off += llen;
+                            } else {
+                                break;
+                            }
+                        }
+                        String page = new String(bytes, "GBK");
+                        try {
+//                            String xpath="//head/meta[@http-equiv='Content-Type']/@content";
+//                            PageAnalyzer pageAnalyzer = new PageAnalyzer();
+//                            TagNode node = pageAnalyzer.toTagNode(page);
+//                            String tmp = pageAnalyzer.getText(node, xpath).toLowerCase();    
+//                            charset = StringUtils.substringAfterLast(tmp, "charset=");
+                            int idx = page.indexOf("charset=");
+                            String x = page.substring(idx + 8, idx + 20).toLowerCase();
+                            if (x.startsWith("\"") || x.startsWith("\'")) {
+                                x = x.substring(1);
+                            }
+//                            if (x.contains("gb")) {
+//                                return page;
+//                            } else if (x.contains("utf")) {
+//                                return new String(bytes, "utf8");
+//                            } else if (x.contains("iso-8859-1")) {
+//                                return new String(bytes, "iso-8859-1");
+//                            } else if (x.contains("big5")) {
+//                                return new String(bytes, "big5");
+//                            } else {
+//                                return page;
+//                            }
+                            if (x.indexOf("\"") > 0) {
+                                charset = x.substring(0, x.indexOf("\""));
+                            } else if (x.indexOf("\'") > 0) {
+                                charset = x.substring(0, x.indexOf("\'"));
+                            } else if (x.indexOf(" ") > 0) {
+                                charset = x.substring(0, x.indexOf(" "));
+                            } else {
+                                charset = x;
+                            }
+                            if (charset.toLowerCase().contains("gb")) {
+                                return page;
+                            } else {
+                                return new String(bytes, charset);
+                            }
+                        } catch (Exception e) {
+                            LOGGER.info("unknow charset user gbk for default " + e.getMessage());
+                            return page;
+                        }
+                    }
+                    
+//                    BufferedReader reader = new BufferedReader(charset==null? new InputStreamReader(entity.getContent()): new InputStreamReader(entity.getContent(), charset));   
+//                    StringBuilder sb = new StringBuilder();   
                 }
             }
         });
@@ -480,8 +553,8 @@ public class HttpTools {
     public static void main(String[] args) throws Exception {
         HttpTools tools = new HttpTools();
         Map head = new HashMap();
-        head.put("HOST", "www.baidu.com:443");
-        String content = tools.doSSLGet("https://www.baidu.com:443", head, "gbk");
+        head.put("HOST", "www.jd.com:443");
+        String content = tools.doSSLGet("https://www.jd.com/:443", head, "gbk");
         System.out.println(content);
     }
  

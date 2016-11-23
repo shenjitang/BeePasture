@@ -271,11 +271,16 @@ public class BeeGather {
         String[] be = s1.split("[.][.]");
         Integer begin = Integer.valueOf(be[0]);
         Integer end = Integer.valueOf(be[1]);
-        for (int i = begin; i <= end; i++ ) {
-            Map map = new HashMap();
-            map.put("i", i);
-            String r = template.expressCalcu(s2, map);
-            list.add(r);
+        if (end >= begin) {
+            for (int i = begin; i <= end; i++ ) {
+                String r = s2.replaceAll("\\$\\{i\\}", i+"");
+                list.add(r);
+            }
+        } else {
+            for (int i = begin; i >= end; i-- ) {
+                String r = s2.replaceAll("\\$\\{i\\}", i+"");
+                list.add(r);
+            }
         }
         return list;
     }
@@ -287,11 +292,16 @@ public class BeeGather {
         String[] be = s1.split("[.][.]");
         char begin = be[0].charAt(0);
         char end = be[1].charAt(0);
-        for (char i = begin; i <= end; i++ ) {
-            Map map = new HashMap();
-            map.put("i", Character.toString(i));
-            String r = template.expressCalcu(s2, map);
-            list.add(r);
+        if (end >= begin) {
+            for (char i = begin; i <= end; i++ ) {
+                String r = s2.replaceAll("\\$\\{i\\}", i+"");
+                list.add(r);
+            }
+        } else {
+            for (char i = begin; i >= end; i-- ) {
+                String r = s2.replaceAll("\\$\\{i\\}", i+"");
+                list.add(r);
+            }
         }
         return list;
     }
