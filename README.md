@@ -7,16 +7,15 @@ BeePasture-core
 ------
 命令行运行工具<br>
 用法： <br>
-		`java -jar BeePasture-core-1.0.jar webgather4.yaml` <br>
+		`java -jar BeePasture-core-1.0.jar script.yaml` <br>
 指定脚本文件的encoding <br>
-		`java -DfileEncoding=utf8 -jar BeePasture-core-1.0.jar webgather4.yaml` <br>
+		`java -DfileEncoding=utf8 -jar BeePasture-core-1.0.jar script.yaml` <br>
 指定一直执行，不退出。 <br>
-		`java -d -jar BeePasture-core-1.0.jar webgather4.yaml` <br>
+		`java -d -jar BeePasture-core-1.0.jar script.yaml` <br>
 指定调试模式执行，带控制台命令，不退出。 <br>
-		`java -Ddebug=true -jar BeePasture-core-1.0.jar webgather4.yaml` <br>
-脚本样例在`examples`目录中
-mongodb_city.yaml  
-是采集大众点评网上所有的城市的采集脚本  
+		`java -Ddebug=true -jar BeePasture-core-1.0.jar script.yaml` <br>
+脚本样例在`examples`目录中，比如：mongodb_city.yaml  \n
+这是一个采集大众点评网上所有的城市的脚本，结果存入mongodb中。  
 ``` mongodb_city
 var:
     cityUrlList: "A..Z http://www.dianping.com/ajax/json/index/citylist/getCitylist?_nr_force=${time}&do=getByPY&firstPY=${i}"
