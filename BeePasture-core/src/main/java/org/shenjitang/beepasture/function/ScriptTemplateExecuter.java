@@ -9,6 +9,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.beetl.core.Configuration;
@@ -51,6 +52,7 @@ public class ScriptTemplateExecuter {
             //}
             gt.registerFunctionPackage("sys", System.class);
             gt.registerFunctionPackage("str", StringFunctions.class);
+            gt.registerFunctionPackage("StringUtils", StringUtils.class);
             gt.registerFunction("dateAdd", new DateAddFunction());
             gt.registerFunction("smartDate", new SmartDateFunction());
             //gt.registerFunctionPackage("it", it);
@@ -96,6 +98,7 @@ public class ScriptTemplateExecuter {
         }
         gt.registerFunctionPackage("sys", System.class);
         gt.registerFunctionPackage("str", StringFunctions.class);
+        gt.registerFunctionPackage("StringUtils", StringUtils.class);
         gt.registerFunction("dateAdd", new DateAddFunction());
         //gt.registerFunctionPackage("it", it);
         for (String key : params.keySet()) {
@@ -130,6 +133,7 @@ public class ScriptTemplateExecuter {
         }
         gt.registerFunctionPackage("sys", System.class);
         gt.registerFunctionPackage("str", StringFunctions.class);
+        gt.registerFunctionPackage("StringUtils", StringUtils.class);
         gt.registerFunction("dateAdd", new DateAddFunction());
         //gt.registerFunctionPackage("it", it);
         for (String key : params.keySet()) {

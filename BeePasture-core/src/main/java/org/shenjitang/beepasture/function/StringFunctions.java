@@ -42,6 +42,10 @@ public class StringFunctions {
         return format.format(new Date());
     }
     
+    public static String substringBeforeLast(String str, String dim) {
+        return StringUtils.substringBeforeLast(str, dim);
+    }
+    
     public static String substring(String str, int beginIndex) {
         if (StringUtils.isNotEmpty(str)) {
             return str.substring(beginIndex);

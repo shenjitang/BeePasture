@@ -61,6 +61,7 @@ public class HttpTools {
     public HttpTools() {
         httpClient = new DefaultHttpClient();
         httpClient.getParams().setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.BROWSER_COMPATIBILITY);
+        httpClient.getParams().setParameter(ClientPNames.CONN_MANAGER_TIMEOUT, 10000L);
     }
     
     public HttpTools(Boolean ssl) throws Exception {
@@ -87,62 +88,10 @@ public class HttpTools {
             }  
         } finally {  
             IOUtils.closeQuietly(input);  
+            LOGGER.info("download from url=>" + url + " to file=>" + dir);
         }  
     }  
   
-    
-    public void download(String url, final String fileName) throws Exception {
-        HttpGet httpget = new HttpGet(url);
-        String responseBody = httpClient.execute(httpget, new ResponseHandler<String> () {
-            
-            @Override
-            public String handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                HttpEntity entity = response.getEntity();
-                //Header contentTypeHeader = entity.getContentType();
-                Long len = entity.getContentLength();
-                byte[] content = new byte[len.intValue()];
-                InputStream in = entity.getContent();
-                int idx = 0;
-                long begin = System.currentTimeMillis();
-                while (true) {
-                    int a = in.available();
-                    System.out.println("下载，缓存到到：" + a +" 个字节");
-                    if (a > 0) {
-                        int aa = in.read(content, idx, a);
-                        System.out.println("下载，读到：" + a +" 个字节");
-                        idx += aa;
-                        if (idx >= len) {
-                            break;
-                        } else if (System.currentTimeMillis() - begin > timeout) {
-                            System.out.println("下载超时，共下载到：" + idx+ "个字节的数据");
-                            FileUtils.writeByteArrayToFile(new File(fileName), content);
-                            throw new RuntimeException("下载超时 " +(System.currentTimeMillis() - begin) + "ms ");
-                        } else {
-                            try {
-                                Thread.sleep(50);
-                            } catch (Exception ee) {
-                                ee.printStackTrace();
-                            }
-                        }
-                    } else {
-                        if (System.currentTimeMillis() - begin > timeout) {
-                            System.out.println("下载超时，共下载到：" + idx+ "个字节的数据");
-                            throw new RuntimeException("下载超时 " +(System.currentTimeMillis() - begin) + "ms ");
-                        }
-                            try {
-                                Thread.sleep(50);
-                            } catch (Exception ee) {
-                                ee.printStackTrace();
-                            }
-                    }
-                }
-                FileUtils.writeByteArrayToFile(new File(fileName), content);
-                return null;
-            }
-
-        });
-    }
-    
     public void download2(String url, final String fileName) throws Exception {
         HttpGet httpget = new HttpGet(url);
         String responseBody = httpClient.execute(httpget, new ResponseHandler<String> () {
@@ -183,9 +132,6 @@ public class HttpTools {
 //    }
 //
     public String doGet(String url, Map heads, final String encoding) throws Exception {
-//        if (StringUtils.isBlank(encoding)) {
-//            return doGet(url, heads);
-//        }
         HttpGet httpget = new HttpGet(url);
         if (heads != null) {
             for (Object key : heads.keySet()) {
@@ -195,149 +141,69 @@ public class HttpTools {
         if (heads == null || !heads.containsKey("User-Agent")) {
             httpget.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:49.0) Gecko/20100101 Firefox/49.0");
         }
-        String responseBody = httpClient.execute(httpget, new ResponseHandler<String> () {
+        String responseBody = null;
+        responseBody = httpClient.execute(httpget, new ResponseHandler<String> () {
 
             @Override
             public String handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                HttpEntity entity = response.getEntity();
-                Header headerEncoding = entity.getContentEncoding();
-                Header[] respHeaders = response.getHeaders("Set-Cookie");
-                List<Cookie> cookies = httpClient.getCookieStore().getCookies();
-                for (Header respHeader : respHeaders) {
-                    Cookie cookie = parseSetCookie(respHeader.getValue());
-                    if (cookie != null) {
-                        boolean find = false;
-                        for (int i = 0; i < cookies.size(); i++) {
-                            Cookie c = cookies.get(i);
-                            if (c.getName().trim().equals(cookie.getName().trim())) {
-                                cookies.set(i, cookie);
-                                find = true;
-                                break;
+                String page;
+                    int status = response.getStatusLine().getStatusCode();
+                    if (status >= 200 && status < 300) {
+                        HttpEntity entity = response.getEntity();
+                        Header headerEncoding = entity.getContentEncoding();
+                        String encod =  headerEncoding==null?null:headerEncoding.getValue();
+                        if (encod == null) {
+                            Header contentType = entity.getContentType();
+                            if (contentType != null) {
+                                HeaderElement[] hes = contentType.getElements();
+                                for (HeaderElement he : hes) {
+                                    String heName = he.getName();// mime-type 比如：application/json
+                                    NameValuePair pair = he.getParameterByName("charset");
+                                    if (pair != null) {
+                                        encod = pair.getValue();
+                                    }
+                                }
                             }
                         }
-                        if (!find) {
-                            cookies.add(cookie);
+                        if (StringUtils.isBlank(encod)) {
+                            encod = encoding;
                         }
-                    }
-                }
-                httpClient.getCookieStore().clear();
-                for (Cookie c : cookies) {
-                    httpClient.getCookieStore().addCookie(c);
-                }
-                //setContext();
-                //System.out.println(headerEncoding.getName() + "=" + headerEncoding.getValue() + "      encoding=" + encoding);
-
-                String encod =  headerEncoding==null?null:headerEncoding.getValue();
-                String charset = null;
-                Header contentType = entity.getContentType();
-                if (contentType != null) {
-                    HeaderElement[] hes = contentType.getElements();
-                    for (HeaderElement he : hes) {
-                        String heName = he.getName();// mime-type 比如：application/json
-                        NameValuePair pair = he.getParameterByName("charset");
-                        if (pair != null) {
-                            charset = pair.getValue();
-                        }
-                    }
-                }
-                if (StringUtils.isBlank(charset)) {
-                    charset = encoding;
-                }
-                int contentLength;
-                Header[] cls = response.getHeaders("Content-Length");
-                if (cls.length > 0 ) {
-                    contentLength = Integer.valueOf(cls[0].getValue());
-                } else {
-                    contentLength = 1024000;
-                }
-                if ("gzip".equalsIgnoreCase(encod)) {
-                    ByteArrayOutputStream out = new ByteArrayOutputStream(contentLength);
-                    byte[] bytes = new byte[1024];
-                    int count = 0;
-                    while(true) {
-                        int size = entity.getContent().read(bytes, 0, 1024);
-                        if (size < 0) {
-                            break;
+                        if (StringUtils.isBlank(encod)) {
+                            byte[] bytes = EntityUtils.toByteArray(entity);
+                            page = new String(bytes, "GBK");
+                            try {
+                                int idx = page.indexOf("charset=");
+                                String x = page.substring(idx + 8, idx + 20).toLowerCase();
+                                if (x.startsWith("\"") || x.startsWith("\'")) {
+                                    x = x.substring(1);
+                                }
+                                if (x.indexOf("\"") > 0) {
+                                    encod = x.substring(0, x.indexOf("\""));
+                                } else if (x.indexOf("\'") > 0) {
+                                    encod = x.substring(0, x.indexOf("\'"));
+                                } else if (x.indexOf(" ") > 0) {
+                                    encod = x.substring(0, x.indexOf(" "));
+                                } else {
+                                    encod = x;
+                                }
+                                if (!encod.toLowerCase().contains("gb")) {
+                                    page = new String(bytes, encod);
+                                }
+                            } catch (Exception e) {
+                                LOGGER.info("unknow charset user gbk for default " + e.getMessage());
+                            }                            
                         } else {
-                            out.write(bytes, 0, size);   
-                            count += size;
+                            page = entity != null ? EntityUtils.toString(entity, encod) : null;
                         }
-                    }
-                    return out.toString(charset);
-                } else {
-                    if (StringUtils.isBlank(charset)) {
-                        charset = encod;
-                    }
-                    if (StringUtils.isNotBlank(charset)) {
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent(), charset));   
-                        StringBuilder sb = new StringBuilder();   
-                        String line = null;   
-                        while ((line = reader.readLine()) != null) {   
-                            sb.append(line + "/n");
-                        }
-                        return sb.toString();
+                        response.getEntity().getContent().close();
+                        return page;
                     } else {
-                        byte[] bytes = new byte[contentLength];
-                        int off = 0;
-                        int len = contentLength < 1024?contentLength:1024;
-                        while(true) {
-                            int llen = entity.getContent().read(bytes, off, len);
-                            if (llen > 0) {
-                                off += llen;
-                            } else {
-                                break;
-                            }
-                        }
-                        String page = new String(bytes, "GBK");
-                        try {
-//                            String xpath="//head/meta[@http-equiv='Content-Type']/@content";
-//                            PageAnalyzer pageAnalyzer = new PageAnalyzer();
-//                            TagNode node = pageAnalyzer.toTagNode(page);
-//                            String tmp = pageAnalyzer.getText(node, xpath).toLowerCase();    
-//                            charset = StringUtils.substringAfterLast(tmp, "charset=");
-                            int idx = page.indexOf("charset=");
-                            String x = page.substring(idx + 8, idx + 20).toLowerCase();
-                            if (x.startsWith("\"") || x.startsWith("\'")) {
-                                x = x.substring(1);
-                            }
-//                            if (x.contains("gb")) {
-//                                return page;
-//                            } else if (x.contains("utf")) {
-//                                return new String(bytes, "utf8");
-//                            } else if (x.contains("iso-8859-1")) {
-//                                return new String(bytes, "iso-8859-1");
-//                            } else if (x.contains("big5")) {
-//                                return new String(bytes, "big5");
-//                            } else {
-//                                return page;
-//                            }
-                            if (x.indexOf("\"") > 0) {
-                                charset = x.substring(0, x.indexOf("\""));
-                            } else if (x.indexOf("\'") > 0) {
-                                charset = x.substring(0, x.indexOf("\'"));
-                            } else if (x.indexOf(" ") > 0) {
-                                charset = x.substring(0, x.indexOf(" "));
-                            } else {
-                                charset = x;
-                            }
-                            if (charset.toLowerCase().contains("gb")) {
-                                return page;
-                            } else {
-                                return new String(bytes, charset);
-                            }
-                        } catch (Exception e) {
-                            LOGGER.info("unknow charset user gbk for default " + e.getMessage());
-                            return page;
-                        }
+                        throw new ClientProtocolException("Unexpected response status: " + status);
                     }
-                    
-//                    BufferedReader reader = new BufferedReader(charset==null? new InputStreamReader(entity.getContent()): new InputStreamReader(entity.getContent(), charset));   
-//                    StringBuilder sb = new StringBuilder();   
-                }
             }
         });
         return responseBody;
-    }
+    }    
     
     public String doGZipGet(String url) throws Exception {
         try {

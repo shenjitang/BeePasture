@@ -5,13 +5,14 @@
  */
 package org.shenjitang.beepasture.resource;
 
+import java.io.IOException;
+import java.nio.CharBuffer;
 import java.util.Iterator;
 import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.plexus.util.StringUtils;
 import org.shenjitang.beepasture.core.BeeGather;
-import org.shenjitang.beepasture.function.ScriptTemplateExecuter;
 import org.shenjitang.beepasture.http.HttpTools;
 
 
@@ -19,10 +20,18 @@ import org.shenjitang.beepasture.http.HttpTools;
  *
  * @author xiaolie
  */
-public class HttpResource extends BeeResource {
+public class HttpResource extends BeeResource implements Runnable {
     protected static final Log LOGGER = LogFactory.getLog(HttpResource.class);
     //private ScriptTemplateExecuter template = new ScriptTemplateExecuter();
     protected HttpTools httpTools;
+    protected long count;
+    protected long RENEWHTTPTOOLS_COUNT = 100L;
+    protected Thread httpThread;
+    protected Map loadParam;
+    protected volatile boolean startRun = false; 
+    protected Object result;
+    protected long timeout = 60000L;
+    protected static long threadCount = 0;
     
     public HttpResource() {
         httpTools = new HttpTools();
@@ -40,6 +49,18 @@ public class HttpResource extends BeeResource {
 
     @Override
     public Object loadResource(Map loadParam) throws Exception {
+        this.loadParam = loadParam;
+        startThread();
+        return waiteForResult(timeout);
+        
+    }
+
+    private Object loadResource() throws Exception {
+        ++count;
+//        if (++count % RENEWHTTPTOOLS_COUNT == 0L) {
+//            LOGGER.info("renew httptool count=" + count);
+//            httpTools = new HttpTools();
+//        }
         Object withVarCurrent = loadParam.get("withVarCurrent");
         String charset = (String)loadParam.get("charset");
         Map heads = (Map) loadParam.get("head");
@@ -70,11 +91,13 @@ public class HttpResource extends BeeResource {
             String page = null;
             String postBody = (String) loadParam.get("post");
             if (org.apache.commons.lang3.StringUtils.isNotBlank(postBody)) {
+                LOGGER.info("=> POST " + url);
                 page = httpTools.doPost((String) url, postBody, heads);
-                LOGGER.info("POST " + url + "\n" + page);
+                LOGGER.debug("POST " + url + "\n" + page);
             } else {
+                LOGGER.info("=> GET " + url);
                 page = httpTools.doGet((String) url, heads, charset);
-                LOGGER.info("GET " + url + "\n" + page);
+                LOGGER.debug("GET " + url + " finish  " + (page == null ? "null" : (page.length() > 50 ? page.substring(0, 40) + "   ......" : page)));
             }
             return page;
         }
@@ -99,5 +122,53 @@ public class HttpResource extends BeeResource {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    
+    @Override
+    public void run() {
+            try {
+                result = loadResource();
+            } catch (Throwable th) {
+                LOGGER.warn("", th);
+            } finally {
+                startRun = false;
+                synchronized(this) {
+                    this.notify();
+                }
+            }
+    }
+
+    private Object waiteForResult(Long timeout) {
+        long beginTime = System.currentTimeMillis();
+        while(System.currentTimeMillis() - beginTime < timeout) {
+            if (startRun) {
+                synchronized (this) {
+                    try {
+                        this.wait(1000);
+                    } catch (InterruptedException e) {
+                        LOGGER.info("waiteForResult interrupted! " + e.toString());
+                    }
+                }
+            } else {
+                return result;
+            }
+        }
+        LOGGER.warn("http get timeout!!!, interrupt thread: " + httpThread.getName());
+        try {
+            httpThread.interrupt();
+        } catch (Exception e) {
+            LOGGER.warn("httpThread.interrupt", e);
+        }
+        try {    Thread.sleep(1000L);} catch (InterruptedException i){}
+        //startThread();
+        //startRun = false;
+        //httpTools = new HttpTools();
+        return null;
+    }
+
+    private void startThread() {
+        startRun = true;
+        httpTools = new HttpTools();
+        httpThread = new Thread(this, "httpResource-thread-" + threadCount++);
+        httpThread.setDaemon(true);
+        httpThread.start();
+    }
 }

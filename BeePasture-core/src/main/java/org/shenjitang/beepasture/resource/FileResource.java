@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.codehaus.plexus.util.StringUtils;
@@ -37,6 +38,7 @@ import org.shenjitang.commons.csv.CSVUtils;
  */
 public class FileResource extends BeeResource {
     protected File file;
+    protected String fileName;
     static SerializeConfig mapping = new SerializeConfig();
 
     public FileResource() {
@@ -45,11 +47,11 @@ public class FileResource extends BeeResource {
     @Override
     public void init(String url, Map param) throws Exception {
         super.init(url, param); //To change body of generated methods, choose Tools | Templates.
-        String fileName = uri.getAuthority() + uri.getPath();
-        if (fileName == null) {
-            fileName = uri.getSchemeSpecificPart();
+        this.fileName = uri.getAuthority() + uri.getPath();
+        if (this.fileName == null) {
+            this.fileName = uri.getSchemeSpecificPart();
         }
-        file = new File(fileName);
+        file = new File(this.fileName);
 //        String query  = uri.getQuery();
 //        if (StringUtils.isNotBlank(query)) {
 //            List<NameValuePair> queryPair = URLEncodedUtils.parse(query, Charset.forName("UTF-8"));
@@ -72,6 +74,13 @@ public class FileResource extends BeeResource {
             String format = ResourceUtils.get(allParam, "format", "plant");
             String dataFormat = ResourceUtils.get(allParam, "dataFormat", "yyyy-MM-dd HH:mm:ss");
             LOGGER.info("save var:" + varName + " to file:" + file.getAbsolutePath());
+            String path =  FilenameUtils.getPathNoEndSeparator(this.fileName);
+            if (StringUtils.isNotBlank(path)) {
+                File dir = new File(path);
+                if (!dir.exists()) {
+                    FileUtils.forceMkdir(dir);
+                }
+            }
             if ("yaml".equalsIgnoreCase(format)) {
                 String content = Yaml.dump(obj);
                 FileUtils.write(file, content, encoding);
