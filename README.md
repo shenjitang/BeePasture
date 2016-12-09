@@ -7,16 +7,15 @@ BeePasture-core
 ------
 命令行运行工具<br>
 用法： <br>
-		`java -jar BeePasture-core-1.0.jar webgather4.yaml` <br>
+		`java -jar BeePasture-core-1.0.jar script.yaml` <br>
 指定脚本文件的encoding <br>
-		`java -DfileEncoding=utf8 -jar BeePasture-core-1.0.jar webgather4.yaml` <br>
+		`java -DfileEncoding=utf8 -jar BeePasture-core-1.0.jar script.yaml` <br>
 指定一直执行，不退出。 <br>
-		`java -d -jar BeePasture-core-1.0.jar webgather4.yaml` <br>
+		`java -d -jar BeePasture-core-1.0.jar script.yaml` <br>
 指定调试模式执行，带控制台命令，不退出。 <br>
-		`java -Ddebug=true -jar BeePasture-core-1.0.jar webgather4.yaml` <br>
-脚本样例在`examples`目录中
-mongodb_city.yaml  
-是采集大众点评网上所有的城市的采集脚本  
+		`java -Ddebug=true -jar BeePasture-core-1.0.jar script.yaml` <br>
+脚本样例在`examples`目录中，比如：mongodb_city.yaml  \n
+这是一个采集大众点评网上所有的城市的脚本，结果存入mongodb中。  
 ``` mongodb_city
 var:
     cityUrlList: "A..Z http://www.dianping.com/ajax/json/index/citylist/getCitylist?_nr_force=${time}&do=getByPY&firstPY=${i}"
@@ -148,6 +147,10 @@ h3. gather命令结构
 	* Map query(String str)  得到url中的参数对，比如要得到url中page参数: ${str.query(_this)["page"]}
 	* String regex(String str, String regex, int n)
 	* String regex(String str, String regex)
+
+BeePasture-camel
+------
+是异步执行的版本，是以流的方式执行，flow关键字下面的所有步骤都是单独线程同时执行的，就行工厂里的流水线一样。这个工具可以一次性执行。也可以作为demo进程提供服务，比如监听mq的topic，然后通过步骤执行业务逻辑。
 
 BeePasture-grizzly2
 ------
