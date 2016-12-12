@@ -30,6 +30,7 @@ import org.shenjitang.beepasture.http.PageAnalyzer;
 import org.shenjitang.beepasture.resource.BeeResource;
 import org.shenjitang.beepasture.resource.ResourceMng;
 import org.shenjitang.beepasture.resource.util.ResourceUtils;
+import org.shenjitang.beepasture.util.ParseUtils;
 import org.shenjitang.commons.csv.CSVUtils;
 
 /**
@@ -85,7 +86,7 @@ public class GatherStep {
     }
 
     public void execute() throws Exception {
-        rurl = maybeScript(rurl) ? doScript(rurl): rurl;
+        rurl = ParseUtils.maybeScript(rurl) ? doScript(rurl): rurl;
         List urls;
         if (withVar != null) {
             urls = withVar;
@@ -129,7 +130,7 @@ public class GatherStep {
             Object page = ourl;
             Boolean direct = ResourceUtils.get(step, "direct", false);
             if (!direct) {
-                if (maybeScript(ourl)) {
+                if (ParseUtils.maybeScript(ourl)) {
                     ourl = template.expressCalcu((String) ourl, beeGather.getVars());
                 } else if (ourl instanceof File) {
                     ourl = "file://" + ((File)ourl).getAbsolutePath();
@@ -146,7 +147,7 @@ public class GatherStep {
                 }
             }
             templateParamMap.put("_page", page);
-            List pages = toList(page);
+            List pages = ParseUtils.toList(page);
             try {
                 List extractList = (List)step.get("extract");
                 if (extractList != null) {
@@ -174,7 +175,7 @@ public class GatherStep {
     
     public void onceFlow(Object ourl) {
         try {
-            if (maybeScript(ourl)) {
+            if (ParseUtils.maybeScript(ourl)) {
                 ourl = template.expressCalcu((String) ourl, beeGather.getVars());
             } else if (ourl instanceof File) {
                 ourl = "file://" + ((File) ourl).getAbsolutePath();
@@ -194,7 +195,7 @@ public class GatherStep {
                         while(ite.hasNext()) {
                             Object page = ite.next();
                             templateParamMap.put("_page", page);
-                            List pages = toList(page);
+                            List pages = ParseUtils.toList(page);
                             List extractList = (List)step.get("extract");
                             if (extractList != null) {
                                 for (Object extract : extractList) {
@@ -259,9 +260,6 @@ public class GatherStep {
         return beeResource.loadResource(getLoadParam());
     }
     
-    public boolean maybeScript(Object str) {
-        return str != null && str instanceof String && str.toString().contains("${");
-    }
     
     /**
      * 對url中取得的內容做xpath處理。
@@ -371,15 +369,6 @@ public class GatherStep {
         return rlist;
     }   
         
-    public static List toList(Object page) {
-        if (page instanceof List) {
-            return (List) page;
-        } else {
-            List pages = new ArrayList();
-            pages.add(page);
-            return pages;
-        }
-    }
     
     public List doJavaScript(List pages, String ascript) {
         if (StringUtils.isBlank(ascript)) {
@@ -582,51 +571,10 @@ public class GatherStep {
         }
     }
     
-//    public List doFilterRegex(List obj, String regex) {
-//        List resList = new ArrayList();
-//        Pattern pattern = Pattern.compile(regex);
-//        for (Object page : (List) obj) {
-//            Matcher matcher = pattern.matcher(page.toString());
-//            if (matcher.find()) {
-//                resList.add(page);
-//                //System.out.print("+");
-//            } else {
-//                //System.out.print("-");
-//            }
-//        }
-//        return resList;
-//    }
-//    
-//    public List doFilterScript(List obj, String filterStr) {
-//        if (StringUtils.isBlank(filterStr)) {
-//            return obj;
-//        }
-//        List resList = new ArrayList();
-//        if (obj instanceof List) {
-//            for (Object page : (List)obj) {
-//                if (doFilterOnce("script", filterStr, page)) {
-//                    resList.add(page);
-//                }
-//            }
-//        } else {
-//            if (doFilterOnce("script", filterStr, obj)) {
-//                resList.add(obj);
-//            }
-//        }
-//        return resList;
-//    }
-//    
     protected List extract(Map extract, List pages) {
         for (Object key: extract.keySet()) {
             if ("filter".equalsIgnoreCase(key.toString())) {
                 return (List)doFilter(pages, extract.get(key));
-//                List resList = new ArrayList();
-//                for (Object page : pages) {
-//                    if (doFilterOnce((String)extract.get(key), page)) {
-//                        resList.add(page);
-//                    }
-//                }
-//                return resList;
             } else if ("xpath".equalsIgnoreCase(key.toString())) {
                 return doXpath(pages, (String)extract.get(key));
             } else if ("jsonpath".equalsIgnoreCase(key.toString())) {
@@ -705,7 +653,7 @@ public class GatherStep {
             for (int i = 0; i < ((List)obj).size(); i++) {
                 Object o = ((List)obj).get(i);
                 if (o instanceof String) {
-                    if (maybeScript((String)o)) {
+                    if (ParseUtils.maybeScript((String)o)) {
                         ((List)obj).remove(i);
                         String v = doScript((String)obj);
                         ((List)obj).add(i, v);
@@ -719,7 +667,7 @@ public class GatherStep {
                 }
             }
         } else if (obj instanceof String) { //string
-            if (maybeScript((String)obj)) {
+            if (ParseUtils.maybeScript((String)obj)) {
                 String v = doScript((String)obj);
                 parent.put(key, v);
             }
@@ -765,24 +713,6 @@ public class GatherStep {
             toMap.putAll((Map)srcTo);
         }
         return toMap;
-        
-//        Object to = save.get("to");
-//        if (to == null) {
-//            toMap.put("to", "camel");
-//        } else if (to instanceof String) {
-//            String toStr = (String)save.get("to");
-//            if (StringUtils.isNotBlank(toStr)) {
-//                toMap.put("to", toStr);
-//            } else {
-//                toMap.put("to", "camel");
-//            }
-//        } else {
-//            return (Map)srcTo;
-//        }
-//        if (srcTo instanceof Map) {
-//            toMap.putAll(srcTo);
-//        }
-//        return toMap;
     }
     
     public void save(List pages, Object ourl) {
@@ -802,12 +732,18 @@ public class GatherStep {
     }
     
     protected void save(Map saveDefMap, List pages, Object ourl) {
+        if (pages.isEmpty()) return;
         pages = setProperties(pages, ourl, (Map)saveDefMap.get("property"));
         String varName = doScript((String)saveDefMap.get("var"));
         String resourceName = doScript((String)saveDefMap.get("resource"));
         String endpoint = doScript((String)saveDefMap.get("endpoint"));
         String toName = doScript((String)saveDefMap.get("to"));
         String filterExpress = (String)saveDefMap.get("filter");
+        if ("_this".equalsIgnoreCase(varName) || "_this".equalsIgnoreCase(toName)) {
+            Map page = (Map)pages.get(pages.size() - 1);
+            ((Map)withVarCurrent).putAll(page);
+            return;
+        }
         BeeResource resource = null;
         List var = null;
         if (StringUtils.isNotBlank(varName)) {
@@ -835,28 +771,7 @@ public class GatherStep {
             if (StringUtils.isNotBlank(endpoint)) {
                 saveToResource("camel", page, ourl, saveDefMap);
             }
-        }
-        
-//        for (Object page : pages) {
-//            removeProperties(page);
-//            if (StringUtils.isNotBlank(filterExpress) && !doFilterOnce("script", filterExpress, page)) {
-//                continue;
-//            }
-//            if (StringUtils.isNotBlank(varName)) {
-//                smartSaveTo(varName, page, ourl, saveDefMap);
-//            } else {
-//                if (StringUtils.isNotBlank(resourceName)) {
-//                    resourceName = doScript(resourceName, page);
-//                    saveToResource(resourceName, page, ourl, saveDefMap);
-//                } else {
-//                    if (StringUtils.isNotBlank(toName)) {
-//                        smartSaveTo(toName, page, ourl, saveDefMap);
-//                    } else if (saveDefMap.containsKey("endpoint")) {
-//                        saveToResource("camel", page, ourl, saveDefMap);                        
-//                    }
-//                }
-//            }
-//        }
+        }       
     }
     
     protected void saveToVar(String varName, Object page, Object ourl) {
@@ -876,16 +791,6 @@ public class GatherStep {
             resource.persist("it", page, saveDefMap);
         } else {
            throw new RuntimeException("can not find resource: " + name);
-        }
-    }
-    
-    protected void smartSaveTo(String name, Object page, Object ourl, Map saveDefMap) {
-        BeeResource resource = beeGather.getResourceMng().getResource(name);
-        if (resource != null) {
-            beeGather.getVars().remove(name);
-            resource.persist(null, page, saveDefMap);
-        } else {
-           saveToVar(name, page, ourl);
         }
     }
     
@@ -911,7 +816,7 @@ public class GatherStep {
     }
 
     public String doScript(String script) {
-        if (maybeScript(script)) {
+        if (ParseUtils.maybeScript(script)) {
             return template.expressCalcu(script, templateParamMap);
         }
         return script;
@@ -919,7 +824,7 @@ public class GatherStep {
     
     public String doScript(String script, Object it) {
         templateParamMap.put("it", it);
-        if (maybeScript(script)) {
+        if (ParseUtils.maybeScript(script)) {
             return template.expressCalcu(script, templateParamMap);
         }
         return script;
@@ -1128,7 +1033,7 @@ public class GatherStep {
 //                                }
                             }
                             if (StringUtils.isNotBlank(ov.toString())) {
-                                ov = sdf.parse(correctDateStr(ov.toString()));
+                                ov = sdf.parse(ParseUtils.correctDateStr(ov.toString()));
                             } else {
                                 ov = null;
                             }
@@ -1233,38 +1138,7 @@ public class GatherStep {
         return templateParamMap;
     }
 
-    public static String correctDateStr(String str) {
-        StringBuilder sb = new StringBuilder();
-        int numCount = 0;
-        for (int i = 0; i < str.length(); i++) {
-            char c = str.charAt(i);
-            if (c >= '0' && c <= '9') { //是数字
-                numCount++;
-            } else { //是字符
-                if (numCount == 1) {
-                    sb.insert(sb.length() - 1, '0');
-                }
-                numCount = 0;
-            }
-            sb.append(c);
-        }
-        if (numCount == 1) {
-            sb.insert(sb.length() - 1, '0');
-        }
-        return sb.toString();
-    }
-    
-    public static void main(String[] args) throws Exception {
-        /*
-        System.out.println(correctDateStr("2013-7-23 8:12:5"));
-        System.out.println(correctDateStr("a2013-7-23 8:12:5"));
-        System.out.println(correctDateStr("a2013-7-23 8:12:5b"));
-         System.out.println(correctDateStr("a2013-7-23 8:12:53b"));
-        SimpleDateFormat format = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z", Locale.ENGLISH);
-        Date d = format.parse(correctDateStr("05/Aug/2016:03:00:28 +0800"));
-        System.out.println(d);
-*/
-    }
+
 
     private Map unmarshal(Object page, Map get) {
         String type = (String) get.get("type");
