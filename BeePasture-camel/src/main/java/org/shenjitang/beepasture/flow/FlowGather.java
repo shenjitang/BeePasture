@@ -161,7 +161,7 @@ public class FlowGather extends BeeGather {
         LOGGER.debug("Thread: " + th.getName() + " started.");
     }
 
-    private void doProcess(final Map processMap, final Object body, final Map<String, Object> headers) {
+    private void doProcess(final Map processMap, final Object body, final Map<String, Object> headers) throws Exception{
         GatherStep gatherStep = new GatherStep(processMap);
         gatherStep.onceGather(body);
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -207,7 +207,6 @@ public class FlowGather extends BeeGather {
                 }
             } else {
                 flowGather.exit();
-                Thread.sleep(1000L);
             }
         } catch (FileNotFoundException e) {
             MAIN_LOGGER.warn(fileName + " not exist 文件不存在！");

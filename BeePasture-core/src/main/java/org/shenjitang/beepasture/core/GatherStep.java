@@ -17,8 +17,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -50,7 +48,7 @@ public class GatherStep {
     protected List withVar;
     protected Object withVarCurrent;
     protected Long count = 0L;
-    protected final String rurl; //yaml中url的值（脚本中的源句）
+    protected String rurl; //yaml中url的值（脚本中的源句）
     protected final Long limit;
     protected final Map save;
     protected Object xpath;
@@ -63,7 +61,6 @@ public class GatherStep {
     public GatherStep(Map step) {
         pageAnalyzer = new PageAnalyzer();
         this.rStep = step;
-        //this.step = step;
         this.beeGather = BeeGather.getInstance();
         String withVarName = (String) getValue(step, "with", (String) null);
         if (StringUtils.isNotBlank(withVarName)) {
@@ -82,8 +79,13 @@ public class GatherStep {
         }
         script = beeGather.getScript(rStep);
     }
+    
+    public String changeValueFromObj(String value, Object obj) {
+        return obj instanceof Map && ((Map)obj).containsKey(value) ? (String)((Map)obj).get(value) : value;
+    }
 
     public void execute() throws Exception {
+        rurl = maybeScript(rurl) ? doScript(rurl): rurl;
         List urls;
         if (withVar != null) {
             urls = withVar;
@@ -91,30 +93,139 @@ public class GatherStep {
             urls = getUrlsFromStepUrl(rurl, rStep); 
         }
         for (Object ourl : urls) {
-            if (ourl instanceof Map) {
-                if (oXpath != null && oXpath instanceof String) {
-                    String xpathFieldValue = (String)((Map)ourl).get(oXpath);
-                    if (xpathFieldValue != null) {
-                        xpath = xpathFieldValue;
-                    }
-                }
+            activeTime = System.currentTimeMillis();
+            withVarCurrent = ourl;
+            templateParamMap.put("_this", ourl);
+            if (withVar != null) {
+                templateParamMap.put("_with", ourl);
+                ourl = ((Map) ourl).get(rurl);            
             }
+            templateParamMap.put("it", ourl);
+            step = (Map)cloneMap(rStep);
+            beforeGatherExpressCalcu("download", "sql");
+            if (withVar != null) {
+                step.put("withVarCurrent", withVarCurrent);
+            }            
             if (rStep.containsKey("iterator")) {
-               onceFlow(ourl); 
+                onceFlow(ourl); 
             } else {
-                if (rStep.containsKey("exit")) {
-                    sleep();
-                    Integer code = (Integer)rStep.get("exit");
-                    System.exit(code);
-                }
                 onceGather(ourl);
                 sleep();
             }
             if (limit != null && ++count >= limit) {
                 break;
             }
+            activeTime = System.currentTimeMillis();
         }
     }
+
+    /**
+     * 做一次gather.
+     * @param ourl 将rurl转换成需要处理的列表后的一条url，如果有withVar就是withVar的第一条。
+     */
+    public void onceGather(Object ourl) throws Exception {
+
+        try {
+            Object page = ourl;
+            Boolean direct = ResourceUtils.get(step, "direct", false);
+            if (!direct) {
+                if (maybeScript(ourl)) {
+                    ourl = template.expressCalcu((String) ourl, beeGather.getVars());
+                } else if (ourl instanceof File) {
+                    ourl = "file://" + ((File)ourl).getAbsolutePath();
+                }
+                //templateParamMap.put("_this", ourl);
+                if (ourl instanceof String) {
+                    if (beeGather.containsResource((String)ourl) || ResourceMng.maybeResource(ourl.toString())) {
+                        try {
+                            page = loadResource((String)ourl);
+                        } catch (Exception e) {
+                            LOGGER.warn("unknown resource:" + ourl, e);
+                        }
+                    }
+                }
+            }
+            templateParamMap.put("_page", page);
+            List pages = toList(page);
+            try {
+                List extractList = (List)step.get("extract");
+                if (extractList != null) {
+                    for (Object extract : extractList) {
+                        pages = extract((Map)extract, pages);
+                        GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
+                    }
+                }
+            } catch (ClassCastException e) {
+                throw new RuntimeException("关键字extract的值必须是数组，不可以是map或别的类型！", e);
+            }
+            pages = doFilter(pages, step.get("filter"));
+            pages = doXpath(pages);
+            pages = doRegex(pages, step.get("regex"));
+            pages = doScript(pages, changeValueFromObj(script, ourl));
+            pages = doJavaScript(pages, (String) step.get("javascript"));
+            pages = doMarshal(pages, (Map)step.get("marshal"));
+            pages = doUnmarshal(pages, (Map)step.get("unmarshal"));
+            //pages = setProperties(pages, ourl);
+            save(pages, ourl);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void onceFlow(Object ourl) {
+        try {
+            if (maybeScript(ourl)) {
+                ourl = template.expressCalcu((String) ourl, beeGather.getVars());
+            } else if (ourl instanceof File) {
+                ourl = "file://" + ((File) ourl).getAbsolutePath();
+            }
+            templateParamMap.put("_this", ourl);
+            if (ourl instanceof String) {
+                String url = (String)ourl;
+                if (beeGather.containsResource(url) || ResourceMng.maybeResource(url)) {
+                    try {
+                        Map loadParam = getLoadParam();
+                        BeeResource beeResource = beeGather.getResourceMng().getResource(url);
+                        Iterator ite = beeResource.iterate(loadParam);
+                        if (ite == null) {
+                            MAIN_LOGGER.warn("skip " + url + "    cause: not find resource");
+                            return;
+                        }
+                        while(ite.hasNext()) {
+                            Object page = ite.next();
+                            templateParamMap.put("_page", page);
+                            List pages = toList(page);
+                            List extractList = (List)step.get("extract");
+                            if (extractList != null) {
+                                for (Object extract : extractList) {
+                                    pages = extract((Map)extract, pages);
+                                    GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
+                                }
+                            }
+                            pages = doFilter(pages, step.get("filter"));
+                            pages = doXpath(pages);
+                            pages = doRegex(pages, step.get("regex"));
+                            pages = doScript(pages, changeValueFromObj(script, ourl));
+                            pages = doJavaScript(pages, (String) step.get("javascript"));
+                            pages = doMarshal(pages, (Map)step.get("marshal"));
+                            pages = doUnmarshal(pages, (Map)step.get("unmarshal"));
+                            //pages = setProperties(pages, ourl);
+                            save(pages, ourl);
+                        }
+                        beeResource.afterIterate();
+                    } catch (Exception e) {
+                        LOGGER.warn("unknown resource:" + ourl, e);
+                    }
+                } else {
+                    LOGGER.warn("url->flow the url mast be resource! not cuttent this url:" + ourl);
+                }
+            } else {
+                LOGGER.warn("url->flow the url mast be resource! not cuttent this url:" + ourl);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }    
     
     protected List getUrlsFromStepUrl(String url, Map step) throws Exception {
         List urls = null;
@@ -149,7 +260,7 @@ public class GatherStep {
     }
     
     public boolean maybeScript(Object str) {
-        return str instanceof String && str.toString().contains("${");
+        return str != null && str instanceof String && str.toString().contains("${");
     }
     
     /**
@@ -615,139 +726,6 @@ public class GatherStep {
         }
     }
     
-    /**
-     * 做一次gather.
-     * @param ourl 将rurl转换成需要处理的列表后的一条url，如果有withVar就是withVar的第一条。
-     */
-    public void onceGather(Object ourl) throws Exception {
-        activeTime = System.currentTimeMillis();
-        withVarCurrent = ourl;
-        templateParamMap.put("_this", ourl);
-        if (withVar != null) {
-            templateParamMap.put("_with", ourl);
-            ourl = ((Map) ourl).get(rurl);            
-        }
-        templateParamMap.put("it", ourl);
-        step = (Map)cloneMap(rStep);
-        beforeGatherExpressCalcu("download", "sql");
-        //templateParamMap.putAll(beeGather.getVars());
-        if (withVar != null) {
-            step.put("withVarCurrent", withVarCurrent);
-        }
-        try {
-            Object page = ourl;
-            Boolean direct = ResourceUtils.get(step, "direct", false);
-            if (!direct) {
-                if (maybeScript(ourl)) {
-                    ourl = template.expressCalcu((String) ourl, beeGather.getVars());
-                } else if (ourl instanceof File) {
-                    ourl = "file://" + ((File)ourl).getAbsolutePath();
-                }
-                //templateParamMap.put("_this", ourl);
-                if (ourl instanceof String) {
-                    if (beeGather.containsResource((String)ourl) || ResourceMng.maybeResource(ourl.toString())) {
-                        try {
-                            page = loadResource((String)ourl);
-                        } catch (Exception e) {
-                            LOGGER.warn("unknown resource:" + ourl, e);
-                        }
-                    }
-                }
-            }
-            templateParamMap.put("_page", page);
-            List pages = toList(page);
-            try {
-                List extractList = (List)step.get("extract");
-                if (extractList != null) {
-                    for (Object extract : extractList) {
-                        pages = extract((Map)extract, pages);
-                        GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
-                    }
-                }
-            } catch (ClassCastException e) {
-                throw new RuntimeException("关键字extract的值必须是数组，不可以是map或别的类型！", e);
-            }
-            pages = doFilter(pages, step.get("filter"));
-            pages = doXpath(pages);
-            pages = doRegex(pages, step.get("regex"));
-            pages = doScript(pages, script);
-            pages = doJavaScript(pages, (String) step.get("javascript"));
-            pages = doMarshal(pages, (Map)step.get("marshal"));
-            pages = doUnmarshal(pages, (Map)step.get("unmarshal"));
-            //pages = setProperties(pages, ourl);
-            save(pages, ourl);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        activeTime = System.currentTimeMillis();
-    }
-    
-    public void onceFlow(Object ourl) {
-        try {
-            withVarCurrent = ourl;
-            templateParamMap.put("_this", ourl);
-            if (withVar != null) {
-                templateParamMap.put("_with", ourl);
-                ourl = ((Map) ourl).get(rurl);
-            }
-            templateParamMap.put("it", ourl);
-            step = cloneMap(rStep);
-            beforeGatherExpressCalcu("download", "sql");
-            if (withVar != null) {
-                step.put("withVarCurrent", withVarCurrent);
-            }
-            if (maybeScript(ourl)) {
-                ourl = template.expressCalcu((String) ourl, beeGather.getVars());
-            } else if (ourl instanceof File) {
-                ourl = "file://" + ((File) ourl).getAbsolutePath();
-            }
-            templateParamMap.put("_this", ourl);
-            if (ourl instanceof String) {
-                String url = (String)ourl;
-                if (beeGather.containsResource(url) || ResourceMng.maybeResource(url)) {
-                    try {
-                        Map loadParam = getLoadParam();
-                        BeeResource beeResource = beeGather.getResourceMng().getResource(url);
-                        Iterator ite = beeResource.iterate(loadParam);
-                        if (ite == null) {
-                            MAIN_LOGGER.warn("skip " + url + "    cause: not find resource");
-                            return;
-                        }
-                        while(ite.hasNext()) {
-                            Object page = ite.next();
-                            templateParamMap.put("_page", page);
-                            List pages = toList(page);
-                            List extractList = (List)step.get("extract");
-                            if (extractList != null) {
-                                for (Object extract : extractList) {
-                                    pages = extract((Map)extract, pages);
-                                    GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
-                                }
-                            }
-                            pages = doFilter(pages, step.get("filter"));
-                            pages = doXpath(pages);
-                            pages = doRegex(pages, step.get("regex"));
-                            pages = doScript(pages, script);
-                            pages = doJavaScript(pages, (String) step.get("javascript"));
-                            pages = doMarshal(pages, (Map)step.get("marshal"));
-                            pages = doUnmarshal(pages, (Map)step.get("unmarshal"));
-                            //pages = setProperties(pages, ourl);
-                            save(pages, ourl);
-                        }
-                        beeResource.afterIterate();
-                    } catch (Exception e) {
-                        LOGGER.warn("unknown resource:" + ourl, e);
-                    }
-                } else {
-                    LOGGER.warn("url->flow the url mast be resource! not cuttent this url:" + ourl);
-                }
-            } else {
-                LOGGER.warn("url->flow the url mast be resource! not cuttent this url:" + ourl);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }    
 
     public Object doScript(Object it, Object page, Object ourl) throws Exception {
         if (it == null) {
@@ -825,34 +803,64 @@ public class GatherStep {
     
     protected void save(Map saveDefMap, List pages, Object ourl) {
         pages = setProperties(pages, ourl, (Map)saveDefMap.get("property"));
+        String varName = doScript((String)saveDefMap.get("var"));
+        String resourceName = doScript((String)saveDefMap.get("resource"));
+        String endpoint = doScript((String)saveDefMap.get("endpoint"));
+        String toName = doScript((String)saveDefMap.get("to"));
+        String filterExpress = (String)saveDefMap.get("filter");
+        BeeResource resource = null;
+        List var = null;
+        if (StringUtils.isNotBlank(varName)) {
+            var = beeGather.getVar(varName);
+        } else if (StringUtils.isNotBlank(toName)){
+            resource = beeGather.getResourceMng().getResource(toName);
+            if (resource == null) {
+                var = beeGather.getVar(toName);
+            }
+        }
+        if (StringUtils.isNotBlank(resourceName)) {
+            resource = beeGather.getResourceMng().getResource(resourceName);
+        }
         for (Object page : pages) {
             removeProperties(page);
-            String filterExpress = (String)saveDefMap.get("filter");
             if (StringUtils.isNotBlank(filterExpress) && !doFilterOnce("script", filterExpress, page)) {
                 continue;
             }
-            String varName = (String)saveDefMap.get("var");
-            if (StringUtils.isNotBlank(varName)) {
-                smartSaveTo(varName, page, ourl, saveDefMap);
-            } else {
-                String resourceName = (String)saveDefMap.get("resource");
-                if (StringUtils.isNotBlank(resourceName)) {
-                    resourceName = doScript(resourceName, page);
-                    saveToResource(resourceName, page, ourl, saveDefMap);
-                } else {
-                    String name = (String)saveDefMap.get("to");
-                    if (StringUtils.isNotBlank(name)) {
-                        smartSaveTo(name, page, ourl, saveDefMap);
-                    } else if (saveDefMap.containsKey("endpoint")) {
-                        saveToResource("camel", page, ourl, saveDefMap);                        
-                    }
-                }
+            if (var != null) {
+                var.add(page);
+            }
+            if (resource != null) {
+                saveToResource(resourceName, page, ourl, saveDefMap);
+            }
+            if (StringUtils.isNotBlank(endpoint)) {
+                saveToResource("camel", page, ourl, saveDefMap);
             }
         }
+        
+//        for (Object page : pages) {
+//            removeProperties(page);
+//            if (StringUtils.isNotBlank(filterExpress) && !doFilterOnce("script", filterExpress, page)) {
+//                continue;
+//            }
+//            if (StringUtils.isNotBlank(varName)) {
+//                smartSaveTo(varName, page, ourl, saveDefMap);
+//            } else {
+//                if (StringUtils.isNotBlank(resourceName)) {
+//                    resourceName = doScript(resourceName, page);
+//                    saveToResource(resourceName, page, ourl, saveDefMap);
+//                } else {
+//                    if (StringUtils.isNotBlank(toName)) {
+//                        smartSaveTo(toName, page, ourl, saveDefMap);
+//                    } else if (saveDefMap.containsKey("endpoint")) {
+//                        saveToResource("camel", page, ourl, saveDefMap);                        
+//                    }
+//                }
+//            }
+//        }
     }
     
     protected void saveToVar(String varName, Object page, Object ourl) {
-        varName = doScript(varName, page);
+        //varName = doScript(varName, page);
         if ("_this".equalsIgnoreCase(varName)) {
             ((Map) withVarCurrent).putAll((Map) page);
         } else {
