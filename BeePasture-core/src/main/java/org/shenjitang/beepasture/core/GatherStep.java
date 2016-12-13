@@ -594,7 +594,7 @@ public class GatherStep {
         return pages;
     }
     
-    protected Object propertyExtract(Map extract, Object it, Map result) {
+    protected Object propertyExtract(Map extract, Object it) {
         try {
             for (Object key: extract.keySet()) {
                 String express = (String)extract.get(key);
@@ -610,11 +610,9 @@ public class GatherStep {
                     return JsonPath.read(it, express);
                 } else if ("javascript".equalsIgnoreCase(key.toString())) {
                     templateParamMap.put("it", it);
-                    templateParamMap.put("_item", result);
                     return JavaScriptExecuter.exec(express, templateParamMap);
                 } else if ("script".equalsIgnoreCase(key.toString())) {
                     templateParamMap.put("it", it);
-                    templateParamMap.put("_item", result);
                     return template.expressCalcu(express, templateParamMap);
                 } else if ("regex".equalsIgnoreCase(key.toString())) {
                     Pattern pattern = Pattern.compile(express);
@@ -737,7 +735,25 @@ public class GatherStep {
         String varName = doScript((String)saveDefMap.get("var"));
         String resourceName = doScript((String)saveDefMap.get("resource"));
         String endpoint = doScript((String)saveDefMap.get("endpoint"));
-        String toName = doScript((String)saveDefMap.get("to"));
+        String toName = null;
+        Object to = saveDefMap.get("to");
+        if (to != null) {
+            if (to instanceof String) {
+                toName = doScript((String)to);
+            } else if (to instanceof Map) {
+                String k = (String)((Map)to).keySet().iterator().next();
+                if ("resource".equalsIgnoreCase(k)) {
+                    resourceName = doScript((String)((Map)to).get(k));
+                } else if ("var".equalsIgnoreCase(k)) {
+                    varName = doScript((String)((Map)to).get(k));
+                } else {
+                    throw new RuntimeException ("save: to: key: value. key is wrong, mast be resource or var");
+                }
+            } else {
+                throw new RuntimeException ("save key's value mast be string or map!");
+            }
+        }
+        
         String filterExpress = (String)saveDefMap.get("filter");
         if ("_this".equalsIgnoreCase(varName) || "_this".equalsIgnoreCase(toName)) {
             Map page = (Map)pages.get(pages.size() - 1);
@@ -925,6 +941,7 @@ public class GatherStep {
             result.put("_", it);
             sobj.put("_", it);
         }
+        templateParamMap.put("_item", sobj);
        
         for (Object key : propertyMap.keySet()) {
             Object ov = null;
@@ -960,7 +977,6 @@ public class GatherStep {
                 }
                 Map propValue = (Map)propertyPropDef;
                 type = (String) propValue.get("type");
-
                 List extractList = (List)propValue.get("extract");
                 if (extractList != null) {
                     if ("_page".equalsIgnoreCase((String)propValue.get("with"))) {
@@ -975,7 +991,7 @@ public class GatherStep {
                         if (ov instanceof Map) {
                             ov = ((Map)ov).get(key);
                         }                        
-                        ov = propertyExtract((Map)extract, ov, sobj);
+                        ov = propertyExtract((Map)extract, ov);
                         //templateParamMap.put("it", ov);
                         GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
                     }
@@ -999,13 +1015,11 @@ public class GatherStep {
 //                    }
                     if (StringUtils.isNotBlank(propScript)) {
                         templateParamMap.put("it", ov);
-                        templateParamMap.put("_item", sobj.get("_"));
                         ov = template.expressCalcu(propScript, templateParamMap);
                     }
                     String javaScriptExpress = (String)propValue.get("javascript");
                     if (StringUtils.isNotBlank(javaScriptExpress)) {
                         templateParamMap.put("it", ov);
-                        templateParamMap.put("_item", sobj.get("_"));
                         ov = JavaScriptExecuter.exec(javaScriptExpress, templateParamMap);
                     }
                 }
