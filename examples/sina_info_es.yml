@@ -1,0 +1,13 @@
+gather: 
+  - url: "http://live.sina.com.cn/zt/f/v/finance/globalnews1"
+    xpath: '//div[@class="bd_list"]/div'
+    save: 
+      to: info
+      property:
+          content: '//p[@class="bd_i_txt_c"]/text()'
+          publishTime: 
+              xpath: '//p[@class="bd_i_time_c"]/text()'
+              type: date
+              format: "HH:mm:ss"
+persist: 
+    info: file:\\veSina.info

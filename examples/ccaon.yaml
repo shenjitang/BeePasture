@@ -1,0 +1,43 @@
+var:
+ link: []
+ 
+gather:
+ - url: "http://www.ccaon.com/list.asp?table_name=new_notprod_mrjd"
+   extract:
+    - xpath: "//div [@id='detail_list']/ul/li"
+   save: 
+    to: info
+    property:
+        title:
+          xpath: "h5/a/text()"
+        publishTime: 
+          xpath: "h6/text()"
+        link:
+          xpath: "h5/a/@href"
+          script: "http://www.ccaon.com/${it}"
+        ruiyunInfoSource:
+          script: "ccaon"
+        channel:
+          script: "新闻快报"
+        channelUrl:
+          script: "http://www.ccaon.com/list.asp?table_name=new_notprod_mrjd"
+        infoType:
+          script: "1"
+    
+ - url: link
+   with: info
+   limit: 3
+   save: 
+     to: _this
+     property:
+         content: ".//*[@id='con111']/text()"
+#    extract:
+#     xpath: "//*[@id='con111']"
+#    save:
+#    to: info
+#    append: true
+#    property:
+#    content:""
+persist:
+    info: "file://D:/tmp/BeePasture/yaml/114.txt"
+	

@@ -1,0 +1,28 @@
+resource: 
+    db1: 
+        url: "jdbc:jtds:sqlserver://121.40.82.180:1433/application1"
+        username: sa
+        password: "rz_180"
+    mongo1:
+        url: mongodb://root:Richeninfo2014@dds-bp189470d9c37e742.mongodb.rds.aliyuncs.com:3717/admin
+
+gather:
+    - url: db1
+      sql: "SELECT * FROM main_basis  where PUBDATE>=CONVERT(varchar(10),getDate()-3,120)"
+      save: 
+          to: main_basis
+          property:
+              PUBDATE: 
+                  script: "${it}"
+                  type: date
+                  format: yyyy-MM-dd
+              
+        
+persist:
+#    main_basis: file://aaa.txt?format=yaml
+    main_basis: 
+        resource: mongo1
+        database: test
+        collection: main_basis
+
+

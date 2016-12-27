@@ -1,0 +1,36 @@
+resource: 
+#    es1:
+#        url: "elasticsearch://xxx.xxx.xxx.150:9300,xxx.xxx.xxx.119:9300/ry_szb_info_test/ry_szb_info?cluster=ruiyun_es_cluster"
+gather:
+    - url: "http://www.c114.net/news/16.html"
+      xpath: '//div[@class="li3-2"]//ul[@class="list1"]/li'
+      save: 
+          to: info
+          property: 
+              _id:
+#                  xpath: a/@href
+#                  script: 'c114__${it.substring(28,35)}'
+                  extract:
+                    - xpath: a/@href
+#                    - script: 'c114__${it.substring(it.lastIndexOf("/") + 1,it.lastIndexOf("[.]"))}'
+                    - script: 'c114__${it.substring(it.lastIndexOf("/") + 1,it.lastIndexOf("html")-1)}'
+              publishTime: 
+                  xpath: span/text()
+              ruiyunInfoSource:
+                  script: "c114"
+              channel:
+                  script: "要闻"
+              channelUrl:
+                  script: "http://www.c114.net/news/16.html"
+              infoType:
+                  script: "1"
+              url:
+                  xpath: a/@href
+              abstract:
+                  xpath: a/text()
+              
+persist:
+    info: "file://c114_info.txt"
+#     info:
+#         resource: es1
+#         _id: id

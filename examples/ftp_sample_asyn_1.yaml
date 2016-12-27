@@ -1,0 +1,67 @@
+camel:
+var: 
+    ftpfiles: '1..5 ftp://test@139.196.238.208/home/test/ws/137/logs/cibsrdapp-ws-app.log.${dateAdd(-${i}),dateFormat="yyyy-MM-dd"}?password=test123'
+
+gather:
+    - url: ftpfiles
+      iterator: 
+      filter: '${it.contains("operate:") && it.contains("operatedata:")}'
+      save: 
+          endpoint: "seda:syyj.cibsrdapp.logs"
+          property:
+              datetime: 
+                  regex: '[0-9]{4}-[01][0-9]-[0-3][0-9][\s][0-2][0-9]:[0-5][0-9]:[0-5][0-9]'
+              user: '${str.regex(it, " user:(.*?);", 1)}'
+              operate: '${str.regex(it, ";operate:(.*?);", 1)}'
+              articleId: '${str.regex(it, "[,;:]articleId:(.*?)[,;]", 1)}'
+              plateId: '${str.regex(it, "[,;:]plateId:(.*?)[,;]", 1)}'
+              customerId: '${str.regex(it, "[,;:]customerId:(.*?)[,;]", 1)}'
+              authorId: '${str.regex(it, "[,;:]authorId:(.*?)[,;]", 1)}'
+              content: '${str.regex(it, "[,;:]content:(.*?)[,;]", 1)}'
+              commentId: '${str.regex(it, "[,;:]commentId:(.*?)[,;]", 1)}'
+              postId: '${str.regex(it, "[,;:]postId:(.*?)[,;]", 1)}'
+              deviceId: '${str.regex(it, "[,;:]deviceId:(.*?)[,;]", 1)}'
+              mobile: '${str.regex(it, "[,;:]mobile:(.*?)[,;]", 1)}'
+              name: '${str.regex(it, "[,;:]name:(.*?)[,;]", 1)}'
+              email: '${str.regex(it, "[,;:]email:(.*?)[,;]", 1)}'
+              nickName: '${str.regex(it, "[,;:]nickName:(.*?)[,;]", 1)}'
+              sign: '${str.regex(it, "[,;:]sign:(.*?)[,;]", 1)}'
+              newPortrait: '${str.regex(it, "[,;:]newPortrait:(.*?)[,;]", 1)}'
+              messageIds: '${str.regex(it, "[,;:]messageIds:(.*?)[,;]", 1)}'
+              token: '${str.regex(it, "[,;:]token:(.*?)[,;]", 1)}'
+              
+#    - exit: 1
+#      sleep: 1s
+#      
+flow: 
+    - url: "seda:syyj.cibsrdapp.logs"
+#      direct: true
+      extract:
+        - marshal: 
+          type: csv
+          delimiter: '|'
+          newline: 
+          head: 
+            - datetime
+            - user
+            - operate
+            - articleId
+            - plateId
+            - customerId
+            - authorId
+            - content 
+            - commentId
+            - postId
+            - deviceId
+            - mobile
+            - name
+            - email
+            - nickName
+            - sign
+            - newPortrait
+            - messageIds
+            - token
+      save:
+          endpoint: "file://logs?fileName=cibsrdapp-ws-app_ff.log&charset=utf8&fileExist=Append"
+#        endpoint: "log:xxxxxxx"
+

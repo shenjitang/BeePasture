@@ -1,0 +1,34 @@
+resource: 
+    db1: 
+        url: "jdbc:mysql://localhost:3306/test"
+        #databaseName: test
+        username: root
+        password: "12345678"
+
+var:
+  stockList: []
+
+gather:
+  - url: "http://www.shfe.com.cn/data/dailydata/20140519dailystock.dat"
+    charset: utf8
+    xpath: json($.o_cursor)
+    save: 
+      to: stockList
+      property:
+        VARNAME: 
+            script: '${it.substring(0, it.indexOf("$"))}'
+            #regex: "[\u4e00-\u9fa5]*"
+            #script: '${str.substring(_page.VARNAME, 0, str.indexOf(_page.VARNAME, "\\$"))}'
+        o_tradingday: 
+            with: _page
+            xpath: "json($.o_tradingday)"
+            type: date
+            format: "yyyyMMdd"
+
+
+
+#保存
+persist:
+    stockList: 
+        resource: db1
+        sql: "insert into shfe_03 (VARNAME, WRTWGHTS, print_date) values ('${stockList.VARNAME}', '${stockList.WRTWGHTS}', '${stockList.o_tradingday, \"yyyy-MM-dd HH:mm:ss\"}')"

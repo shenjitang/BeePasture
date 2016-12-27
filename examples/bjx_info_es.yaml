@@ -1,0 +1,61 @@
+var:
+    topUrlList: '1..1 http://news.bjx.com.cn/list?page=${i}'
+
+resource:
+#    es1:
+#      url: "elasticsearch://xxx.xxx.xxx.150:9300,xxx.xxx.xxx.119:9300/ry_szb_info_test/ry_szb_info?cluster=ruiyun_es_cluster"
+
+gather:
+    - url: topUrlList
+      xpath: '//ul[@class="list_left_ztul"]/li/a'
+      save:
+        to: info
+        property:
+            url: /@href
+            title: /@title
+
+    - url: url
+      with: info
+#      charset: utf8
+#      limit: 2
+#      sleep: 1000
+      save:
+        to: _this
+        property:
+            _id:
+                script: 'aabbb'
+#            title:
+#                xpath: '//div[@class="list_detail"]/h1/text()'
+#            publishTime:
+#                xpath: '//div[@class="list_copy"]/b[2]/text()'
+#                type: date
+#                format: 'yyyy-MM-dd HH:mm:ss'
+#            ruiyunInfoSource:
+#                extract:
+#                  - xpath: '//p[@class="fl"][2]/text()'
+#                  - script: '${it.substring(3,it.indexOf("我要评论"))}'
+#                  - script: '${it.replaceAll("&nbsp;","")}'
+#            author:
+#                extract:
+#                  - xpath: '//p[@class="fr"]/text()'
+#                  - script: '${it.substring(5,it.indexOf("字号"))}'
+#                  - script: '${it.replaceAll("&nbsp;","")}'               
+#            channel:
+#                script: "航空网-最好的航空资源门户"
+#            channelUrl:
+#                script: "http://www.hangkong.com/news/xinwen/mhkx/"
+#            infoType:
+#                script: "1"
+#            url:
+#                script: "${_this}" 
+#            content:
+#                xpath: '//div[@class="zwnr"]/text()'
+#            abstract:
+#                extract:
+#                  - xpath: '//p[@class="hxts"]/text()'
+#                  - script: '${it.replace("&nbsp;&nbsp;&nbsp;&nbsp;核心提示：","")}'
+
+persist:
+    info: "file://bjx.info"
+#    info:
+#       resource: es1

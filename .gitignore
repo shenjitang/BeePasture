@@ -10,6 +10,7 @@
 /BeePasture-camel/logs/
 /BeePasture-camel/.projectKnowledge/
 /target/
+/ry/
 /.projectKnowledge/
 *.log
 nbactions.xml

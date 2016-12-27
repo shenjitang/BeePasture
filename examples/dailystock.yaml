@@ -15,8 +15,9 @@ gather:
     save: 
       to: stockList
       property: 
+          VARNAME: '${it.substring(0, it.indexOf("$"))}'
           print_date: 
-              scope: _page
+              with: _page
               xpath: "json($.print_date)"
               type: date
               format: "yyyyMMdd HH:mm:ss"

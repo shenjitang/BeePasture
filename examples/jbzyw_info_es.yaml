@@ -1,0 +1,16 @@
+var: 
+    urlList:"1..2 http://www.jbzyw.com/lists/278/${i}"
+
+gather:
+    - url: urlList
+      charset: utf8
+      xpath: '//div[@class="newslist"]'
+      sleep: 2000
+      save: 
+          to: info
+          property:
+                  title: '//ul[@class="td1"]//a/@title'
+                  link: '//ul[@class="td1"]//a/@href'
+
+persist:
+     info: "file://jbzyw.txt"

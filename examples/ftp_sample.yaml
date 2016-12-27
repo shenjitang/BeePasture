@@ -1,0 +1,76 @@
+resource: 
+#    ftp1: 
+#        url: "ftp://test@139.196.238.208?password=test123"
+#        url: "ftp://xl@121.40.82.180?password=xl123"
+var: 
+    csvlines:
+        - 'datetime|user|operate|articleId|plateId|customerId|authorId|content|commentId|postId|deviceId|mobile|name|email|nickName|sign|newPortrait|messageIds|token'
+gather:
+#    - url: ftp1
+#      filename: "ws/137/logs/cibsrdapp-ws-app.log.2016-10-25"
+#      filename: "hello.txt"
+#      localfile: localhost_access_log.2016-10-22.txt
+#      save: 
+#          to: data
+#    - url: data
+#      direct: true
+#      save:
+#          to: ftp1
+#          filename: "tom.txt"
+    - url: "file://cibsrdapp-ws-app.log.2016-10-25?encoding=utf8&format=line"
+      filter: '${it.contains("operate:") && it.contains("operatedata:")}'
+      save:
+          to: lines
+          property:
+              datetime: 
+                  regex: '[0-9]{4}-[01][0-9]-[0-3][0-9][\s][0-2][0-9]:[0-5][0-9]:[0-5][0-9]'
+              user: '${str.regex(it, " user:(.*?);", 1)}'
+              operate: '${str.regex(it, ";operate:(.*?);", 1)}'
+              articleId: '${str.regex(it, "[,;:]articleId:(.*?)[,;]", 1)}'
+              plateId: '${str.regex(it, "[,;:]plateId:(.*?)[,;]", 1)}'
+              customerId: '${str.regex(it, "[,;:]customerId:(.*?)[,;]", 1)}'
+              authorId: '${str.regex(it, "[,;:]authorId:(.*?)[,;]", 1)}'
+              content: '${str.regex(it, "[,;:]content:(.*?)[,;]", 1)}'
+              commentId: '${str.regex(it, "[,;:]commentId:(.*?)[,;]", 1)}'
+              postId: '${str.regex(it, "[,;:]postId:(.*?)[,;]", 1)}'
+              deviceId: '${str.regex(it, "[,;:]deviceId:(.*?)[,;]", 1)}'
+              mobile: '${str.regex(it, "[,;:]mobile:(.*?)[,;]", 1)}'
+              name: '${str.regex(it, "[,;:]name:(.*?)[,;]", 1)}'
+              email: '${str.regex(it, "[,;:]email:(.*?)[,;]", 1)}'
+              nickName: '${str.regex(it, "[,;:]nickName:(.*?)[,;]", 1)}'
+              sign: '${str.regex(it, "[,;:]sign:(.*?)[,;]", 1)}'
+              newPortrait: '${str.regex(it, "[,;:]newPortrait:(.*?)[,;]", 1)}'
+              messageIds: '${str.regex(it, "[,;:]messageIds:(.*?)[,;]", 1)}'
+              token: '${str.regex(it, "[,;:]token:(.*?)[,;]", 1)}'
+              
+    - url: lines
+      direct: true
+      marshal: 
+          type: csv
+          delimiter: '|'
+          head: 
+            - datetime
+            - user
+            - operate
+            - articleId
+            - plateId
+            - customerId
+            - authorId
+            - content 
+            - commentId
+            - postId
+            - deviceId
+            - mobile
+            - name
+            - email
+            - nickName
+            - sign
+            - newPortrait
+            - messageIds
+            - token
+      save:
+          to: csvlines
+          
+persist:
+    csvlines: file:\\cibsrdapp-ws-app.log.f1.2016-10-25?encoding=utf8&format=line
+
