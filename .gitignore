@@ -1,6 +1,15 @@
 /BeePasture-core/target/
+/BeePasture-core/logs/
+/BeePasture-core/null/
+/BeePasture-core/temp/
+/BeePasture-core/.projectKnowledge/
 /BeePasture-grizzly2/target/
 /BeePasture-core/nbproject/
 /BeePasture-eureka-client/target/
 /BeePasture-camel/target/
+/BeePasture-camel/logs/
+/BeePasture-camel/.projectKnowledge/
 /target/
+/.projectKnowledge/
+*.log
+nbactions.xml

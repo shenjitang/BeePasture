@@ -1,0 +1,24 @@
+info:
+camel: 
+resource:
+    es:
+      url: "elasticsearch://120.26.232.150:9300/test/test?cluster=ruiyun_es_cluster"
+
+gather:
+    - url: 'http://119.29.63.230/24h/news.json?newsid=1'
+      xpath: 'json($.list)'	
+#      charset: utf8
+      save:
+        to: 
+            - var: info
+            - endpoint: "seda:bee"
+        property:
+          _id: 
+            script: '24h_${_item.newsID}'
+            
+persist: 
+#    info: "file://24h_info.text"
+    info:
+      resource: es
+#       - endpoint: "seda:bee"
+       

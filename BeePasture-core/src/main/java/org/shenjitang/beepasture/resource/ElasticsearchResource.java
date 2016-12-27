@@ -15,7 +15,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
@@ -163,52 +165,40 @@ public class ElasticsearchResource extends BeeResource {
         String idField = (String)allParam.get("_id");
         if (obj instanceof List) {
             for (Object item : (List)obj) {
-                try {
-                    String _id = null;
-                    if (org.codehaus.plexus.util.StringUtils.isNotBlank(idField)) {
-                        _id = ((Map)item).remove(idField).toString();
-                    } else if (((Map)item).containsKey("_id")) {
-                        _id = ((Map)item).remove("_id").toString();
-                    }
-                    if (((Map)item).containsKey("_id")) {
-                        ((Map)item).remove("_id");
-                    }
-                    String indexContent = JSONObject.toJSONString(item);
-                    if (org.codehaus.plexus.util.StringUtils.isBlank(_id)) {
-                        IndexRequest indexRequest = new IndexRequest(_index, _type).source(indexContent);
-                        client.index(indexRequest);
-                    } else {
-                        IndexRequest indexRequest = new IndexRequest(_index, _type, _id).source(indexContent);
-                        UpdateRequest updateRequest = new UpdateRequest(_index, _type, _id)
-                               .doc(indexContent)
-                               .upsert(indexRequest);              
-                        client.update(updateRequest).get();       
-                    }
-                } catch (Exception ee) {
-                    ee.printStackTrace();
-                }
+                insert((Map)item, idField, _index, _type);
             }
         } else {
+            insert((Map)obj, idField, _index, _type);
+        }    
+    }
+    
+    private void insert(Map record, String idField, String _index, String _type) {
+        try {
             String _id = null;
             if (org.codehaus.plexus.util.StringUtils.isNotBlank(idField)) {
-                _id = (String) ((Map) obj).remove(idField);
+                _id = (record).remove(idField).toString();
+            } else if ((record).containsKey("_id")) {
+                _id = (record).remove("_id").toString();
             }
-            String indexContent = JSONObject.toJSONString(obj);
+            if ((record).containsKey("_id")) {
+                (record).remove("_id");
+            }
+            String indexContent = JSONObject.toJSONString(record);
             if (org.codehaus.plexus.util.StringUtils.isBlank(_id)) {
                 IndexRequest indexRequest = new IndexRequest(_index, _type).source(indexContent);
-                client.index(indexRequest);
+                ActionFuture<IndexResponse> actionFuture = client.index(indexRequest);
+                //IndexResponse response = actionFuture.actionGet();
+                //System.out.println(response.toString());
             } else {
                 IndexRequest indexRequest = new IndexRequest(_index, _type, _id).source(indexContent);
                 UpdateRequest updateRequest = new UpdateRequest(_index, _type, _id)
                         .doc(indexContent)
                         .upsert(indexRequest);
-                try {
-                    client.update(updateRequest).get();
-                } catch (Exception ee) {
-                    ee.printStackTrace();
-                }
+                client.update(updateRequest).get();
             }
-        }    
+        } catch (Exception ee) {
+            ee.printStackTrace();
+        }
     }
 
     @Override

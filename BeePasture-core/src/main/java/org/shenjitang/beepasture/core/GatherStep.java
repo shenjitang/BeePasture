@@ -47,7 +47,7 @@ public class GatherStep {
     protected final PageAnalyzer pageAnalyzer;
     protected static final Log LOGGER = LogFactory.getLog(GatherStep.class);
     protected List withVar;
-    protected Object withVarCurrent;
+    protected Map withVarCurrent;
     protected Long count = 0L;
     protected String rurl; //yaml中url的值（脚本中的源句）
     protected final Long limit;
@@ -95,15 +95,18 @@ public class GatherStep {
         }
         for (Object ourl : urls) {
             activeTime = System.currentTimeMillis();
-            withVarCurrent = ourl;
+            if (ourl instanceof Map) {
+                withVarCurrent = (Map)ourl;
+            }
             templateParamMap.put("_this", ourl);
             if (withVar != null) {
                 templateParamMap.put("_with", ourl);
                 ourl = ((Map) ourl).get(rurl);            
             }
             templateParamMap.put("it", ourl);
-            step = (Map)cloneMap(rStep);
-            beforeGatherExpressCalcu("download", "sql");
+            cloneStep();
+            //step = (Map)cloneMap(rStep);
+            //sbeforeGatherExpressCalcu("download", "sql");
             if (withVar != null) {
                 step.put("withVarCurrent", withVarCurrent);
             }            
@@ -119,13 +122,17 @@ public class GatherStep {
             activeTime = System.currentTimeMillis();
         }
     }
+    
+    public void cloneStep() {
+            step = (Map)cloneMap(rStep);
+            beforeGatherExpressCalcu("download", "sql");
+    }
 
     /**
      * 做一次gather.
      * @param ourl 将rurl转换成需要处理的列表后的一条url，如果有withVar就是withVar的第一条。
      */
     public void onceGather(Object ourl) throws Exception {
-
         try {
             Object page = ourl;
             Boolean direct = ResourceUtils.get(step, "direct", false);
@@ -135,7 +142,6 @@ public class GatherStep {
                 } else if (ourl instanceof File) {
                     ourl = "file://" + ((File)ourl).getAbsolutePath();
                 }
-                //templateParamMap.put("_this", ourl);
                 if (ourl instanceof String) {
                     if (beeGather.containsResource((String)ourl) || ResourceMng.maybeResource(ourl.toString())) {
                         try {
@@ -166,10 +172,9 @@ public class GatherStep {
             pages = doJavaScript(pages, (String) step.get("javascript"));
             pages = doMarshal(pages, (Map)step.get("marshal"));
             pages = doUnmarshal(pages, (Map)step.get("unmarshal"));
-            //pages = setProperties(pages, ourl);
             save(pages, ourl);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.warn("", e);
         }
     }
     
@@ -210,7 +215,6 @@ public class GatherStep {
                             pages = doJavaScript(pages, (String) step.get("javascript"));
                             pages = doMarshal(pages, (Map)step.get("marshal"));
                             pages = doUnmarshal(pages, (Map)step.get("unmarshal"));
-                            //pages = setProperties(pages, ourl);
                             save(pages, ourl);
                         }
                         beeResource.afterIterate();
@@ -383,7 +387,11 @@ public class GatherStep {
                 }
                 templateParamMap.put("it", page);
                 Object res = JavaScriptExecuter.exec(ascript, templateParamMap);
-                list.add(res);
+                if (res instanceof List) {
+                    list.addAll((List)res);
+                } else {
+                    list.add(res);
+                }
             } catch (Exception e) {
                 LOGGER.warn("template:" + ascript + "  page:" + page, e);
             }
@@ -698,6 +706,7 @@ public class GatherStep {
     public Map saveStr2map(Object srcTo) {
         Map toMap = new HashMap();
         toMap.putAll(save);
+        toMap.remove("to");
         if (srcTo == null && !toMap.containsKey("resource")) {
             toMap.put("resource", "camel");
             //toMap.putAll(save);
@@ -757,7 +766,7 @@ public class GatherStep {
         String filterExpress = (String)saveDefMap.get("filter");
         if ("_this".equalsIgnoreCase(varName) || "_this".equalsIgnoreCase(toName)) {
             Map page = (Map)pages.get(pages.size() - 1);
-            ((Map)withVarCurrent).putAll(page);
+            withVarCurrent.putAll(page);
             return;
         }
         BeeResource resource = null;
@@ -783,8 +792,7 @@ public class GatherStep {
             }
             if (resource != null) {
                 saveToResource(resourceName, page, ourl, saveDefMap);
-            }
-            if (StringUtils.isNotBlank(endpoint)) {
+            } else if (StringUtils.isNotBlank(endpoint)) {
                 saveToResource("camel", page, ourl, saveDefMap);
             }
         }       
@@ -793,7 +801,7 @@ public class GatherStep {
     protected void saveToVar(String varName, Object page, Object ourl) {
         //varName = doScript(varName, page);
         if ("_this".equalsIgnoreCase(varName)) {
-            ((Map) withVarCurrent).putAll((Map) page);
+            withVarCurrent.putAll((Map) page);
         } else {
             List toList = beeGather.getVar(varName);
             toList.add(page);
@@ -963,8 +971,8 @@ public class GatherStep {
                     } else if ("_item".equalsIgnoreCase(def)) {
                         result.put(key, it);
                         continue;
-                    } else if (withVarCurrent != null && withVarCurrent instanceof Map && ((Map)withVarCurrent).containsKey(def)) {
-                        result.put(key, ((Map)withVarCurrent).get(def));
+                    } else if (withVarCurrent != null && withVarCurrent.containsKey(def)) {
+                        result.put(key, withVarCurrent.get(def));
                         continue;
                     } else if (def.contains("/")) {
                         m1.put("xpath", def);
@@ -1029,7 +1037,7 @@ public class GatherStep {
                             String format = getValue(propValue, "format", "yyyy-MM-dd HH:mm:ss");
                             String locate = (String)(propValue).get("locate");
                             SimpleDateFormat sdf = null;
-                            if (StringUtils.isBlank(locate) && ov != null) {
+                            if (StringUtils.isBlank(locate)) {
                                 if (ov.toString().contains("MMM")) {
                                     locate = "ENGLISH";
                                 }
@@ -1038,13 +1046,6 @@ public class GatherStep {
                                 sdf = new SimpleDateFormat(format);
                             } else {
                                 sdf = new SimpleDateFormat(format, Locale.forLanguageTag(locate));
-//                                if ("ENGLISH".equalsIgnoreCase(locate)) {
-//                                    sdf = new SimpleDateFormat(format, Locale.ENGLISH);
-//                                } else if ("CHINESE".equalsIgnoreCase(locate)) {
-//                                    sdf = new SimpleDateFormat(format, Locale.CHINESE);
-//                                } else if () {
-//                                    sdf = new SimpleDateFormat(format, Locale.);
-//                                }
                             }
                             if (StringUtils.isNotBlank(ov.toString())) {
                                 ov = sdf.parse(ParseUtils.correctDateStr(ov.toString()));

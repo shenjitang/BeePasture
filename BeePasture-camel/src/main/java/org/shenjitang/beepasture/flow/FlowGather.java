@@ -163,6 +163,7 @@ public class FlowGather extends BeeGather {
 
     private void doProcess(final Map processMap, final Object body, final Map<String, Object> headers) throws Exception{
         GatherStep gatherStep = new GatherStep(processMap);
+        gatherStep.cloneStep();
         gatherStep.onceGather(body);
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
@@ -175,6 +176,7 @@ public class FlowGather extends BeeGather {
         return camelContext;
     }
 
+    static Boolean debug = false;
     public static void main( String[] args ) throws Exception {
         String fileEncoding = System.getProperty("fileEncoding", "utf8");
         Long waitBeforeExit = Long.valueOf(System.getProperty("waitBeforeExit", "1000"));
@@ -185,7 +187,7 @@ public class FlowGather extends BeeGather {
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\nagao_sample.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\dce_03.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\100ppi_info_es.yaml";
-        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\xyyj_ftp_log_asyn_ua.yaml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\24h_gl.yaml";
         if (args.length > 0) {
             fileName = args[0];
         }
@@ -199,7 +201,7 @@ public class FlowGather extends BeeGather {
             flowGather.doGather();
             flowGather.saveTo();
             MAIN_LOGGER.info("finish fileEncoding=" + fileEncoding + " script=" + fileName);
-            if (args.length > 1 && "-d".equalsIgnoreCase(args[1])) {
+            if ((args.length > 1 && "-d".equalsIgnoreCase(args[1])) || debug) {
                 while(Boolean.TRUE) {
                     try {
                         Thread.sleep(1000);

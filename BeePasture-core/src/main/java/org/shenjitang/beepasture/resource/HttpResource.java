@@ -61,7 +61,7 @@ public class HttpResource extends BeeResource implements Runnable {
 //            LOGGER.info("renew httptool count=" + count);
 //            httpTools = new HttpTools();
 //        }
-        Object withVarCurrent = loadParam.get("withVarCurrent");
+        Map withVarCurrent = (Map)loadParam.get("withVarCurrent");
         String charset = (String)loadParam.get("charset");
         Map heads = (Map) loadParam.get("head");
         if (heads == null) {
@@ -73,8 +73,8 @@ public class HttpResource extends BeeResource implements Runnable {
             httpTools.downloadFile(url.toString(), fileName);
             String filenameToVar = (String) download.get("filename");
             if (StringUtils.isNotBlank(filenameToVar)) { 
-                if (withVarCurrent != null && withVarCurrent instanceof Map) {
-                    ((Map) withVarCurrent).put(filenameToVar, fileName);
+                if (withVarCurrent != null) {
+                    withVarCurrent.put(filenameToVar, fileName);
                 } else {
                     BeeGather.getInstance().getVar(filenameToVar).add(fileName);
                 }
@@ -104,11 +104,11 @@ public class HttpResource extends BeeResource implements Runnable {
 
     }
     
-    protected String getFileName(Object withVarCurrent, Map loadParam, Map download) {
+    protected String getFileName(Map withVarCurrent, Map loadParam, Map download) {
         String fileName = null;
         String to = (String)download.get("to");
-        if (withVarCurrent != null && withVarCurrent instanceof Map) {
-            fileName = (String)((Map)withVarCurrent).get(to);
+        if (withVarCurrent != null) {
+            fileName = (String)withVarCurrent.get(to);
         }
         if (StringUtils.isBlank(fileName)) {
             fileName = to;
