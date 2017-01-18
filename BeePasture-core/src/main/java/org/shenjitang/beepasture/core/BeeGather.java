@@ -5,13 +5,10 @@
  */
 package org.shenjitang.beepasture.core;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -19,6 +16,7 @@ import org.ho.yaml.Yaml;
 import org.shenjitang.beepasture.function.ScriptTemplateExecuter;
 import org.shenjitang.beepasture.resource.BeeResource;
 import org.shenjitang.beepasture.resource.ResourceMng;
+import org.shenjitang.beepasture.util.ParseUtils;
 
 /**
  *
@@ -205,105 +203,10 @@ public class BeeGather {
         return vars;
     }
     
-    private DecimalFormat formatN2 = new DecimalFormat("00");
-    private DecimalFormat formatN4 = new DecimalFormat("0000");
-    private Pattern DPATTERN1 =  Pattern.compile("[0-9]+\\.\\.[0-9]+");
-    private Pattern DPATTERN2 =  Pattern.compile("[a-zA-Z]\\.\\.[a-zA-Z]");
-
     protected Map initVars(Map vars, Map resources) throws Exception{
-        replaceByArray(vars);
-        return vars;
-    }
-    
-    private void replaceByArray (Map map) throws Exception {
-        for (Object varName : map.keySet()) {
-            Object value = vars.get(varName);
-            if (value instanceof Map) {
-                replaceByArray ((Map)value);
-            } else if (value instanceof List) {
-                replaceByArray ((List)value);
-            } else if (value instanceof String) {
-                Matcher m = DPATTERN1.matcher((String)value);
-                if (m.find()) {
-                    List list = string2list1((String)value, m.end());
-                    map.put(varName, list);
-                }
-                m = DPATTERN2.matcher((String)value);
-                if (m.find()) {
-                    List list = string2list2((String)value, m.end());
-                    map.put(varName, list);
-                }
-            }
-        }
-    }
-    
-    private void replaceByArray (List list) throws Exception {
-        //ArrayList newList = new ArrayList();
-        for (int i = 0; i < list.size(); i++) {
-            Object value = list.get(i);
-            if (value instanceof Map) {
-                replaceByArray ((Map)value);
-            } else if (value instanceof List) {
-                replaceByArray ((List)value);
-            } else if (value instanceof String) {
-                Matcher m = DPATTERN1.matcher((String)value);
-                if (m.find()) {
-                    List newList = string2list1((String)value, m.end());
-                    list.remove(i);
-                    list.addAll(i, newList);
-                    i = i - 1 +  newList.size();
-                }
-                m = DPATTERN2.matcher((String)value);
-                if (m.find()) {
-                    List newList = string2list2((String)value, m.end());
-                    list.remove(i);
-                    list.addAll(i, newList);
-                    i = i - 1 + list.size();
-                }
-            }
-        }
+        return ParseUtils.replaceByArray(vars);
     }
 
-    private List string2list1(String value, int idx) {
-        List list = new ArrayList();
-        String s1 = value.substring(0, idx).trim();
-        String s2 = value.substring(idx).trim();
-        String[] be = s1.split("[.][.]");
-        Integer begin = Integer.valueOf(be[0]);
-        Integer end = Integer.valueOf(be[1]);
-        if (end >= begin) {
-            for (int i = begin; i <= end; i++ ) {
-                String r = s2.replaceAll("\\$\\{i\\}", i+"");
-                list.add(r);
-            }
-        } else {
-            for (int i = begin; i >= end; i-- ) {
-                String r = s2.replaceAll("\\$\\{i\\}", i+"");
-                list.add(r);
-            }
-        }
-        return list;
-    }
 
-    private List string2list2(String value, int idx) {
-        List list = new ArrayList();
-        String s1 = value.substring(0, idx).trim();
-        String s2 = value.substring(idx).trim();
-        String[] be = s1.split("[.][.]");
-        char begin = be[0].charAt(0);
-        char end = be[1].charAt(0);
-        if (end >= begin) {
-            for (char i = begin; i <= end; i++ ) {
-                String r = s2.replaceAll("\\$\\{i\\}", i+"");
-                list.add(r);
-            }
-        } else {
-            for (char i = begin; i >= end; i-- ) {
-                String r = s2.replaceAll("\\$\\{i\\}", i+"");
-                list.add(r);
-            }
-        }
-        return list;
-    }
     
 }

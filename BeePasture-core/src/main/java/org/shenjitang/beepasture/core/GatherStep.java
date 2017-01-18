@@ -6,10 +6,12 @@
 package org.shenjitang.beepasture.core;
 
 import com.alibaba.fastjson.JSON;
+import com.beust.jcommander.internal.Lists;
 import com.jayway.jsonpath.JsonPath;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -53,7 +55,7 @@ public class GatherStep {
     protected final Long limit;
     protected final Map save;
     protected Object xpath;
-    protected final Object oXpath;
+    //protected final Object oXpath;
     protected Map heads;
     protected final Map templateParamMap = new HashMap();
     protected final String script; //yamel中script或template的值（脚本中的源句）
@@ -72,7 +74,7 @@ public class GatherStep {
         rurl = (String) rStep.get("url");
         limit = GatherStep.getLongValue(rStep, "limit");
         save = (Map) rStep.get("save");
-        oXpath = rStep.get("xpath");
+        //oXpath = rStep.get("xpath");
         xpath = rStep.get("xpath");
         heads = (Map) rStep.get("head");
         if (heads == null) {
@@ -233,6 +235,10 @@ public class GatherStep {
     }    
     
     protected List getUrlsFromStepUrl(String url, Map step) throws Exception {
+//        return beeGather.getVars().containsKey(url) ? 
+//                (List)beeGather.getVar(url) : 
+//                Lists.newArrayList(url);
+        
         List urls = null;
         if (beeGather.getVars().containsKey(url)) {
             urls = (List)beeGather.getVar(url);//   vars.get(url);
@@ -304,6 +310,8 @@ public class GatherStep {
     }
     
     public List doXpath(String page, String xpath) {    
+        Object _this = templateParamMap.get("_this");
+        xpath = changeValueFromObj(xpath, _this);
         List rlist = new ArrayList();
         if (xpath.startsWith("json(")) {
             String jsonPath = xpath.substring(5, xpath.length() - 1);
@@ -971,6 +979,9 @@ public class GatherStep {
                     } else if ("_item".equalsIgnoreCase(def)) {
                         result.put(key, it);
                         continue;
+                    } else if ("it".equalsIgnoreCase(def)) {
+                        result.put(key, it);
+                        continue;
                     } else if (withVarCurrent != null && withVarCurrent.containsKey(def)) {
                         result.put(key, withVarCurrent.get(def));
                         continue;
@@ -1060,7 +1071,11 @@ public class GatherStep {
                         } else if ("int".equalsIgnoreCase(type) || "Integer".equalsIgnoreCase(type)) {
                                 ov = Integer.valueOf(ov.toString());
                         } else if ("long".equalsIgnoreCase(type)) {
+                            if (ov instanceof Date) {
+                                ov = ((Date)ov).getTime();
+                            } else {
                                 ov = Long.valueOf(ov.toString());
+                            }
                         } else if ("double".equalsIgnoreCase(type)) {
                                 ov = Double.valueOf(ov.toString());
                         } else if ("float".equalsIgnoreCase(type)) {

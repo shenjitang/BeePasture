@@ -5,8 +5,12 @@
  */
 package org.shenjitang.beepasture.util;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -47,6 +51,104 @@ public class ParseUtils {
             List pages = new ArrayList();
             pages.add(page);
             return pages;
+        }
+    }
+    
+    public static List string2list1(String value, int idx) {
+        List list = new ArrayList();
+        String s1 = value.substring(0, idx).trim();
+        String s2 = value.substring(idx).trim();
+        String[] be = s1.split("[.][.]");
+        Integer begin = Integer.valueOf(be[0]);
+        Integer end = Integer.valueOf(be[1]);
+        if (end >= begin) {
+            for (int i = begin; i <= end; i++ ) {
+                String r = s2.replaceAll("\\$\\{i\\}", i+"");
+                list.add(r);
+            }
+        } else {
+            for (int i = begin; i >= end; i-- ) {
+                String r = s2.replaceAll("\\$\\{i\\}", i+"");
+                list.add(r);
+            }
+        }
+        return list;
+    }
+
+    public static List string2list2(String value, int idx) {
+        List list = new ArrayList();
+        String s1 = value.substring(0, idx).trim();
+        String s2 = value.substring(idx).trim();
+        String[] be = s1.split("[.][.]");
+        char begin = be[0].charAt(0);
+        char end = be[1].charAt(0);
+        if (end >= begin) {
+            for (char i = begin; i <= end; i++ ) {
+                String r = s2.replaceAll("\\$\\{i\\}", i+"");
+                list.add(r);
+            }
+        } else {
+            for (char i = begin; i >= end; i-- ) {
+                String r = s2.replaceAll("\\$\\{i\\}", i+"");
+                list.add(r);
+            }
+        }
+        return list;
+    }    
+
+    private static final DecimalFormat formatN2 = new DecimalFormat("00");
+    private static final DecimalFormat formatN4 = new DecimalFormat("0000");
+    private static final Pattern DPATTERN1 =  Pattern.compile("[0-9]+\\.\\.[0-9]+");
+    private static final Pattern DPATTERN2 =  Pattern.compile("[a-zA-Z]\\.\\.[a-zA-Z]");
+
+    
+    public static Map replaceByArray (Map map) throws Exception {
+        for (Object varName : map.keySet()) {
+            Object value = map.get(varName);
+            if (value instanceof Map) {
+                replaceByArray ((Map)value);
+            } else if (value instanceof List) {
+                replaceByArray ((List)value);
+            } else if (value instanceof String) {
+                Matcher m = DPATTERN1.matcher((String)value);
+                if (m.find()) {
+                    List list = string2list1((String)value, m.end());
+                    map.put(varName, list);
+                }
+                m = DPATTERN2.matcher((String)value);
+                if (m.find()) {
+                    List list = string2list2((String)value, m.end());
+                    map.put(varName, list);
+                }
+            }
+        }
+        return map;
+    }
+    
+    public static void replaceByArray (List list) throws Exception {
+        //ArrayList newList = new ArrayList();
+        for (int i = 0; i < list.size(); i++) {
+            Object value = list.get(i);
+            if (value instanceof Map) {
+                replaceByArray ((Map)value);
+            } else if (value instanceof List) {
+                replaceByArray ((List)value);
+            } else if (value instanceof String) {
+                Matcher m = DPATTERN1.matcher((String)value);
+                if (m.find()) {
+                    List newList = string2list1((String)value, m.end());
+                    list.remove(i);
+                    list.addAll(i, newList);
+                    i = i - 1 +  newList.size();
+                }
+                m = DPATTERN2.matcher((String)value);
+                if (m.find()) {
+                    List newList = string2list2((String)value, m.end());
+                    list.remove(i);
+                    list.addAll(i, newList);
+                    i = i - 1 + list.size();
+                }
+            }
         }
     }
     
