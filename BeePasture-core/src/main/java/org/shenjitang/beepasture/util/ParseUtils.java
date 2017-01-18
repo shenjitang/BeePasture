@@ -5,6 +5,7 @@
  */
 package org.shenjitang.beepasture.util;
 
+import com.beust.jcommander.internal.Lists;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,13 +46,7 @@ public class ParseUtils {
     }
 
     public static List toList(Object page) {
-        if (page instanceof List) {
-            return (List) page;
-        } else {
-            List pages = new ArrayList();
-            pages.add(page);
-            return pages;
-        }
+        return page instanceof List ? (List) page : Lists.newArrayList(page);
     }
     
     public static List string2list1(String value, int idx) {

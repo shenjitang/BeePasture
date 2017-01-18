@@ -55,7 +55,6 @@ public class GatherStep {
     protected final Long limit;
     protected final Map save;
     protected Object xpath;
-    //protected final Object oXpath;
     protected Map heads;
     protected final Map templateParamMap = new HashMap();
     protected final String script; //yamel中script或template的值（脚本中的源句）
@@ -74,7 +73,6 @@ public class GatherStep {
         rurl = (String) rStep.get("url");
         limit = GatherStep.getLongValue(rStep, "limit");
         save = (Map) rStep.get("save");
-        //oXpath = rStep.get("xpath");
         xpath = rStep.get("xpath");
         heads = (Map) rStep.get("head");
         if (heads == null) {
@@ -97,13 +95,10 @@ public class GatherStep {
             }
             templateParamMap.put("_this", ourl);
             if (withVar != null) {
-                templateParamMap.put("_with", ourl);
                 ourl = ((Map) ourl).get(rurl);            
             }
             templateParamMap.put("it", ourl);
             cloneStep();
-            //step = (Map)cloneMap(rStep);
-            //sbeforeGatherExpressCalcu("download", "sql");
             if (withVar != null) {
                 step.put("withVarCurrent", withVarCurrent);
             }            
@@ -403,7 +398,6 @@ public class GatherStep {
             return pages;
         }
         List list = new ArrayList();
-        //templateParamMap.putAll(beeGather.getVars());
         for (Object page : pages) {
             try {
                 if (page instanceof TagNode) {
