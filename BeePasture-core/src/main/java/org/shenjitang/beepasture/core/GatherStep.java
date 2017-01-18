@@ -89,12 +89,7 @@ public class GatherStep {
 
     public void execute() throws Exception {
         rurl = ParseUtils.maybeScript(rurl) ? doScript(rurl): rurl;
-        List urls;
-        if (withVar != null) {
-            urls = withVar;
-        } else {
-            urls = getUrlsFromStepUrl(rurl, rStep); 
-        }
+        List urls = withVar == null? getUrlsFromStepUrl(rurl, rStep) : withVar;
         for (Object ourl : urls) {
             activeTime = System.currentTimeMillis();
             if (ourl instanceof Map) {
@@ -235,18 +230,9 @@ public class GatherStep {
     }    
     
     protected List getUrlsFromStepUrl(String url, Map step) throws Exception {
-//        return beeGather.getVars().containsKey(url) ? 
-//                (List)beeGather.getVar(url) : 
-//                Lists.newArrayList(url);
-        
-        List urls = null;
-        if (beeGather.getVars().containsKey(url)) {
-            urls = (List)beeGather.getVar(url);//   vars.get(url);
-        } else {
-            urls = new ArrayList();
-            urls.add(url);
-        }
-        return urls;
+        return beeGather.getVars().containsKey(url) ? 
+                (List)beeGather.getVar(url) : 
+                Lists.newArrayList(url);
     }
    
     protected Map getLoadParam() {

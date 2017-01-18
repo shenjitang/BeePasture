@@ -1,11 +1,10 @@
 resource: 
     db1: 
-        url: "jdbc:mysql://localhost:3306/test"
-        #databaseName: test
+        url: "jdbc:mysql://192.168.1.229:3306/test"
         username: root
         password: "12345678"
     mongo1:
-        url: mongodb://localhost:27017/test
+        url: mongodb://root:Richeninfo2014@120.55.88.26:3717/admin
 
 var:
     hello_man: []
@@ -13,12 +12,24 @@ var:
 gather:
     - url: db1
       param: 
-          sql: "select * from hello_man"
+          sql: "select * from t_f_cffex_001 limit 10"
       save: 
-          to: hello_man
+          to: t_f_cffex_001
+          property:
+              pubdate: 
+                  type: long
+              updatetime:
+                  type: long
+              modifydate:
+                  type: long
+              CTIME:
+                  type: long
+              
 
         
 persist:
-    hello_man: 
+#    hello_man: "file://t_f_cffex_001.data?encoding=utf8"
+    t_f_cffex_001: 
         resource: mongo1
+        database: test
 
