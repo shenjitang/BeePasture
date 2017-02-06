@@ -26,7 +26,7 @@ public class ResourceMng {
     public ResourceMng() {
     }
     
-    public BeeResource getResource(String name) {
+    public BeeResource getResource(String name, Boolean save) {
         if (StringUtils.isBlank(name)) {
             name = "camel";
         }
@@ -36,7 +36,7 @@ public class ResourceMng {
                 if (maybeResource(name)) {
                     Map params = new HashMap();
                     params.put("url", name);
-                    beeResurce = initOneResource(name, params);
+                    beeResurce = initOneResource(name, params, save);
                 } else {
                     //throw new RuntimeException("不认识的资源或url: " + name);
                     return null;
@@ -49,12 +49,16 @@ public class ResourceMng {
         return null;
     }
     
+    public BeeResource getResource(String name) {
+        return getResource(name, true);
+    }
+    
     public BeeResource addResource(String name, BeeResource resource) {
         resourceMap.put(name, resource);
         return resource;
     }
 
-    public BeeResource initOneResource(String name, Map params) {
+    public BeeResource initOneResource(String name, Map params, Boolean save) {
         String url = (String) params.get("url");
         String scheme = null;
         try {
@@ -68,7 +72,9 @@ public class ResourceMng {
             BeeResource resource = (BeeResource) Class.forName(resourceClassname).newInstance();
             resource.setName(name);
             resource.init(url, params);
-            resourceMap.put(name, resource);
+            if (save) {
+                resourceMap.put(name, resource);
+            }
             return resource;
         } catch (Exception e) {
             throw new RuntimeException("Don't know resource :" + url, e);
@@ -82,7 +88,7 @@ public class ResourceMng {
             if (StringUtils.isBlank(name)) {
                 name = (String)one.get("url");
             }
-            initOneResource(name, one);
+            initOneResource(name, one, true);
         }
     }
 
@@ -90,7 +96,7 @@ public class ResourceMng {
 //        this.resourceDefine = resources;
         try {
             for (Object key : resources.keySet() ) {
-                initOneResource((String)key, (Map)resources.get(key));
+                initOneResource((String)key, (Map)resources.get(key), true);
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -56,6 +56,7 @@ public class GatherStep {
     protected final Map save;
     protected Object xpath;
     protected Map heads;
+    protected Boolean free;
     protected final Map templateParamMap = new HashMap();
     protected final String script; //yamel中script或template的值（脚本中的源句）
     public static volatile long activeTime = System.currentTimeMillis();
@@ -66,11 +67,12 @@ public class GatherStep {
         this.beeGather = BeeGather.getInstance();
         String withVarName = (String) getValue(step, "with", (String) null);
         if (StringUtils.isNotBlank(withVarName)) {
-            if (beeGather.getResourceMng().getResource(withVarName) == null) {
+            if (beeGather.getResourceMng().getResource(withVarName, false) == null) {
                 withVar = (List) beeGather.getVars().get(withVarName);
             }
         }
         rurl = (String) rStep.get("url");
+        free = rStep.get("free") != null;
         limit = GatherStep.getLongValue(rStep, "limit");
         save = (Map) rStep.get("save");
         xpath = rStep.get("xpath");
@@ -87,8 +89,9 @@ public class GatherStep {
 
     public void execute() throws Exception {
         rurl = ParseUtils.maybeScript(rurl) ? doScript(rurl): rurl;
-        List urls = withVar == null? getUrlsFromStepUrl(rurl, rStep) : withVar;
-        for (Object ourl : urls) {
+        List urls = withVar == null? getUrlsFromStepUrl(rurl, rStep) : withVar;        
+        for (int i = 0; i < urls.size(); i++) {
+            Object ourl = urls.get(i);
             activeTime = System.currentTimeMillis();
             if (ourl instanceof Map) {
                 withVarCurrent = (Map)ourl;
@@ -112,6 +115,10 @@ public class GatherStep {
                 break;
             }
             activeTime = System.currentTimeMillis();
+            if (free) {
+                urls.remove(i);
+                i--;
+            }
         }
     }
     
@@ -183,7 +190,7 @@ public class GatherStep {
                 if (beeGather.containsResource(url) || ResourceMng.maybeResource(url)) {
                     try {
                         Map loadParam = getLoadParam();
-                        BeeResource beeResource = beeGather.getResourceMng().getResource(url);
+                        BeeResource beeResource = beeGather.getResourceMng().getResource(url, false);
                         Iterator ite = beeResource.iterate(loadParam);
                         if (ite == null) {
                             MAIN_LOGGER.warn("skip " + url + "    cause: not find resource");
@@ -247,7 +254,7 @@ public class GatherStep {
     
     protected Object loadResource(String url) throws Exception {
         GatherDebug.debug(this, "加载资源：" + url);
-        BeeResource beeResource = beeGather.getResourceMng().getResource(url);
+        BeeResource beeResource = beeGather.getResourceMng().getResource(url, false);
         return beeResource.loadResource(getLoadParam());
     }
     
@@ -762,13 +769,13 @@ public class GatherStep {
         if (StringUtils.isNotBlank(varName)) {
             var = beeGather.getVar(varName);
         } else if (StringUtils.isNotBlank(toName)){
-            resource = beeGather.getResourceMng().getResource(toName);
+            resource = beeGather.getResourceMng().getResource(toName, false);
             if (resource == null) {
                 var = beeGather.getVar(toName);
             }
         }
         if (StringUtils.isNotBlank(resourceName)) {
-            resource = beeGather.getResourceMng().getResource(resourceName);
+            resource = beeGather.getResourceMng().getResource(resourceName, false);
         }
         for (Object page : pages) {
             removeProperties(page);
@@ -797,7 +804,7 @@ public class GatherStep {
     }
     
     protected void saveToResource(String name, Object page, Object ourl, Map saveDefMap) {
-        BeeResource resource = beeGather.getResourceMng().getResource(name);
+        BeeResource resource = beeGather.getResourceMng().getResource(name, false);
         if (resource != null) {
             beeGather.getVars().remove(name);
             resource.persist("it", page, saveDefMap);

@@ -51,9 +51,10 @@ public class Main {
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\dfcfw.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\bing_test.yml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\xyyj_ftp_log_1.yaml";
-        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\xyyj_bing_db_gov.yml";
+        //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\chinaiol_index.yml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\wuhua_web_study.yml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\mysql2mongodb.yaml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\chinamoney.yaml";
         if (args.length > 0) {
             fileName = args[0];
         }
