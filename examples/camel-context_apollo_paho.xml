@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configures the Camel Context-->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+    <bean id="mqttConnectOptions" class="org.eclipse.paho.client.mqttv3.MqttConnectOptions">
+        <property name="userName" value="admin" />
+        <property name="password" value="password" />
+<!--        <property name="cleanSession" value="false" />
+        <property name="keepAliveInterval" value="100" />
+        <property name="serverURIs" value="tcp://mqf-s8beamfn4g.mqtt.aliyuncs.com:1883" />-->
+    </bean>
+    <camelContext xmlns="http://camel.apache.org/schema/spring">
+       <route>
+          <from uri="timer://mocksz?period=2000&amp;repeatCount=10"></from>
+          <setBody><simple>"hello ali oss at ccccccc "</simple></setBody>
+          <to uri="paho:ry_dev_test.info?brokerUrl=tcp://121.40.133.133:61613&amp;connectOptions=#mqttConnectOptions" />
+          <log message="@@@@@@@@###############################@@@@@@@@@: ${body}"/>
+      </route>
+
+       <route>
+          <from uri="paho:ry_dev_test.info/?brokerUrl=tcp://121.40.133.133:61613&amp;connectOptions=#mqttConnectOptions" />
+          <log message="@@@@@@@@==========info=====================@@@@@@@@@: ${body}"/>
+      </route>
+       <route>
+          <from uri="paho:ry_dev_test/notice/?brokerUrl=tcp://121.40.133.133:61613&amp;connectOptions=#mqttConnectOptions" />
+          <log message="@@@@@@@@===========notice====================@@@@@@@@@: ${body}"/>
+      </route>
+    </camelContext>
+
+</beans>
+
+

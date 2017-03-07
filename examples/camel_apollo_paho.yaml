@@ -1,5 +1,5 @@
 
-camel: "file:../examples/camel-context_alimqtt.xml"
+camel: "file:../examples/camel-context_apollo_paho.xml"
 #    url: "camelContext:../examples/camel-context_mqtt_2_ons.xml"
     
 gather:

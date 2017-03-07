@@ -34,7 +34,7 @@ public class PageAnalyzer {
         //document = DocumentHelper.parseText(pageContent);
     }
     
-    public List getList(TagNode node, String xpathExpress) throws Exception {
+    public List<String> getList(TagNode node, String xpathExpress) throws Exception {
 //        XPath dbPaths = new DefaultXPath(xpathExpress);
 //        List results = dbPaths.selectNodes(document);
 //        return results;
@@ -43,7 +43,7 @@ public class PageAnalyzer {
         List resList = new ArrayList();
         for (Object o : objs) {
             if (o instanceof TagNode) {
-                resList.add(o);
+                resList.add(cleaner.getInnerHtml((TagNode)o));
             } else {
                 resList.add(o.toString());
             }
@@ -52,13 +52,11 @@ public class PageAnalyzer {
     }
 
     public String getText(TagNode node, String xpathExpress) throws Exception {
-        XPather xPather = new XPather(xpathExpress);
-        Object[] objs = xPather.evaluateAgainstNode(node);
-        if (objs.length > 0) {
-            return objs[0].toString();
-        } else {
-            return null;
+        List<String> list = getList(node, xpathExpress);
+        if (list.size() > 0) {
+            return list.get(0);
         }
+        return null;
     }
     
 }

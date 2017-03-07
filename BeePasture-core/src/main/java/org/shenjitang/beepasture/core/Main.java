@@ -54,7 +54,7 @@ public class Main {
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\chinaiol_index.yml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\wuhua_web_study.yml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\mysql2mongodb.yaml";
-        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\chinamoney.yaml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\cl\\amac002.yaml";
         if (args.length > 0) {
             fileName = args[0];
         }

@@ -941,8 +941,6 @@ public class GatherStep {
             sobj.putAll((Map) it);
         } else {
             result = new HashMap();
-            result.put("_", it);
-            sobj.put("_", it);
         }
         templateParamMap.put("_item", sobj);
        
@@ -1012,6 +1010,7 @@ public class GatherStep {
                     if (aim instanceof String) {
                         ov = xpathPropertyObj((String) aim, propValue);
                     } else if (aim instanceof TagNode) {
+                        System.out.println(">>>>>" + aim.toString());
                         ov = xpathPropertyObj((TagNode) aim, propValue);
                     } else if (aim instanceof Map) {
                         ov = ((Map) aim).get(key);
