@@ -34,7 +34,7 @@ public class PageAnalyzer {
         //document = DocumentHelper.parseText(pageContent);
     }
     
-    public List<String> getList(TagNode node, String xpathExpress) throws Exception {
+    public List<String> getList(TagNode node, String xpathExpress, boolean innerHtml) throws Exception {
 //        XPath dbPaths = new DefaultXPath(xpathExpress);
 //        List results = dbPaths.selectNodes(document);
 //        return results;
@@ -43,7 +43,11 @@ public class PageAnalyzer {
         List resList = new ArrayList();
         for (Object o : objs) {
             if (o instanceof TagNode) {
-                resList.add(cleaner.getInnerHtml((TagNode)o));
+                if (innerHtml) {
+                    resList.add(cleaner.getInnerHtml((TagNode)o));
+                } else {
+                    resList.add(o);
+                }
             } else {
                 resList.add(o.toString());
             }
@@ -52,11 +56,29 @@ public class PageAnalyzer {
     }
 
     public String getText(TagNode node, String xpathExpress) throws Exception {
-        List<String> list = getList(node, xpathExpress);
-        if (list.size() > 0) {
-            return list.get(0);
+        boolean innerHtml = false;
+        if (xpathExpress.startsWith("innerHtml(")) {
+            xpathExpress = xpathExpress.substring(10, xpathExpress.length() - 1);
+            innerHtml = true;
         }
-        return null;
+        StringBuilder sb = new StringBuilder();
+        List<String> list = getList(node, xpathExpress, innerHtml);
+        for (int i = 0; i < list.size(); i++) {
+            Object o = list.get(i);
+            if (o instanceof TagNode) {
+                XPather xPather = new XPather("text()");
+                Object[] oo = xPather.evaluateAgainstNode((TagNode)o);
+                for (Object one : oo) {
+                    sb.append(one.toString());
+                }
+            } else {
+                sb.append(o.toString());
+            }
+            if (i < list.size() - 1) {
+                sb.append("\n");
+            }
+        }
+        return sb.toString();
     }
     
 }

@@ -59,9 +59,11 @@ public class GatherStep {
     protected Boolean free;
     protected final Map templateParamMap = new HashMap();
     protected final String script; //yamel中script或template的值（脚本中的源句）
+    protected Integer id;
     public static volatile long activeTime = System.currentTimeMillis();
 
-    public GatherStep(Map step) {
+    public GatherStep(Map step, Integer id) {
+        this.id = id;
         pageAnalyzer = new PageAnalyzer();
         this.rStep = step;
         this.beeGather = BeeGather.getInstance();
@@ -81,6 +83,10 @@ public class GatherStep {
             heads = (Map) rStep.get("heads");
         }
         script = beeGather.getScript(rStep);
+    }
+
+    public Integer getId() {
+        return id;
     }
     
     public String changeValueFromObj(String value, Object obj) {
@@ -158,7 +164,7 @@ public class GatherStep {
                 if (extractList != null) {
                     for (Object extract : extractList) {
                         pages = extract((Map)extract, pages);
-                        GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
+//                        GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
                     }
                 }
             } catch (ClassCastException e) {
@@ -204,7 +210,7 @@ public class GatherStep {
                             if (extractList != null) {
                                 for (Object extract : extractList) {
                                     pages = extract((Map)extract, pages);
-                                    GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
+//                                    GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
                                 }
                             }
                             pages = doFilter(pages, step.get("filter"));
@@ -298,6 +304,7 @@ public class GatherStep {
     }
     
     public List doXpath(String page, String xpath) {    
+        GatherDebug.debug(this, "xpath: " + xpath);
         Object _this = templateParamMap.get("_this");
         xpath = changeValueFromObj(xpath, _this);
         List rlist = new ArrayList();
@@ -310,10 +317,23 @@ public class GatherStep {
                 rlist.add(s);
             }
             return rlist;
+        } else if (xpath.startsWith("innerHtml(")){
+            try {
+                String path = xpath.substring(10, xpath.length() - 1);
+                TagNode node = pageAnalyzer.toTagNode(page);
+                List pages = pageAnalyzer.getList(node, path, true);
+                if (pages == null || pages.isEmpty()) {
+                    LOGGER.warn("xpath不能抓到合适的内容！ xpath:" + xpath);
+                }
+                return pages;
+            } catch (Exception e) {
+                LOGGER.warn("xpath:" + xpath + "  page:" + page, e);
+                return new ArrayList();
+            }
         } else {
             try {
                 TagNode node = pageAnalyzer.toTagNode(page);
-                List pages = pageAnalyzer.getList(node, xpath);
+                List pages = pageAnalyzer.getList(node, xpath, false);
                 if (pages == null || pages.isEmpty()) {
                     LOGGER.warn("xpath不能抓到合适的内容！ xpath:" + xpath);
                 }
@@ -336,9 +356,21 @@ public class GatherStep {
                 rlist.add(s);
             }
             return rlist;
+        } else if (xpath.startsWith("innerHtml(")){
+            try {
+                String path = xpath.substring(10, xpath.length() - 1);
+                List pages = pageAnalyzer.getList(page, path, true);
+                if (pages == null || pages.isEmpty()) {
+                    LOGGER.warn("xpath不能抓到合适的内容！ xpath:" + xpath);
+                }
+                return pages;
+            } catch (Exception e) {
+                LOGGER.warn("xpath:" + xpath + "  page:" + page, e);
+                return new ArrayList();
+            }
         } else {
             try {
-                List pages = pageAnalyzer.getList(page, xpath);
+                List pages = pageAnalyzer.getList(page, xpath, false);
                 if (pages == null || pages.isEmpty()) {
                     LOGGER.warn("xpath不能抓到合适的内容！ xpath:" + xpath);
                 }
@@ -411,6 +443,7 @@ public class GatherStep {
                     page = ((TagNode)page).getText();
                 }
                 templateParamMap.put("it", page);
+                GatherDebug.debug(this, "script: " + ascript);
                 String res = template.expressCalcu(ascript, templateParamMap);
                 list.add(res);
             } catch (Exception e) {
@@ -453,6 +486,7 @@ public class GatherStep {
     }
 
     public String doRegex(String page, String regex, Integer groupIndex) {
+        GatherDebug.debug(this, "regex: " + regex);
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(page);
         if (matcher.find()) {
@@ -462,6 +496,7 @@ public class GatherStep {
     }
     
     public String doRegex(String page, String regex) {
+        GatherDebug.debug(this, "regex: " + regex);
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(page);
         if (matcher.find()) {
@@ -562,6 +597,7 @@ public class GatherStep {
     }
     
     protected Boolean doFilterOnce(String key, String filterExpress, Object page) {
+        GatherDebug.debug(this, "filter " + key + ": " + filterExpress);
         if ("script".equalsIgnoreCase(key)) {
             String res = doScript(filterExpress, page);
             return Boolean.valueOf(res);
@@ -692,6 +728,7 @@ public class GatherStep {
             }
         }
         if (StringUtils.isNotBlank(script)) {
+            GatherDebug.debug(this, "script: " + script);
             return template.expressCalcu(script, it, page, ourl, beeGather.getVars());
         } else {
             return it;
@@ -836,6 +873,7 @@ public class GatherStep {
 
     public String doScript(String script) {
         if (ParseUtils.maybeScript(script)) {
+            GatherDebug.debug(this, "script: " + script);
             return template.expressCalcu(script, templateParamMap);
         }
         return script;
@@ -844,6 +882,7 @@ public class GatherStep {
     public String doScript(String script, Object it) {
         templateParamMap.put("it", it);
         if (ParseUtils.maybeScript(script)) {
+            GatherDebug.debug(this, "script: " + script);
             return template.expressCalcu(script, templateParamMap);
         }
         return script;
@@ -1010,7 +1049,7 @@ public class GatherStep {
                     if (aim instanceof String) {
                         ov = xpathPropertyObj((String) aim, propValue);
                     } else if (aim instanceof TagNode) {
-                        System.out.println(">>>>>" + aim.toString());
+                        //System.out.println(">>>>>" + aim.toString());
                         ov = xpathPropertyObj((TagNode) aim, propValue);
                     } else if (aim instanceof Map) {
                         ov = ((Map) aim).get(key);
@@ -1032,22 +1071,28 @@ public class GatherStep {
                     try {
                         if ("date".equalsIgnoreCase(type)) {
                             String format = getValue(propValue, "format", "yyyy-MM-dd HH:mm:ss");
-                            String locate = (String)(propValue).get("locate");
-                            SimpleDateFormat sdf = null;
-                            if (StringUtils.isBlank(locate)) {
-                                if (ov.toString().contains("MMM")) {
-                                    locate = "ENGLISH";
+                            if ("millisecond".equalsIgnoreCase(format) || "ms".equalsIgnoreCase(format)) {
+                                Long ms = Long.valueOf(ov.toString());
+                                ov = new Date();
+                                ((Date)ov).setTime(ms);
+                            } else {
+                                String locate = (String)(propValue).get("locate");
+                                SimpleDateFormat sdf = null;
+                                if (StringUtils.isBlank(locate)) {
+                                    if (ov.toString().contains("MMM")) {
+                                        locate = "ENGLISH";
+                                    }
                                 }
-                            }
-                            if (StringUtils.isBlank(locate)) {
-                                sdf = new SimpleDateFormat(format);
-                            } else {
-                                sdf = new SimpleDateFormat(format, Locale.forLanguageTag(locate));
-                            }
-                            if (StringUtils.isNotBlank(ov.toString())) {
-                                ov = sdf.parse(ParseUtils.correctDateStr(ov.toString()));
-                            } else {
-                                ov = null;
+                                if (StringUtils.isBlank(locate)) {
+                                    sdf = new SimpleDateFormat(format);
+                                } else {
+                                    sdf = new SimpleDateFormat(format, Locale.forLanguageTag(locate));
+                                }
+                                if (StringUtils.isNotBlank(ov.toString())) {
+                                    ov = sdf.parse(ParseUtils.correctDateStr(ov.toString()));
+                                } else {
+                                    ov = null;
+                                }
                             }
                         } else if ("String[]".equalsIgnoreCase(type)) {
                             String split = getValue(propValue, "split", ",");
@@ -1085,7 +1130,7 @@ public class GatherStep {
             } catch (Exception e) {
                 LOGGER.warn("提取字段：" + key + " 出现异常", e);
             }
-            GatherDebug.debug(this, "提取字段：" + key + " = " + ov);
+            GatherDebug.debug(this, "提取完字段：" + key + " = " + ov);
         }
         return result;
     }
@@ -1158,6 +1203,7 @@ public class GatherStep {
 
     private Map unmarshal(Object page, Map get) {
         String type = (String) get.get("type");
+        GatherDebug.debug(this, "unmarshal " + type);
         List heads = (List)get.get("head");
         if ("csv".equalsIgnoreCase(type)) {
             String split = ResourceUtils.get(get, "split", ",");
@@ -1179,6 +1225,7 @@ public class GatherStep {
     private String marshal(Object page, Map get) throws Exception {
         String result = null;
         String type = (String) get.get("type");
+        GatherDebug.debug(this, "marshal " + type);
         if ("json".equalsIgnoreCase(type)) {
             result = JSON.toJSONString(page);
         } else if ("csv".equalsIgnoreCase(type)) {

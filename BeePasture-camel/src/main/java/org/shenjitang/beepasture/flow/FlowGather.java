@@ -38,6 +38,7 @@ public class FlowGather extends BeeGather {
     private static int threadNo = 1;
     private CamelContextResource camelResource;
     private Long waitBeforeExit;
+    private static int id = 1;
 
     public FlowGather() {
         super();
@@ -162,7 +163,7 @@ public class FlowGather extends BeeGather {
     }
 
     private void doProcess(final Map processMap, final Object body, final Map<String, Object> headers) throws Exception{
-        GatherStep gatherStep = new GatherStep(processMap);
+        GatherStep gatherStep = new GatherStep(processMap, id++);
         gatherStep.cloneStep();
         gatherStep.onceGather(body);
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -176,7 +177,7 @@ public class FlowGather extends BeeGather {
         return camelContext;
     }
 
-    static Boolean debug = true;
+    static Boolean debug = false;
     public static void main( String[] args ) throws Exception {
         String fileEncoding = System.getProperty("fileEncoding", "utf8");
         Long waitBeforeExit = Long.valueOf(System.getProperty("waitBeforeExit", "1000"));

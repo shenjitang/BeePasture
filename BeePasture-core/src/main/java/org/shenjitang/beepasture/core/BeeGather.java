@@ -92,10 +92,11 @@ public class BeeGather {
         if (gatherStepList == null) {
             return vars;
         }
+        int i = 0;
         for (Object stepObj : gatherStepList) {
             Map step = (Map) stepObj;
             MAIN_LOGGER.info("enter " + step.get("url"));
-            GatherStep gatherStep = new GatherStep(step);
+            GatherStep gatherStep = new GatherStep(step, i++);
             gatherStep.execute();
             MAIN_LOGGER.info("level " + step.get("url"));
 //            gatherStep.sleep();

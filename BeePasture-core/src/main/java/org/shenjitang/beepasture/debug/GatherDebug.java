@@ -23,6 +23,7 @@ import org.shenjitang.beepasture.resource.util.ResourceUtils;
  */
 public class GatherDebug {
     static Boolean debug = Boolean.valueOf(System.getProperty("debug", "false"));
+    private static String msg = "";
 
     public GatherDebug() {
     }
@@ -45,10 +46,12 @@ public class GatherDebug {
             return;
         }
         try {
-            System.out.println(desc);
+            System.out.println("prev: " + msg);
+            msg = desc;
+            System.out.println("next: " + msg);
             System.out.println("cmd: ? n l p e s t");
             while(debug) {
-                System.out.print("cmd:/> ");
+                System.out.print("Gather:" + gatherStep.getId() + "> ");
                 BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
                 String cmd = reader.readLine().trim();
                 if (cmd.toLowerCase().startsWith("n")) {
