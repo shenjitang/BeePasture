@@ -17,6 +17,8 @@ import org.shenjitang.beepasture.function.ScriptTemplateExecuter;
 import org.shenjitang.beepasture.resource.BeeResource;
 import org.shenjitang.beepasture.resource.ResourceMng;
 import org.shenjitang.beepasture.util.ParseUtils;
+import org.htmlcleaner.TagNode;
+import org.shenjitang.beepasture.http.PageAnalyzer;
 
 /**
  *
@@ -35,6 +37,7 @@ public class BeeGather {
     protected final ResourceMng resourceMng = new ResourceMng();
     protected static final Log LOGGER = LogFactory.getLog(BeeGather.class);
     protected static BeeGather instance;
+//    protected PageAnalyzer pageAnalyzer = new PageAnalyzer();
 
     public Map getProgram() {
         return program;
@@ -170,6 +173,19 @@ public class BeeGather {
     
     
     public void persist(String resourceName, Map params, String varName, Object obj) throws Exception {
+//        if (obj instanceof TagNode) {
+//            obj = pageAnalyzer.cleaner.getInnerHtml((TagNode)obj);
+//        }
+//        if (obj instanceof List) {
+//            List list = new ArrayList();
+//            for (Object o : (List)obj) {
+//                if (o instanceof TagNode) {
+//                    o = pageAnalyzer.cleaner.getInnerHtml((TagNode)o);
+//                }
+//                list.add(o);
+//            }
+//            obj = list;
+//        }
         BeeResource beeResource = resourceMng.getResource(resourceName);
         beeResource.persist(varName, obj, params);
     }

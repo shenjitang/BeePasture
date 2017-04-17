@@ -23,7 +23,7 @@ public class Main {
     
     public static void main( String[] args ) throws Exception {
         String fileEncoding = System.getProperty("fileEncoding", "utf8");
-        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\ccaon.yaml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\image_test.yml";
         if (args.length > 0) {
             fileName = args[0];
         }

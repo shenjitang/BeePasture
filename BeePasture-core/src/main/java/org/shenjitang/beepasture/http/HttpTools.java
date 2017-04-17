@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -111,6 +112,22 @@ public class HttpTools {
         });
     }
     
+    public String dataImage(String url) throws IOException {  
+        String imgType = url.substring(url.lastIndexOf(".") + 1);
+        HttpGet httpget = new HttpGet(url);  
+        HttpResponse response = httpClient.execute(httpget);  
+        HttpEntity entity = response.getEntity();  
+        InputStream input = null;  
+        try {  
+            input = entity.getContent();
+            byte[] bytes = IOUtils.toByteArray(input);
+            String str = Base64.getEncoder().encodeToString(bytes);
+            return "data:image/" + imgType + ";base64," + str;
+        } finally {  
+            IOUtils.closeQuietly(input);  
+            LOGGER.info("dataImage from url=>" + url);
+        }  
+    }  
 //    public String doGet(String url, Map heads) throws Exception {
 //        try {
 //            HttpGet httpget = new HttpGet(url);

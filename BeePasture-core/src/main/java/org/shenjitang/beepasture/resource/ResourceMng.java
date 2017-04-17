@@ -20,7 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 public class ResourceMng {
     //private Map resourceDefine;
     private final Map<String, BeeResource> resourceMap = new HashMap();
-    private final static Pattern RESOURCE_PATTERN = Pattern.compile("^[a-zA-z]{2,18}:[^\\s]*");
+    private final static Pattern RESOURCE_PATTERN = Pattern.compile("^[a-zA-z0-9]{2,18}:[^\\s]*");
     
 
     public ResourceMng() {

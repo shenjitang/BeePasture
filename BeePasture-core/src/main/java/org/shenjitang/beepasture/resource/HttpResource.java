@@ -87,21 +87,22 @@ public class HttpResource extends BeeResource implements Runnable {
                 return fileResource.loadResource(saveMap);
             }
             return fileUrl;
-        } else {
-            String page = null;
-            String postBody = (String) loadParam.get("post");
-            if (org.apache.commons.lang3.StringUtils.isNotBlank(postBody)) {
-                LOGGER.info("=> POST " + url);
-                page = httpTools.doPost((String) url, postBody, heads);
-                LOGGER.debug("POST " + url + "\n" + page);
-            } else {
-                LOGGER.info("=> GET " + url);
-                page = httpTools.doGet((String) url, heads, charset);
-                LOGGER.debug("GET " + url + " finish  " + (page == null ? "null" : (page.length() > 50 ? page.substring(0, 40) + "   ......" : page)));
-            }
-            return page;
         }
-
+        if (loadParam.containsKey("dataimage")) {
+            return httpTools.dataImage(url);
+        }
+        String page = null;
+        String postBody = (String) loadParam.get("post");
+        if (org.apache.commons.lang3.StringUtils.isNotBlank(postBody)) {
+            LOGGER.info("=> POST " + url);
+            page = httpTools.doPost((String) url, postBody, heads);
+            LOGGER.debug("POST " + url + "\n" + page);
+        } else {
+            LOGGER.info("=> GET " + url);
+            page = httpTools.doGet((String) url, heads, charset);
+            LOGGER.debug("GET " + url + " finish  " + (page == null ? "null" : (page.length() > 50 ? page.substring(0, 40) + "   ......" : page)));
+        }
+        return page;
     }
     
     protected String getFileName(Map withVarCurrent, Map loadParam, Map download) {

@@ -1,0 +1,18 @@
+gather:
+  - url: "http://news.dahe.cn/2017/04-14/108393481.html"
+    extract:
+        - xpath: "//div[@id='mainCon']"
+        - dataimage: 
+        - xpath: "innerHtml(.)"
+    save: 
+        to: info
+#    property: 
+#        context: 
+#            extract: 
+#              - xpath: "//div[@id='mainCon']"
+#              - dataimage: 
+#            
+#        title: //h1[@id='4g_title']
+persist:
+    info: "file://img.html"
+            

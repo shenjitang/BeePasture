@@ -6,7 +6,11 @@
 package org.shenjitang.beepasture.core;
 
 import com.alibaba.fastjson.JSON;
-import com.beust.jcommander.internal.Lists;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+//import com.beust.jcommander.internal.Lists;
+//import com.beust.jcommander.internal.Maps;
 import com.jayway.jsonpath.JsonPath;
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -628,6 +632,8 @@ public class GatherStep {
                 return doMarshal(pages, (Map)extract.get("marshal"));
             } else if ("unmarshal".equalsIgnoreCase(key.toString())) {
                 return doUnmarshal(pages, (Map)extract.get("unmarshal"));
+            } else if ("dataimage".equalsIgnoreCase(key.toString())) {
+                return dataimageAll(pages);
             }
         }
         return pages;
@@ -659,6 +665,8 @@ public class GatherStep {
                     if (matcher.find()) {
                         return matcher.group();
                     }
+                } else if ("dataimage".equalsIgnoreCase(key.toString())) {
+                    return dataimage(it);
                 }
             }
         } catch (Exception e) {
@@ -1252,5 +1260,51 @@ public class GatherStep {
 
     private Map cloneMap(Map rStep) {
         return (Map)Yaml.load(Yaml.dump(rStep));
+    }
+
+    private List dataimageAll(List pages) {
+        List list = new ArrayList();
+        for (Object page : pages) {
+            list.add(dataimage(page));
+        }
+        return list;
+    }
+    
+    private TagNode dataimage(Object page) {
+            try {
+                if (page instanceof TagNode) {
+                    return dataimage((TagNode)page);
+                } else {
+                    return dataimage(page.toString());
+                }
+            } catch (Exception e) {
+                LOGGER.warn("dataimage", e);
+            }
+            return null;
+    }
+    
+    private TagNode dataimage(TagNode tagNode) throws Exception {
+        TagNode[] allNode = tagNode.getAllElements(true);
+        for (TagNode node : allNode) {
+            if ("img".equalsIgnoreCase(node.getName())) {
+                String imgUrl = node.getAttributeByName("src");
+                if (StringUtils.isNotBlank(imgUrl) && imgUrl.toLowerCase().startsWith("http:")) {
+                    BeeResource beeResource = beeGather.getResourceMng().getResource(imgUrl, false);
+                    String str = (String)beeResource.loadResource(ImmutableMap.of("dataimage", Boolean.TRUE));
+                    node.removeAttribute("src");
+                    node.addAttribute("src", str);
+                }
+            }
+        }
+        return tagNode;
+    }
+    
+    private TagNode dataimage(String str) throws Exception {
+//        if (!str.startsWith("<")) {
+//            str = "<div id=\"auto-add\">" + str + "</div>";
+//        }
+        TagNode node = pageAnalyzer.toTagNode(str);
+        return dataimage(node);
+//        throw new RuntimeException("data-image 目前只能处理TagNode");
     }
 }
