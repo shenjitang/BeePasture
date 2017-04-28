@@ -8,7 +8,6 @@ package org.shenjitang.beepasture.core;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 //import com.beust.jcommander.internal.Lists;
 //import com.beust.jcommander.internal.Maps;
 import com.jayway.jsonpath.JsonPath;
@@ -249,17 +248,23 @@ public class GatherStep {
    
     protected Map getLoadParam() {
         //资源装载的params里的参数，如果是对vars的引用，就要替换成vars立的值。
-        Map loadParam = new HashMap();
-        Map map = step.get("param") == null ? step : (Map) step.get("param");
-        for (Object key : map.keySet()) {
-            Object value = map.get(key);
-            if (beeGather.getVars().containsKey(value)) {
-                loadParam.put(key, beeGather.getVar((String) value));
-            } else {
-                loadParam.put(key, value);
-            }
+        Object p = step.get("param");
+        if (p == null) {
+            return new HashMap();
+        } else {
+            return (Map)p;
         }
-        return loadParam;
+//        Map loadParam = new HashMap();
+//        Map map = step.get("param") == null ? step : (Map) step.get("param");
+//        for (Object key : map.keySet()) {
+//            Object value = map.get(key);
+//            if (beeGather.getVars().containsKey(value)) {
+//                loadParam.put(key, beeGather.getVar((String) value));
+//            } else {
+//                loadParam.put(key, value);
+//            }
+//        }
+//        return loadParam;
     }
     
     protected Object loadResource(String url) throws Exception {
@@ -520,6 +525,13 @@ public class GatherStep {
                     resList.add(page);
                     LOGGER.debug("keep item: " + page.toString());
                 } else {
+                    if (withVar != null) {
+                        try {
+                            ((List)withVar).remove(withVarCurrent);
+                        } catch (Exception e) {
+                            LOGGER.warn("这里必须是list。不是list，肯定有问题，需要检查。", e);
+                        }
+                    }
                     LOGGER.info("skip item: " + page.toString());
                 }
             }
@@ -593,6 +605,13 @@ public class GatherStep {
                     LOGGER.debug("keep item: " + page.toString());
                     resList.add(page);
                 } else {
+                    if (withVar != null) {
+                        try {
+                            ((List)withVar).remove(withVarCurrent);
+                        } catch (Exception e) {
+                            LOGGER.warn("这里必须是list。不是list，肯定有问题，需要检查。", e);
+                        }
+                    }
                     LOGGER.info("skip item: " + page.toString());
                 }
             }

@@ -1,0 +1,42 @@
+queryFragments: &queryFragments
+        from: 0
+        size: 5
+#        fields: []
+        query: 
+            constant_score: 
+                filter:
+                    missing:
+                        field: autoTag
+fieldWeight: 
+    title: 0.8
+    abstract: 0.5
+    content: 0.4
+resource:
+    - 
+    - es:
+        url: "elasticsearch://localhost:9300/ry_bee_info/ry_bee_info?cluster=ruiyun_es_cluster"
+var:
+#    datas: []
+
+gather:
+    - url: es
+      param: 
+          query: *queryFragments
+      save: 
+          to: datas
+#          removePropety:
+#              - id
+#          property:
+#              infoType: 
+#                  script: "news"
+#              id:
+#                  script: "${_id}"
+          
+        
+persist:
+    datas: file:\\estest.txt?encoding=utf8&format=yaml
+
+#    datas:
+#        resource: es1
+#        _id: id
+        
