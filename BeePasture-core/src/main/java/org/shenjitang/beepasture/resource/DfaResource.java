@@ -15,6 +15,8 @@ import java.util.Set;
 import org.shenjitang.beepasture.algorithm.DeterministicFiniteAutomaton;
 import org.shenjitang.beepasture.core.BeeGather;
 import org.shenjitang.beepasture.resource.BeeResource;
+import org.shenjitang.beepasture.resource.BeeResource;
+import org.shenjitang.beepasture.resource.ResourceMng;
 
 /**
  *
@@ -41,11 +43,16 @@ public class DfaResource extends BeeResource {
             if (res != null) {
                 wordSet = getWords(res, param);
             } else {
-                int idx = wordStr.indexOf(":");
-                if (idx > 0) {
-                    String[] wordContent = (String[])resourceMng.getResource(wordStr).loadResource(null);
-                    for (String w : wordContent) {
-                        wordSet.add(w);
+                Object wordsInVar = BeeGather.getInstance().getVar((String)wordDef);
+                if (wordsInVar != null) {
+                    wordSet.addAll((List)wordsInVar);
+                } else {
+                    int idx = wordStr.indexOf(":");
+                    if (idx > 0) {
+                        String[] wordContent = (String[])resourceMng.getResource(wordStr).loadResource(null);
+                        for (String w : wordContent) {
+                            wordSet.add(w);
+                        }
                     }
                 }
             }

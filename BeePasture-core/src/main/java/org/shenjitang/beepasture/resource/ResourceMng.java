@@ -62,6 +62,7 @@ public class ResourceMng {
         String url = (String) params.get("url");
         String scheme = null;
         try {
+            System.out.println("init resource : " + url);
             URI uri = URI.create(url);
             scheme = uri.getScheme();
         } catch (IllegalArgumentException e) {
