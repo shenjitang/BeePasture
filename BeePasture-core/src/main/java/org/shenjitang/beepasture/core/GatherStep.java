@@ -8,8 +8,6 @@ package org.shenjitang.beepasture.core;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-//import com.beust.jcommander.internal.Lists;
-//import com.beust.jcommander.internal.Maps;
 import com.jayway.jsonpath.JsonPath;
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -248,23 +246,23 @@ public class GatherStep {
    
     protected Map getLoadParam() {
         //资源装载的params里的参数，如果是对vars的引用，就要替换成vars立的值。
-        Object p = step.get("param");
-        if (p == null) {
-            return new HashMap();
-        } else {
-            return (Map)p;
-        }
-//        Map loadParam = new HashMap();
-//        Map map = step.get("param") == null ? step : (Map) step.get("param");
-//        for (Object key : map.keySet()) {
-//            Object value = map.get(key);
-//            if (beeGather.getVars().containsKey(value)) {
-//                loadParam.put(key, beeGather.getVar((String) value));
-//            } else {
-//                loadParam.put(key, value);
-//            }
+//        Object p = step.get("param");
+//        if (p == null) {
+//            return new HashMap();
+//        } else {
+//            return (Map)p;
 //        }
-//        return loadParam;
+        Map loadParam = new HashMap();
+        Map map = step.get("param") == null ? step : (Map) step.get("param");
+        for (Object key : map.keySet()) {
+            Object value = map.get(key);
+            if (beeGather.getVars().containsKey(value)) {
+                loadParam.put(key, beeGather.getVar((String) value));
+            } else {
+                loadParam.put(key, value);
+            }
+        }
+        return loadParam;
     }
     
     protected Object loadResource(String url) throws Exception {
@@ -1014,10 +1012,6 @@ public class GatherStep {
             Object ov = null;
             try {
                 Object propertyPropDef = propertyMap.get(key);
-
-                String type = null;
-                String propScript = null;
-    //            String scope = null;
                 if (propertyPropDef instanceof String) {
                     String def = (String)propertyPropDef;
                     Map m1 = new HashMap();
@@ -1046,7 +1040,7 @@ public class GatherStep {
                     propertyPropDef = m1;
                 }
                 Map propValue = (Map)propertyPropDef;
-                type = (String) propValue.get("type");
+                String type = (String) propValue.get("type");
                 List extractList = (List)propValue.get("extract");
                 if (extractList != null) {
                     if ("_page".equalsIgnoreCase((String)propValue.get("with"))) {
@@ -1066,7 +1060,7 @@ public class GatherStep {
                         GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
                     }
                 } else {
-                    propScript = beeGather.getScript(propValue);
+                    String propScript = beeGather.getScript(propValue);
                     Object aim = it;
                     if ("_page".equalsIgnoreCase((String)propValue.get("with"))) {
                         aim = templateParamMap.get("_page");
@@ -1076,7 +1070,6 @@ public class GatherStep {
                     if (aim instanceof String) {
                         ov = xpathPropertyObj((String) aim, propValue);
                     } else if (aim instanceof TagNode) {
-                        //System.out.println(">>>>>" + aim.toString());
                         ov = xpathPropertyObj((TagNode) aim, propValue);
                     } else if (aim instanceof Map) {
                         ov = ((Map) aim).get(key);
