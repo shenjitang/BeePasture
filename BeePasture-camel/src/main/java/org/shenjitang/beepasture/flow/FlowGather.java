@@ -189,8 +189,8 @@ public class FlowGather extends BeeGather {
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\dce_03.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\100ppi_info_es.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\24h_gl.yaml";
-        //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\camel_only.yaml";
-        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\camel_apollo_paho.yaml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\camel_only.yaml";
+        //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\es2tagservice.yml";
         if (args.length > 0) {
             fileName = args[0];
         }

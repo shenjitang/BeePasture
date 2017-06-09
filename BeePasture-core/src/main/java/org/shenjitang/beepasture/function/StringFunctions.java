@@ -30,9 +30,9 @@ public class StringFunctions {
         }
     }
     
-    public static Integer length(String str) {
+    public static Integer length(Object str) {
         if (str != null) {
-            return str.length();
+            return str.toString().length();
         }
         return 0;
     }

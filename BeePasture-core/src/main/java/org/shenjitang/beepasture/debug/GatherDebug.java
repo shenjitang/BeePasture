@@ -24,6 +24,7 @@ import org.shenjitang.beepasture.resource.util.ResourceUtils;
 public class GatherDebug {
     static Boolean debug = Boolean.valueOf(System.getProperty("debug", "false"));
     private static String msg = "";
+    private static DebugLevel level = DebugLevel.STATEMENT;
 
     public GatherDebug() {
     }
@@ -32,6 +33,8 @@ public class GatherDebug {
         System.out.println("单点调试只支持extract键下的语句，extract键外的处理不建议使用，将来也不会支持。");
         System.out.println("?             说明：help 显示帮助");
         System.out.println("n             说明：next 下一步");
+        System.out.println("ns            说明：next step 跳到下一个step");
+        System.out.println("ng            说明：next gather 跳到下一个gather");
         System.out.println("l             说明：list 列出变量名");
         System.out.println("p [varname]   说明：print 打印变量内容");
         System.out.println("e             说明：exit 退出debug模式，执行到底");
@@ -41,9 +44,19 @@ public class GatherDebug {
 
     }
     
-    public static void debug(GatherStep gatherStep, String desc) {
+    public static void debug(GatherStep gatherStep, DebugLevel currentLevel, String desc) {
         if (!debug) {
             return;
+        }
+        if (level == DebugLevel.GATHER) {
+            if (currentLevel != DebugLevel.GATHER) {
+                return;
+            }
+        }
+        if (level == DebugLevel.STEP) {
+            if (currentLevel == DebugLevel.STATEMENT) {
+                return;
+            }
         }
         try {
             System.out.println("prev: " + msg);
@@ -54,7 +67,14 @@ public class GatherDebug {
                 System.out.print("Gather:" + gatherStep.getId() + "> ");
                 BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
                 String cmd = reader.readLine().trim();
-                if (cmd.toLowerCase().startsWith("n")) {
+                if (cmd.toLowerCase().startsWith("n")) { //下一步
+                    level = DebugLevel.STATEMENT;
+                    return;
+                } else if (cmd.toLowerCase().startsWith("ng")) { //下一个gather
+                    level = DebugLevel.GATHER;
+                    return;
+                } else if (cmd.toLowerCase().startsWith("ns")) { //下一个step
+                    level = DebugLevel.STEP;
                     return;
                 } else if (cmd.toLowerCase().startsWith("?")) {
                     help();

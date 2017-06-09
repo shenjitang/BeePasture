@@ -23,7 +23,7 @@ public class Main {
     
     public static void main( String[] args ) throws Exception {
         String fileEncoding = System.getProperty("fileEncoding", "utf8");
-        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\es_info_tag.yml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\ndrc_1.yml";
         if (args.length > 0) {
             fileName = args[0];
         }
