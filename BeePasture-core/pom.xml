@@ -80,7 +80,7 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>MongoDBUtils</artifactId>
-      <version>${project.version}</version>
+      <version>1.1</version>
       <exclusions>
         <exclusion>
           <groupId>org.mongodb</groupId>
@@ -163,10 +163,21 @@
     </dependency>
 </dependencies>
 <repositories>
-  <repository>
-    <id>maven-repository</id>
-    <url>https://raw.github.com/GitHub/xiaolie/MongoDBUtils/master</url>
-  </repository>
+    <repository> 
+        <id>ruiyun</id> 
+        <name>ruiyun</name> 
+        <url>http://101.37.33.1:8081/repository/maven-public/</url> 
+        <releases>
+            <enabled>true</enabled>
+        </releases> 
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots> 
+    </repository> 
+<!--    <repository>
+        <id>maven-repository</id>
+        <url>https://raw.github.com/GitHub/xiaolie/MongoDBUtils/master</url>
+    </repository>-->
 </repositories>
 <build>
   <plugins>
