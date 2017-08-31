@@ -45,7 +45,7 @@ public class ProxyService {
                     Map map = (Map)proxy;
                     if ("HTTPS".equalsIgnoreCase((String)map.get("protocol"))) {
                         httpsProxyList.add(proxy);
-                        httpProxyList.add(proxy);
+                        //httpProxyList.add(proxy);
                     } else if ("HTTP".equalsIgnoreCase((String)map.get("protocol"))) {
                         httpProxyList.add(proxy);
                     }

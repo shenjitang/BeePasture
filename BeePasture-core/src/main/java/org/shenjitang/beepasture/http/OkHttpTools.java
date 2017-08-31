@@ -33,6 +33,37 @@ import org.apache.commons.logging.LogFactory;
 public class OkHttpTools implements HttpService {
     private static final Log LOGGER = LogFactory.getLog(OkHttpTools.class);
     private OkHttpClient httpClient;
+    private static Proxy httpProxy;
+    private static Proxy httpsProxy;
+    
+    static {
+        if (System.getProperty("httpProxy", "true").equalsIgnoreCase("true")) {
+            Map proxyMap = ProxyService.getInstance().getProxy(false);
+            if (proxyMap != null) {
+                String ipPort = (String) proxyMap.get("ip");
+                String ip = org.apache.commons.lang3.StringUtils.substringBefore(ipPort, ":");
+                Integer port = Integer.valueOf(org.apache.commons.lang3.StringUtils.substringAfter(ipPort, ":"));
+                if (checkHttpProxy(ip, port)) {
+                    httpProxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(ip, port));
+                    LOGGER.info("================proxy: " + ip + ":" + port + " 可用 ================");
+                } else {
+                    LOGGER.info("================proxy: " + ip + ":" + port + " 不可用 ================");
+                }
+            }
+            proxyMap = ProxyService.getInstance().getProxy(true);
+            if (proxyMap != null) {
+                String ipPort = (String) proxyMap.get("ip");
+                String ip = org.apache.commons.lang3.StringUtils.substringBefore(ipPort, ":");
+                Integer port = Integer.valueOf(org.apache.commons.lang3.StringUtils.substringAfter(ipPort, ":"));
+                if (checkHttpsProxy(ip, port)) {
+                    httpsProxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(ip, port));
+                    LOGGER.info("================proxy: " + ip + ":" + port + " 可用 ================");
+                } else {
+                    LOGGER.info("================proxy: " + ip + ":" + port + " 不可用 ================");
+                }
+            }
+        }
+    }
 
     public OkHttpTools() {
         this(false);
@@ -41,23 +72,10 @@ public class OkHttpTools implements HttpService {
     public OkHttpTools(Boolean ssl) {
         OkHttpClient.Builder builder = new OkHttpClient.Builder().connectTimeout(20, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS);
-        Proxy proxy = null;
-        if (System.getProperty("httpProxy", "true").equalsIgnoreCase("true")) {
-            Map proxyMap = ProxyService.getInstance().getProxy(ssl);
-            if (proxyMap != null) {
-                String ipPort = (String) proxyMap.get("ip");
-                String ip = org.apache.commons.lang3.StringUtils.substringBefore(ipPort, ":");
-                Integer port = Integer.valueOf(org.apache.commons.lang3.StringUtils.substringAfter(ipPort, ":"));
-                if (checkProxy(ip, port)) {
-                    proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(ip, port));
-                } else {
-                    LOGGER.info("================proxy: " + ipPort + " 不可用 ================");
-                }
-            }
-            if (proxy != null) {
-                LOGGER.info("================use proxy: " + proxy.address().toString() + " ================");
-                builder = builder.proxy(proxy);
-            }
+        Proxy proxy = ssl?httpsProxy:httpProxy ;
+        if (proxy != null) {
+            LOGGER.info("================use proxy: " + proxy.address().toString() + " ================");
+            builder = builder.proxy(proxy);
         }
         httpClient = builder.build();
     }
@@ -169,13 +187,21 @@ public class OkHttpTools implements HttpService {
         return MediaType.parse(mediaType);
     }
 
-    public boolean checkProxy(String ip, Integer port) {
+    public static boolean checkHttpProxy(String ip, Integer port) {
+        return checkProxy(ip, port, "http://www.smzen.com/");
+    }
+    
+    public static boolean checkHttpsProxy(String ip, Integer port) {
+        return checkProxy(ip, port, "https://www.baidu.com/");
+    }
+
+    public static boolean checkProxy(String ip, Integer port, String url) {
         OkHttpClient client = new OkHttpClient.Builder()
                 .connectTimeout(5, TimeUnit.SECONDS)
                 .writeTimeout(5, TimeUnit.SECONDS).readTimeout(5, TimeUnit.SECONDS)
                 .proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress(ip, port)))
                 .build();
-        Request request = new Request.Builder().url("http://www.smzen.com/").build();
+        Request request = new Request.Builder().url(url).build();
         try {
             try (Response response = client.newCall(request).execute()) {
                 if (response.isSuccessful()) {
