@@ -53,7 +53,7 @@ import org.htmlcleaner.TagNode;
  *
  * @author xiaolie
  */
-public class HttpTools {
+public class HttpTools implements HttpService {
     private static final Log LOGGER = LogFactory.getLog(HttpTools.class);
     private DefaultHttpClient httpClient;
     //private HttpClientContext context = null;
@@ -73,6 +73,8 @@ public class HttpTools {
         }
         httpClient.getParams().setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.BROWSER_COMPATIBILITY);
     }
+    
+    @Override
     public void downloadFile(String url, String dir) throws IOException {  
         HttpGet httpget = new HttpGet(url);  
         HttpResponse response = httpClient.execute(httpget);  
@@ -112,6 +114,7 @@ public class HttpTools {
         });
     }
     
+    @Override
     public String dataImage(String url) throws IOException {  
         String imgType = url.substring(url.lastIndexOf(".") + 1);
         HttpGet httpget = new HttpGet(url);  
@@ -148,6 +151,7 @@ public class HttpTools {
 //        }
 //    }
 //
+    @Override
     public String doGet(String url, Map heads, final String encoding) throws Exception {
         HttpGet httpget = new HttpGet(url);
         if (heads != null) {
@@ -210,7 +214,11 @@ public class HttpTools {
                                 LOGGER.info("unknow charset user gbk for default " + e.getMessage());
                             }                            
                         } else {
-                            page = entity != null ? EntityUtils.toString(entity, encod) : null;
+                            if ("gzip".equals(encod)) {
+                                page = entity != null ? readHtmlContentFromEntity(entity): null;
+                            } else {
+                                page = entity != null ? EntityUtils.toString(entity, encod) : null;
+                            }
                         }
                         response.getEntity().getContent().close();
                         return page;
@@ -245,7 +253,8 @@ public class HttpTools {
     }
     
     
-    public String doPost(String url, String postBody, Map<String, String> headers) throws Exception {
+    @Override
+    public String doPost(String url, String postBody, Map<String, String> headers, String encoding) throws Exception {
         HttpPost httpPost = new HttpPost(url);
         if (headers != null) {
             for (Map.Entry<String, String> entry : headers.entrySet()) {
@@ -268,7 +277,8 @@ public class HttpTools {
         }
     }
     
-    public String doPost(String url, Map<String, String> formParams, Map<String, String> headers) throws Exception {
+    @Override
+    public String doPost(String url, Map<String, String> formParams, Map<String, String> headers, String encoding) throws Exception {
         HttpPost httpPost = new HttpPost(url);
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             httpPost.addHeader(entry.getKey(), entry.getValue());

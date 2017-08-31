@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +53,7 @@ import org.apache.http.util.EntityUtils;
  *
  * @author xiaolie
  */
-public class HttpTools4 {
+public class HttpTools4 implements HttpService {
     private static final Log LOGGER = LogFactory.getLog(HttpTools4.class);
     private CloseableHttpClient httpClient;
     //private HttpClientContext context = null;
@@ -77,6 +78,7 @@ public class HttpTools4 {
                     .setConnectionTimeToLive(10000L, TimeUnit.MILLISECONDS).build();
         }
     }
+    @Override
     public void downloadFile(String url, String dir) throws IOException {  
         HttpGet httpget = new HttpGet(url);  
         try {
@@ -131,6 +133,7 @@ public class HttpTools4 {
         }
     }
     
+    @Override
     public String doGet(String url, Map heads, final String encoding) throws Exception {
         HttpGet httpget = new HttpGet(url);
         if (heads != null) {
@@ -220,7 +223,8 @@ public class HttpTools4 {
     }    
     
     
-    public String doPost(String url, String postBody, Map<String, String> headers) throws Exception {
+    @Override
+    public String doPost(String url, String postBody, Map<String, String> headers, String encoding) throws Exception {
         HttpPost httpPost = new HttpPost(url);
         if (headers != null) {
             for (Map.Entry<String, String> entry : headers.entrySet()) {
@@ -245,7 +249,8 @@ public class HttpTools4 {
         }
     }
     
-    public String doPost(String url, Map<String, String> formParams, Map<String, String> headers) throws Exception {
+    @Override
+    public String doPost(String url, Map<String, String> formParams, Map<String, String> headers, String encoding) throws Exception {
         HttpPost httpPost = new HttpPost(url);
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             httpPost.addHeader(entry.getKey(), entry.getValue());
@@ -325,6 +330,24 @@ public class HttpTools4 {
         connManager.setMaxTotal(100);
         connManager.setDefaultMaxPerRoute(10);
         return connManager;
+    }
+
+    @Override
+    public String dataImage(String url) throws IOException {
+        String imgType = url.substring(url.lastIndexOf(".") + 1);
+        HttpGet httpget = new HttpGet(url);  
+        HttpResponse response = httpClient.execute(httpget);  
+        HttpEntity entity = response.getEntity();  
+        InputStream input = null;  
+        try {  
+            input = entity.getContent();
+            byte[] bytes = IOUtils.toByteArray(input);
+            String str = Base64.getEncoder().encodeToString(bytes);
+            return "data:image/" + imgType + ";base64," + str;
+        } finally {  
+            IOUtils.closeQuietly(input);  
+            LOGGER.info("dataImage from url=>" + url);
+        }  
     }
  
 }

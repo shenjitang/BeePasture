@@ -224,6 +224,19 @@ public class ElasticsearchResource extends BeeResource {
             record.put("_id", hit.getId());
             if (hit.sourceAsMap() != null) {
                 record.putAll(hit.sourceAsMap());
+            } else {
+                Map<String, SearchHitField> fieldMap = hit.getFields();
+                if (fieldMap != null) {
+                    for (String key : fieldMap.keySet()) {
+                        SearchHitField shf = fieldMap.get(key);
+                        List vv = shf.getValues();
+                        if (vv.size() == 1) {
+                            record.put(key, vv.get(0).toString());
+                        } else {
+                            record.put(key, vv);
+                        }
+                    }
+                }
             }
             resultList.add(record);
 //            for (String key : hit.fields().keySet()) {

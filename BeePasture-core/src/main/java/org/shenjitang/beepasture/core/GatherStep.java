@@ -26,6 +26,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ho.yaml.Yaml;
 import org.htmlcleaner.TagNode;
+import org.htmlcleaner.XPather;
 import org.shenjitang.beepasture.debug.DebugLevel;
 import org.shenjitang.beepasture.debug.GatherDebug;
 import org.shenjitang.beepasture.function.JavaScriptExecuter;
@@ -54,6 +55,7 @@ public class GatherStep {
     protected Map withVarCurrent;
     protected Long count = 0L;
     protected String rurl; //yaml中url的值（脚本中的源句）
+    protected Object ourl; //yaml中url进过计算得到的最终的url，可能是http:这样的字符串，也肯能是一个resource.
     protected final Long limit;
     protected final Map save;
     protected Object xpath;
@@ -99,7 +101,7 @@ public class GatherStep {
         rurl = ParseUtils.maybeScript(rurl) ? doScript(rurl): rurl;
         List urls = withVar == null? getUrlsFromStepUrl(rurl, rStep) : withVar;        
         for (int i = 0; i < urls.size(); i++) {
-            Object ourl = urls.get(i);
+            ourl = urls.get(i);
             activeTime = System.currentTimeMillis();
             if (ourl instanceof Map) {
                 withVarCurrent = (Map)ourl;
@@ -340,6 +342,25 @@ public class GatherStep {
                 LOGGER.warn("xpath:" + xpath + "  page:" + page, e);
                 return new ArrayList();
             }
+        } else if (xpath.startsWith("remove(")){
+            try {
+                String path = xpath.substring(7, xpath.length() - 1);
+                TagNode node = pageAnalyzer.toTagNode(page);
+                XPather xPather = new XPather(path);
+                Object[] objs = xPather.evaluateAgainstNode(node);
+                List resList = new ArrayList();
+                for (Object o : objs) {
+                    if (o instanceof TagNode) {
+                        node.removeChild(o);
+                    }
+                }
+                List pages = new ArrayList();
+                pages.add(node);
+                return pages;
+            } catch (Exception e) {
+                LOGGER.warn("xpath:" + xpath + "  page:" + page, e);
+                return new ArrayList();
+            }
         } else {
             try {
                 TagNode node = pageAnalyzer.toTagNode(page);
@@ -373,6 +394,17 @@ public class GatherStep {
                 if (pages == null || pages.isEmpty()) {
                     LOGGER.warn("xpath不能抓到合适的内容！ xpath:" + xpath);
                 }
+                return pages;
+            } catch (Exception e) {
+                LOGGER.warn("xpath:" + xpath + "  page:" + page, e);
+                return new ArrayList();
+            }
+        } else if (xpath.startsWith("remove(")){
+            try {
+                String path = xpath.substring(7, xpath.length() - 1);
+                removeChild(page, path);
+                List pages = new ArrayList();
+                pages.add(page);
                 return pages;
             } catch (Exception e) {
                 LOGGER.warn("xpath:" + xpath + "  page:" + page, e);
@@ -1305,8 +1337,9 @@ public class GatherStep {
                 String imgUrl = node.getAttributeByName("src");
                 if (StringUtils.isNotBlank(imgUrl)) {
                     if (!imgUrl.toLowerCase().startsWith("http:")) {
-                        imgUrl = StringUtils.substringBeforeLast((String)templateParamMap.get("it"), "/") + "/" + imgUrl;
+                        imgUrl = StringUtils.substringBeforeLast(ourl.toString(), "/") + "/" + imgUrl;
                     }
+                    LOGGER.info("image:" + imgUrl);
                     BeeResource beeResource = beeGather.getResourceMng().getResource(imgUrl, false);
                     String str = (String)beeResource.loadResource(ImmutableMap.of("dataimage", Boolean.TRUE));
                     node.removeAttribute("src");
@@ -1324,5 +1357,17 @@ public class GatherStep {
         TagNode node = pageAnalyzer.toTagNode(str);
         return dataimage(node);
 //        throw new RuntimeException("data-image 目前只能处理TagNode");
+    }
+
+    private void removeChild(TagNode page, String tagNode) {
+        for (TagNode cp : page.getChildTags()) {
+            if (cp.getName().equals(tagNode)) {
+                page.removeChild(cp);
+            }
+            if (cp.getChildTags().length > 0) {
+                removeChild(cp, tagNode);
+            }
+        }
+        
     }
 }

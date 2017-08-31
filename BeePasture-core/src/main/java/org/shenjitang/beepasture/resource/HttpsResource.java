@@ -5,7 +5,8 @@
  */
 package org.shenjitang.beepasture.resource;
 
-import org.shenjitang.beepasture.http.HttpTools;
+import org.shenjitang.beepasture.http.OkHttpTools;
+
 
 /**
  *
@@ -14,7 +15,8 @@ import org.shenjitang.beepasture.http.HttpTools;
 public class HttpsResource extends HttpResource {
 
     public HttpsResource() throws Exception {
-        httpTools = new HttpTools(true);
+        ssl = true;
+        //httpTools = new OkHttpTools(true);
     }
     
 }

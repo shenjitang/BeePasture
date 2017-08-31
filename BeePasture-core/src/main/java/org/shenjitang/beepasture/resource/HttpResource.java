@@ -13,7 +13,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.plexus.util.StringUtils;
 import org.shenjitang.beepasture.core.BeeGather;
-import org.shenjitang.beepasture.http.HttpTools;
+import org.shenjitang.beepasture.http.HttpService;
+import org.shenjitang.beepasture.http.OkHttpTools;
 
 
 /**
@@ -23,7 +24,7 @@ import org.shenjitang.beepasture.http.HttpTools;
 public class HttpResource extends BeeResource implements Runnable {
     protected static final Log LOGGER = LogFactory.getLog(HttpResource.class);
     //private ScriptTemplateExecuter template = new ScriptTemplateExecuter();
-    protected HttpTools httpTools;
+    //protected HttpService httpTools;
     protected long count;
     protected long RENEWHTTPTOOLS_COUNT = 100L;
     protected Thread httpThread;
@@ -32,9 +33,10 @@ public class HttpResource extends BeeResource implements Runnable {
     protected Object result;
     protected long timeout = 60000L;
     protected static long threadCount = 0;
+    protected boolean ssl = false;
     
     public HttpResource() {
-        httpTools = new HttpTools();
+        //httpTools = new OkHttpTools(false);
     }
     
     @Override
@@ -57,6 +59,7 @@ public class HttpResource extends BeeResource implements Runnable {
 
     private Object loadResource() throws Exception {
         ++count;
+        HttpService httpTools = new OkHttpTools(ssl);
 //        if (++count % RENEWHTTPTOOLS_COUNT == 0L) {
 //            LOGGER.info("renew httptool count=" + count);
 //            httpTools = new HttpTools();
@@ -95,7 +98,7 @@ public class HttpResource extends BeeResource implements Runnable {
         String postBody = (String) loadParam.get("post");
         if (org.apache.commons.lang3.StringUtils.isNotBlank(postBody)) {
             LOGGER.info("=> POST " + url);
-            page = httpTools.doPost((String) url, postBody, heads);
+            page = httpTools.doPost((String) url, postBody, heads, null);
             LOGGER.debug("POST " + url + "\n" + page);
         } else {
             LOGGER.info("=> GET " + url);
@@ -167,7 +170,6 @@ public class HttpResource extends BeeResource implements Runnable {
 
     private void startThread() {
         startRun = true;
-        httpTools = new HttpTools();
         httpThread = new Thread(this, "httpResource-thread-" + threadCount++);
         httpThread.setDaemon(true);
         httpThread.start();
