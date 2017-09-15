@@ -18,7 +18,7 @@ import org.htmlcleaner.XPather;
  * @author xiaolie
  */
 public class PageAnalyzer {
-    public HtmlCleaner cleaner;  
+    public HtmlCleaner cleaner;
 
     public PageAnalyzer() {
          CleanerProperties prop = new  CleanerProperties();
@@ -33,26 +33,24 @@ public class PageAnalyzer {
         return cleaner.clean(pageContent);
         //document = DocumentHelper.parseText(pageContent);
     }
-    
+
     public List<String> getList(TagNode node, String xpathExpress, boolean innerHtml) throws Exception {
-//        XPath dbPaths = new DefaultXPath(xpathExpress);
-//        List results = dbPaths.selectNodes(document);
-//        return results;
-        XPather xPather = new XPather(xpathExpress);
-        Object[] objs = xPather.evaluateAgainstNode(node);
-        List resList = new ArrayList();
-        for (Object o : objs) {
-            if (o instanceof TagNode) {
-                if (innerHtml) {
-                    resList.add(cleaner.getInnerHtml((TagNode)o));
-                } else {
-                    resList.add(o);
-                }
-            } else {
-                resList.add(o.toString());
-            }
-        }
-        return resList;
+          XPather xPather = new XPather(xpathExpress);
+          Object[] objs = xPather.evaluateAgainstNode(node);
+          List resList = new ArrayList();
+          for (Object o : objs) {
+              if (o instanceof TagNode) {
+                  if (innerHtml) {
+                      String oo = cleaner.getInnerHtml((TagNode)o);
+                      resList.add(oo);
+                  } else {
+                      resList.add(o);
+                  }
+              } else {
+                  resList.add(o.toString());
+              }
+          }
+          return resList;
     }
 
     public String getText(TagNode node, String xpathExpress) throws Exception {
@@ -62,16 +60,23 @@ public class PageAnalyzer {
             innerHtml = true;
         }
         StringBuilder sb = new StringBuilder();
-        List<String> list = getList(node, xpathExpress, innerHtml);
+        List<String> list = getList(node, xpathExpress, false);
         for (int i = 0; i < list.size(); i++) {
             Object o = list.get(i);
             if (o instanceof TagNode) {
-                XPather xPather = new XPather("text()");
-                Object[] oo = xPather.evaluateAgainstNode((TagNode)o);
-                for (Object one : oo) {
-                    sb.append(one.toString());
+                System.out.println(">>>>>>>>>>>>>>>>> " + o);
+                if (innerHtml) {
+                  sb.append(cleaner.getInnerHtml((TagNode)o));
+                } else {
+                  XPather xPather = new XPather("text()");
+                  Object[] oo = xPather.evaluateAgainstNode((TagNode)o);
+                  for (Object one : oo) {
+                      System.out.println(">>>>>>>>>>>>>>>>oo> " + oo);
+                      sb.append(one.toString());
+                  }
                 }
             } else {
+                System.out.println("><<<<<<<<<<<<<<< " + o);
                 sb.append(o.toString());
             }
             if (i < list.size() - 1) {
@@ -80,5 +85,5 @@ public class PageAnalyzer {
         }
         return sb.toString();
     }
-    
+
 }

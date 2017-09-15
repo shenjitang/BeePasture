@@ -14,6 +14,7 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.plexus.util.StringUtils;
 import org.shenjitang.beepasture.core.BeeGather;
 import org.shenjitang.beepasture.http.HttpService;
+import org.shenjitang.beepasture.http.HttpTools;
 import org.shenjitang.beepasture.http.OkHttpTools;
 
 
@@ -59,7 +60,7 @@ public class HttpResource extends BeeResource implements Runnable {
 
     private Object loadResource() throws Exception {
         ++count;
-        HttpService httpTools = new OkHttpTools(ssl);
+        HttpService httpTools = new HttpTools(ssl);//OkHttpTools(ssl);
 //        if (++count % RENEWHTTPTOOLS_COUNT == 0L) {
 //            LOGGER.info("renew httptool count=" + count);
 //            httpTools = new HttpTools();

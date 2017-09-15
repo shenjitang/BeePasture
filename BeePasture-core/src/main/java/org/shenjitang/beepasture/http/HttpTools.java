@@ -28,6 +28,9 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpException;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.ParseException;
@@ -40,6 +43,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.params.ClientPNames;
 import org.apache.http.client.params.CookiePolicy;
+import org.apache.http.conn.routing.HttpRoute;
+import org.apache.http.conn.routing.HttpRoutePlanner;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -47,8 +52,8 @@ import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
-import org.htmlcleaner.TagNode;
 /**
  *
  * @author xiaolie
@@ -58,20 +63,77 @@ public class HttpTools implements HttpService {
     private DefaultHttpClient httpClient;
     //private HttpClientContext context = null;
     private long timeout = 30000L;
+    private static HttpRoutePlanner httpRoutePlanner = null;
+    private static HttpRoutePlanner httpsRoutePlanner = null;
+    
+    static {
+        if (System.getProperty("httpProxy", "true").equalsIgnoreCase("true")) {
+            Map proxyMap = ProxyService.getInstance().getProxy(false);
+            if (proxyMap != null) {
+                String ipPort = (String) proxyMap.get("ip");
+                String ip = org.apache.commons.lang3.StringUtils.substringBefore(ipPort, ":");
+                Integer port = Integer.valueOf(org.apache.commons.lang3.StringUtils.substringAfter(ipPort, ":"));
+                if (OkHttpTools.checkHttpProxy(ip, port)) {
+                    httpRoutePlanner = new HttpRoutePlanner() {
 
-    public HttpTools() {
-        httpClient = new DefaultHttpClient();
-        httpClient.getParams().setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.BROWSER_COMPATIBILITY);
-        httpClient.getParams().setParameter(ClientPNames.CONN_MANAGER_TIMEOUT, 10000L);
+                        @Override
+                        public HttpRoute determineRoute(
+                                HttpHost target,
+                                HttpRequest request,
+                                HttpContext context) throws HttpException {
+                            return new HttpRoute(target, null,  new HttpHost(ip, port),
+                                    "https".equalsIgnoreCase(target.getSchemeName()));
+                        }
+
+                    };                    
+                    LOGGER.info("================proxy: " + ip + ":" + port + " 可用 ================");
+                } else {
+                    LOGGER.info("================proxy: " + ip + ":" + port + " 不可用 ================");
+                }
+            }
+            proxyMap = ProxyService.getInstance().getProxy(true);
+            if (proxyMap != null) {
+                final String ipPort = (String) proxyMap.get("ip");
+                final String ip = org.apache.commons.lang3.StringUtils.substringBefore(ipPort, ":");
+                Integer port = Integer.valueOf(org.apache.commons.lang3.StringUtils.substringAfter(ipPort, ":"));
+                if (OkHttpTools.checkHttpsProxy(ip, port)) {
+                    httpsRoutePlanner = new HttpRoutePlanner() {
+
+                        @Override
+                        public HttpRoute determineRoute(
+                                HttpHost target,
+                                HttpRequest request,
+                                HttpContext context) throws HttpException {
+                            return new HttpRoute(target, null,  new HttpHost(ip, port),
+                                    "https".equalsIgnoreCase(target.getSchemeName()));
+                        }
+
+                    };                    
+                    LOGGER.info("================proxy: " + ip + ":" + port + " 可用 ================");
+                } else {
+                    LOGGER.info("================proxy: " + ip + ":" + port + " 不可用 ================");
+                }
+            }
+        }
     }
+    
+
+//    public HttpTools() {
+//        httpClient = new DefaultHttpClient();
+//        httpClient.getParams().setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.BROWSER_COMPATIBILITY);
+//        httpClient.getParams().setParameter(ClientPNames.CONN_MANAGER_TIMEOUT, 10000L);
+//    }
     
     public HttpTools(Boolean ssl) throws Exception {
         if (ssl) {
             httpClient = new SSLClient();
+            httpClient.setRoutePlanner(httpRoutePlanner);
         } else {
             httpClient = new DefaultHttpClient();
+            httpClient.setRoutePlanner(httpsRoutePlanner);
         }
         httpClient.getParams().setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.BROWSER_COMPATIBILITY);
+        
     }
     
     @Override
@@ -444,7 +506,7 @@ public class HttpTools implements HttpService {
     }
     
     public static void main(String[] args) throws Exception {
-        HttpTools tools = new HttpTools();
+        HttpTools tools = new HttpTools(true);
         Map head = new HashMap();
         head.put("HOST", "www.jd.com:443");
         String content = tools.doSSLGet("https://www.jd.com/:443", head, "gbk");

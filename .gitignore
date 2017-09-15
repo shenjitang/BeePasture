@@ -12,6 +12,8 @@
 /target/
 /ry/
 /cl/
+/lilong/
+/test/
 /.projectKnowledge/
 *.log
 nbactions.xml
