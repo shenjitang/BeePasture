@@ -166,19 +166,24 @@
         <artifactId>guava</artifactId>
       <version>20.0</version>
     </dependency>
+        <dependency>
+            <groupId>org.nlpcn</groupId>
+            <artifactId>nlp-lang</artifactId>
+            <version>1.7.3</version>
+        </dependency>
 </dependencies>
 <repositories>
-    <repository> 
-        <id>ruiyun</id> 
-        <name>ruiyun</name> 
-        <url>http://101.37.33.1:8081/repository/maven-public/</url> 
+    <repository>
+        <id>ruiyun</id>
+        <name>ruiyun</name>
+        <url>http://101.37.33.1:8081/repository/maven-public/</url>
         <releases>
             <enabled>true</enabled>
-        </releases> 
+        </releases>
         <snapshots>
             <enabled>true</enabled>
-        </snapshots> 
-    </repository> 
+        </snapshots>
+    </repository>
 <!--    <repository>
         <id>maven-repository</id>
         <url>https://raw.github.com/GitHub/xiaolie/MongoDBUtils/master</url>

@@ -29,23 +29,23 @@ public class StringFunctions {
             return str;
         }
     }
-    
+
     public static Integer length(Object str) {
         if (str != null) {
             return str.toString().length();
         }
         return 0;
     }
-    
+
     public static String now(String pattern) {
         SimpleDateFormat format = new SimpleDateFormat(pattern);
         return format.format(new Date());
     }
-    
+
     public static String substringBeforeLast(String str, String dim) {
         return StringUtils.substringBeforeLast(str, dim);
     }
-    
+
     public static String substring(String str, int beginIndex) {
         if (StringUtils.isNotEmpty(str)) {
             return str.substring(beginIndex);
@@ -61,7 +61,7 @@ public class StringFunctions {
             return str;
         }
     }
-    
+
     public static String replaceAll(String str, String src, String dest) {
         return str.replaceAll(src, dest);
     }
@@ -69,22 +69,22 @@ public class StringFunctions {
     public static int indexOf(String str, String indexOfStr) {
         return str.indexOf(indexOfStr);
     }
-    
+
     public static String unicode2str(String str) {
         StringBuilder sb = new StringBuilder();
-        int i = -1;  
-        int pos = 0;  
+        int i = -1;
+        int pos = 0;
 
-        while((i=str.indexOf("\\u", pos)) != -1){  
-            sb.append(str.substring(pos, i));  
-            if(i+5 < str.length()){  
-                pos = i+6;  
-                sb.append((char)Integer.parseInt(str.substring(i+2, i+6), 16));  
-            }  
-        }  
-        return sb.toString();  
+        while((i=str.indexOf("\\u", pos)) != -1){
+            sb.append(str.substring(pos, i));
+            if(i+5 < str.length()){
+                pos = i+6;
+                sb.append((char)Integer.parseInt(str.substring(i+2, i+6), 16));
+            }
+        }
+        return sb.toString();
     }
-    
+
     public static Date smartDate(String str) {
         if (str.indexOf("分钟前") > 0) {
             long n = Long.valueOf(str.substring(0, str.indexOf("分钟前")).trim());
@@ -102,7 +102,7 @@ public class StringFunctions {
             return null;
         }
     }
-    
+
     public static String urlEncod(String str, String charset) throws Exception {
         if (StringUtils.isNotBlank(str)) {
             return URLEncoder.encode(str, charset);
@@ -110,7 +110,7 @@ public class StringFunctions {
             return str;
         }
     }
-    
+
     public static String urlDecode(String str, String charset) throws Exception {
         if (StringUtils.isNotBlank(str)) {
             return URLDecoder.decode(str, charset);
@@ -118,12 +118,12 @@ public class StringFunctions {
             return str;
         }
     }
-    
+
     public static String scheme(String str) {
         URI uri = URI.create(str);
         return uri.getScheme();
     }
-    
+
     public static String authority(String str) {
         URI uri = URI.create(str);
         return uri.getAuthority();
@@ -155,7 +155,7 @@ public class StringFunctions {
         }
         return map;
     }
-    
+
     public static String regex(String str, String regex, int n) {
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(str);
@@ -163,7 +163,7 @@ public class StringFunctions {
             return matcher.group(n);
         } else {
             return "";
-        }        
+        }
     }
     public static String regex(String str, String regex) {
         Pattern pattern = Pattern.compile(regex);
@@ -174,11 +174,11 @@ public class StringFunctions {
             return "";
         }
     }
-    
+
     public static String[] split(String str) {
         return str.split(" ");
     }
-    
+
     public static String[] split(String str, String regex) {
         return str.split(regex);
     }
@@ -186,8 +186,11 @@ public class StringFunctions {
     public static String[] split(String str, String regex, int limit) {
         return str.split(regex, limit);
     }
-    
+
     public static String uuid() {
         return UUID.randomUUID().toString();
+    }
+    public static String rmHtmlTag(String str) {
+      return org.nlpcn.commons.lang.util.StringUtil.rmHtmlTag(str);
     }
 }

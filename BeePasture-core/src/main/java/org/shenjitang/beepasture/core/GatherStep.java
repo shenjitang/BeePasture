@@ -686,6 +686,28 @@ public class GatherStep {
                 return doUnmarshal(pages, (Map)extract.get("unmarshal"));
             } else if ("dataimage".equalsIgnoreCase(key.toString())) {
                 return dataimageAll(pages);
+            } else if ("convert".equalsIgnoreCase(key.toString())) {
+              List list = new ArrayList();
+              String type = (String)extract.get("convert");
+              if ("json".equalsIgnoreCase(type.trim())) {
+                for (Object page : pages) {
+                  String jsonStr = JSON.toJSONString(page);
+                  list.add(jsonStr);
+                }
+              }
+              return list;
+            } else if ("split".equalsIgnoreCase(key.toString())) {
+              List list = new ArrayList();
+              String split = (String)extract.get("split");
+              //System.out.println("=========split:" + split);
+              for (Object page : pages) {
+                String[] pp = ((String)page).split(split);
+                for (String p : pp) {
+                  //System.out.println("=========p:" + p);
+                  list.add(p);
+                }
+              }
+              return list;
             }
         }
         return pages;
@@ -1129,6 +1151,10 @@ public class GatherStep {
                             String format = getValue(propValue, "format", "yyyy-MM-dd HH:mm:ss");
                             if ("millisecond".equalsIgnoreCase(format) || "ms".equalsIgnoreCase(format)) {
                                 Long ms = Long.valueOf(ov.toString());
+                                ov = new Date();
+                                ((Date)ov).setTime(ms);
+                            } else if ("second".equalsIgnoreCase(format) || "s".equalsIgnoreCase(format)) {
+                                Long ms = Long.valueOf(ov.toString()) * 1000L;
                                 ov = new Date();
                                 ((Date)ov).setTime(ms);
                             } else {
