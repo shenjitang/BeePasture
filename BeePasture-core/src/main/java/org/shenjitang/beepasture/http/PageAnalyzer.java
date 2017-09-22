@@ -64,19 +64,16 @@ public class PageAnalyzer {
         for (int i = 0; i < list.size(); i++) {
             Object o = list.get(i);
             if (o instanceof TagNode) {
-                System.out.println(">>>>>>>>>>>>>>>>> " + o);
                 if (innerHtml) {
                   sb.append(cleaner.getInnerHtml((TagNode)o));
                 } else {
                   XPather xPather = new XPather("text()");
                   Object[] oo = xPather.evaluateAgainstNode((TagNode)o);
                   for (Object one : oo) {
-                      System.out.println(">>>>>>>>>>>>>>>>oo> " + oo);
                       sb.append(one.toString());
                   }
                 }
             } else {
-                System.out.println("><<<<<<<<<<<<<<< " + o);
                 sb.append(o.toString());
             }
             if (i < list.size() - 1) {

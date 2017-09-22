@@ -13,6 +13,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.plexus.util.StringUtils;
 import org.shenjitang.beepasture.core.BeeGather;
+import org.shenjitang.beepasture.core.GatherStep;
 import org.shenjitang.beepasture.http.HttpService;
 import org.shenjitang.beepasture.http.HttpTools;
 import org.shenjitang.beepasture.http.OkHttpTools;
@@ -46,12 +47,24 @@ public class HttpResource extends BeeResource implements Runnable {
     }
     
     @Override
-    public void persist(String varName, Object obj, Map params) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void persist(GatherStep gatherStep, String varName, Object obj, Map params) {
+        System.out.println(varName);
+        String url = (String)params.get("to");
+//        String method = (String)params.get("method");
+        Map heads = (Map)params.get("head");
+        try {
+//            if ("post".equalsIgnoreCase(method)) {
+                HttpService httpTools = new HttpTools(ssl);
+                String page = httpTools.doPost((String) url, obj.toString(), heads, null);
+//            } else {               
+//            }
+        } catch (Exception e) {
+            LOGGER.warn(url, e);
+        }
     }
 
     @Override
-    public Object loadResource(Map loadParam) throws Exception {
+    public Object loadResource(GatherStep gatherStep, Map loadParam) throws Exception {
         this.loadParam = loadParam;
         startThread();
         return waiteForResult(timeout);
@@ -88,7 +101,7 @@ public class HttpResource extends BeeResource implements Runnable {
             fileResource.init(fileUrl, null);
             Map saveMap = (Map)loadParam.get("save");
             if (saveMap != null) {
-                return fileResource.loadResource(saveMap);
+                return fileResource.loadResource(null, saveMap);
             }
             return fileUrl;
         }
@@ -123,7 +136,7 @@ public class HttpResource extends BeeResource implements Runnable {
     }
 
     @Override
-    public Iterator<Object> iterate(Map param) throws Exception {
+    public Iterator<Object> iterate(GatherStep gatherStep, Map param) throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

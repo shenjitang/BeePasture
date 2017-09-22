@@ -20,6 +20,7 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.shenjitang.beepasture.core.GatherStep;
 
 /**
  *
@@ -40,12 +41,12 @@ public class DirResource extends BeeResource {
     }
 
     @Override
-    public void persist(String varName, Object obj, Map persistParams) {
+    public void persist(GatherStep gatherStep, String varName, Object obj, Map persistParams) {
         throw new UnsupportedOperationException("Dir 资源不支持写操作");
     }
 
     @Override
-    public Object loadResource(Map loadParam) throws Exception {
+    public Object loadResource(GatherStep gatherStep, Map loadParam) throws Exception {
         String urlStr = (String)params.get("url");
         URI uri = URI.create(urlStr);
         
@@ -140,7 +141,7 @@ public class DirResource extends BeeResource {
     }
 
     @Override
-    public Iterator<Object> iterate(Map param) throws Exception {
+    public Iterator<Object> iterate(GatherStep gatherStep, Map param) throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
         

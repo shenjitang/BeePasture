@@ -12,6 +12,7 @@ import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 import org.shenjitang.beepasture.algorithm.NagaoAlgorithm;
 import org.shenjitang.beepasture.core.BeeGather;
+import org.shenjitang.beepasture.core.GatherStep;
 import org.shenjitang.beepasture.resource.BeeResource;
 import org.shenjitang.beepasture.resource.ResourceMng;
 import org.shenjitang.beepasture.resource.util.ResourceUtils;
@@ -51,7 +52,7 @@ public class NagaoResource extends BeeResource {
             String stop = (String)param.get("stopzi");
             if(!StringUtils.isNotBlank(stop)) {
                 if(ResourceMng.maybeResource(stop)) {
-                    stopzi = (String)BeeGather.getInstance().getResourceMng().getResource(stop).loadResource(null);
+                    stopzi = (String)BeeGather.getInstance().getResourceMng().getResource(stop).loadResource(null, null);
                 }
             }
         }
@@ -61,7 +62,7 @@ public class NagaoResource extends BeeResource {
                 stopwords = (List)stop;
             } else if(StringUtils.isNotBlank((String)stop)) {
                 if(ResourceMng.maybeResource((String)stop)) {
-                    stopwords = (List)BeeGather.getInstance().getResourceMng().getResource((String)stop).loadResource(null);
+                    stopwords = (List)BeeGather.getInstance().getResourceMng().getResource((String)stop).loadResource(null, null);
                 }
             }
         }
@@ -69,7 +70,7 @@ public class NagaoResource extends BeeResource {
 
     
     @Override
-    public void persist(String varName, Object obj, Map params) {
+    public void persist(GatherStep gatherStep, String varName, Object obj, Map params) {
         if ("__start__".equalsIgnoreCase((String)obj)) {
             nagao = new NagaoAlgorithm(N, threshold, stopzi);
         } else if ("__end__".equalsIgnoreCase((String)obj)) {
@@ -80,7 +81,7 @@ public class NagaoResource extends BeeResource {
             //step4: save TF NeighborInfo and MI
             result = nagao.saveTFNeighborInfoMI(stopwords);
             for (Map record : result) {
-                flowOut(record, null);
+                flowOut(null, record, null);
             }
         } else {
             nagao.addToPTable((String)obj);
@@ -88,12 +89,12 @@ public class NagaoResource extends BeeResource {
     }
 
     @Override
-    public Object loadResource(Map loadParam) throws Exception {
+    public Object loadResource(GatherStep gatherStep, Map loadParam) throws Exception {
         return result;
     }
 
     @Override
-    public Iterator<Object> iterate(Map param) throws Exception {
+    public Iterator<Object> iterate(GatherStep gatherStep, Map param) throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

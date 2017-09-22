@@ -5,7 +5,7 @@
  */
 package org.shenjitang.beepasture.util;
 
-import com.beust.jcommander.internal.Lists;
+import com.google.common.collect.Lists;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;

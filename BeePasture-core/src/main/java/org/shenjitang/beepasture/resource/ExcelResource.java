@@ -6,6 +6,7 @@
 package org.shenjitang.beepasture.resource;
 
 import java.util.Map;
+import org.shenjitang.beepasture.core.GatherStep;
 import org.shenjitang.beepasture.resource.util.ExcelParser;
 
 /**
@@ -15,12 +16,12 @@ import org.shenjitang.beepasture.resource.util.ExcelParser;
 public class ExcelResource extends FileResource {
 
     @Override
-    public void persist(String varName, Object obj, Map params) {
+    public void persist(GatherStep gatherStep, String varName, Object obj, Map params) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public Object loadResource(Map loadParam) throws Exception {
+    public Object loadResource(GatherStep gatherStep, Map loadParam) throws Exception {
         return ExcelParser.parseExcel(file, null);
     }
     

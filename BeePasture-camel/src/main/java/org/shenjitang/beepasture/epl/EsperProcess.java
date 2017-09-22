@@ -88,7 +88,7 @@ public class EsperProcess {
                             map.put(name, first.get(name));
                             System.out.println("EventType: " + name + " => " + first.get(name));
                         }
-                        saveToResource.persist(null, map, saveMap);
+                        saveToResource.persist(null, null, map, saveMap);
                         //saveToResource.persist(null, first, saveMap);
                     }
                 }            

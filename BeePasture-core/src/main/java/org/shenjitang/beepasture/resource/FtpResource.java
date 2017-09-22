@@ -20,6 +20,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPClientConfig;
+import org.shenjitang.beepasture.core.GatherStep;
 import static org.shenjitang.beepasture.resource.FileResource.readFile;
 import org.shenjitang.beepasture.resource.util.ResourceUtils;
 
@@ -94,7 +95,7 @@ public class FtpResource extends BeeResource {
     }
 
     @Override
-    public void persist(String varName, Object obj, Map localParams) {
+    public void persist(GatherStep gatherStep, String varName, Object obj, Map localParams) {
         String filename = getFilename(localParams);
         String localfile = getLocalfile(localParams, null);
         if (StringUtils.isBlank(localfile)) {
@@ -140,7 +141,7 @@ public class FtpResource extends BeeResource {
     }
 
     @Override
-    public Object loadResource(Map localParam) throws Exception {
+    public Object loadResource(GatherStep gatherStep, Map localParam) throws Exception {
         if (!ftpClient.isConnected()) {
             connect();
         }
@@ -171,7 +172,7 @@ public class FtpResource extends BeeResource {
     }
 
     @Override
-    public Iterator<Object> iterate(Map param) throws Exception {
+    public Iterator<Object> iterate(GatherStep gatherStep, Map param) throws Exception {
         String filename = getFilename(param);//(String)param.get("filename");
         if (!ftpClient.isConnected()) {
             connect();

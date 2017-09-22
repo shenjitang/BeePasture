@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import org.shenjitang.beepasture.algorithm.DeterministicFiniteAutomaton;
 import org.shenjitang.beepasture.core.BeeGather;
+import org.shenjitang.beepasture.core.GatherStep;
 import org.shenjitang.beepasture.resource.BeeResource;
 import org.shenjitang.beepasture.resource.BeeResource;
 import org.shenjitang.beepasture.resource.ResourceMng;
@@ -49,7 +50,7 @@ public class DfaResource extends BeeResource {
                 } else {
                     int idx = wordStr.indexOf(":");
                     if (idx > 0) {
-                        String[] wordContent = (String[])resourceMng.getResource(wordStr).loadResource(null);
+                        String[] wordContent = (String[])resourceMng.getResource(wordStr).loadResource(null, null);
                         for (String w : wordContent) {
                             wordSet.add(w);
                         }
@@ -62,7 +63,7 @@ public class DfaResource extends BeeResource {
     
     protected Set getWords(BeeResource res, Map params) throws Exception {
         Set wordSet = new HashSet();
-        List res1 = (List) res.loadResource(params);
+        List res1 = (List) res.loadResource(null, params);
         for (Object obj : res1) {
             if (obj instanceof String) {
                 wordSet.add(obj);
@@ -81,7 +82,7 @@ public class DfaResource extends BeeResource {
     }
     
     @Override
-    public void persist(String varName, Object obj, Map flowParams) {
+    public void persist(GatherStep gatherStep, String varName, Object obj, Map flowParams) {
         List fields = getList(flowParams, "target");
         List headList = new ArrayList();
         if (fields.size() > 0) {
@@ -93,7 +94,7 @@ public class DfaResource extends BeeResource {
                 headList.add(vec);
             }
             datas = obj;
-            flowOut(obj, headList);
+            flowOut(gatherStep, obj, headList);
         } else {
             Map wordMap = dfa.analysis((String) obj);
             Map resultMap = new HashMap();
@@ -101,17 +102,17 @@ public class DfaResource extends BeeResource {
             resultMap.put("dfa_vec_message", wordMap);
             headList.add("dfa_vec_message");
             datas = resultMap;
-            flowOut(resultMap, headList);
+            flowOut(gatherStep, resultMap, headList);
         }
     }
 
     @Override
-    public Object loadResource(Map loadParam) throws Exception {
+    public Object loadResource(GatherStep gatherStep, Map loadParam) throws Exception {
         return datas;
     }
 
     @Override
-    public Iterator<Object> iterate(Map param) throws Exception {
+    public Iterator<Object> iterate(GatherStep gatherStep, Map param) throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

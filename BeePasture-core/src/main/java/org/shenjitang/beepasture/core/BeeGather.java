@@ -187,7 +187,7 @@ public class BeeGather {
 //            obj = list;
 //        }
         BeeResource beeResource = resourceMng.getResource(resourceName);
-        beeResource.persist(varName, obj, params);
+        beeResource.persist(null, varName, obj, params);
     }
     
     public void saveTo() throws Exception {

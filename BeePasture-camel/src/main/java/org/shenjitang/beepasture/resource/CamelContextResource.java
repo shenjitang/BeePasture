@@ -16,6 +16,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.shenjitang.beepasture.core.GatherStep;
 
 /**
  *
@@ -49,7 +50,7 @@ public class CamelContextResource extends BeeResource {
     }
     
     @Override
-    public void persist(String varName, Object obj, Map params) {
+    public void persist(GatherStep gatherStep, String varName, Object obj, Map params) {
         String to = (String)params.get("route");
         if (to == null) {
             to = (String)params.get("endpoint");
@@ -83,7 +84,7 @@ public class CamelContextResource extends BeeResource {
     }
 
     @Override
-    public Object loadResource(Map loadParam) throws Exception {
+    public Object loadResource(GatherStep gatherStep, Map loadParam) throws Exception {
         String endPoint = (String)loadParam.get("endpoint");
         Object obj = camelConsumer.receiveBody(endPoint);
         System.out.println("^^^^^^^^^^^^^^^^^^^^^^endPoint:" + endPoint);
@@ -126,7 +127,7 @@ public class CamelContextResource extends BeeResource {
     }
 
     @Override
-    public Iterator<Object> iterate(Map param) throws Exception {
+    public Iterator<Object> iterate(GatherStep gatherStep, Map param) throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

@@ -19,6 +19,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.shenjitang.beepasture.core.BeeGather;
+import org.shenjitang.beepasture.core.GatherStep;
 
 /**
  *
@@ -28,8 +29,6 @@ public abstract class BeeResource {
     protected final Log LOGGER = LogFactory.getLog(this.getClass());
     protected BeeResource saveToResource;
     protected Map saveDefMap;
-    public BeeResource() {
-    }
     protected String flowOutEndpoint = null;
     protected String name;
     protected String url;
@@ -37,6 +36,9 @@ public abstract class BeeResource {
     protected Map params = new HashMap();
     protected Map uriParams = new HashMap();
     
+    public BeeResource() {
+    }
+
     public void init(String url, Map param) throws Exception {
         if (url != null) {
             this.url = url;
@@ -68,9 +70,9 @@ public abstract class BeeResource {
         }
     }
     
-    abstract public void persist(String varName, Object obj, Map params);
-    abstract public Object loadResource(Map loadParam) throws Exception;
-    abstract public Iterator<Object> iterate(Map param) throws Exception;
+    abstract public void persist(GatherStep gatherStep, String varName, Object obj, Map params);
+    abstract public Object loadResource(GatherStep gatherStep, Map loadParam) throws Exception;
+    abstract public Iterator<Object> iterate(GatherStep gatherStep, Map param) throws Exception;
     
     public void afterIterate() {
         
@@ -109,10 +111,10 @@ public abstract class BeeResource {
         }
     }
     
-    protected void flowOut(Object result, List<String> headList) {
+    protected void flowOut(GatherStep gatherStep, Object result, List<String> headList) {
         if (saveToResource != null) {
             saveDefMap.put("header", headList);
-            saveToResource.persist(null, result, saveDefMap);
+            saveToResource.persist(gatherStep, null, result, saveDefMap);
         }
     }
     

@@ -19,6 +19,7 @@ import java.util.Properties;
 import javax.sql.DataSource;
 import org.apache.commons.dbcp.BasicDataSourceFactory;
 import org.apache.commons.lang3.StringUtils;
+import org.shenjitang.beepasture.core.GatherStep;
 import org.shenjitang.beepasture.function.ScriptTemplateExecuter;
 
 /**
@@ -47,7 +48,7 @@ public class JdbcResource extends BeeResource {
     }
 
     @Override
-    public void persist(String varName, Object obj, Map persistParams) {
+    public void persist(GatherStep gatherStep, String varName, Object obj, Map persistParams) {
         String topVarName = varName.split("[.]")[0];
         String tailVarName = null;
         if (topVarName.length() < varName.length()) {
@@ -111,7 +112,7 @@ public class JdbcResource extends BeeResource {
     }
     
     @Override
-    public Object loadResource(Map loadParam) throws Exception {
+    public Object loadResource(GatherStep gatherStep, Map loadParam) throws Exception {
         List list = new ArrayList();
         String sql = (String)loadParam.get("sql");
         try (Connection conn = ds.getConnection()) {
@@ -200,7 +201,7 @@ public class JdbcResource extends BeeResource {
     }    
 
     @Override
-    public Iterator<Object> iterate(Map loadParam) throws Exception {
+    public Iterator<Object> iterate(GatherStep gatherStep, Map loadParam) throws Exception {
         return new RecordIterator(loadParam);
     }
     

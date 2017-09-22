@@ -37,6 +37,7 @@ import org.shenjitang.beepasture.resource.ResourceMng;
 import org.shenjitang.beepasture.resource.util.ResourceUtils;
 import org.shenjitang.beepasture.util.ParseUtils;
 import org.shenjitang.commons.csv.CSVUtils;
+import com.google.common.collect.Lists;
 
 /**
  *
@@ -74,7 +75,7 @@ public class GatherStep {
         String withVarName = (String) getValue(step, "with", (String) null);
         if (StringUtils.isNotBlank(withVarName)) {
             if (beeGather.getResourceMng().getResource(withVarName, false) == null) {
-                withVar = (List) beeGather.getVars().get(withVarName);
+                withVar = Lists.newArrayList((List)beeGather.getVars().get(withVarName)) ;
             }
         }
         rurl = (String) rStep.get("url");
@@ -112,6 +113,9 @@ public class GatherStep {
             }
             templateParamMap.put("it", ourl);
             cloneStep();
+            if (step.containsKey("local")) {
+                templateParamMap.putAll((Map)step.get("local"));
+            }
             if (withVar != null) {
                 step.put("withVarCurrent", withVarCurrent);
             }
@@ -135,7 +139,7 @@ public class GatherStep {
 
     public void cloneStep() {
             step = (Map)cloneMap(rStep);
-            beforeGatherExpressCalcu("download", "sql");
+            beforeGatherExpressCalcu(step, "download", "sql", "local");
     }
 
     /**
@@ -203,7 +207,7 @@ public class GatherStep {
                     try {
                         Map loadParam = getLoadParam();
                         BeeResource beeResource = beeGather.getResourceMng().getResource(url, false);
-                        Iterator ite = beeResource.iterate(loadParam);
+                        Iterator ite = beeResource.iterate(this, loadParam);
                         if (ite == null) {
                             MAIN_LOGGER.warn("skip " + url + "    cause: not find resource");
                             return;
@@ -273,7 +277,7 @@ public class GatherStep {
     protected Object loadResource(String url) throws Exception {
         GatherDebug.debug(this, DebugLevel.STATEMENT, "加载资源：" + url);
         BeeResource beeResource = beeGather.getResourceMng().getResource(url, false);
-        return beeResource.loadResource(getLoadParam());
+        return beeResource.loadResource(this, getLoadParam());
     }
 
 
@@ -553,8 +557,10 @@ public class GatherStep {
         }
         List resList = new ArrayList();
         if (filter instanceof String) {
+            int i = 0;
             for (Object page : (List) obj) {
-                if (doFilterOnce("script", (String)filter, page)) {
+                i++;
+                if (doFilterOnce("script", (String)filter, page, i)) {
                     resList.add(page);
                     LOGGER.debug("keep item: " + page.toString());
                 } else {
@@ -569,24 +575,26 @@ public class GatherStep {
                 }
             }
         } else {
+            int i = 0;
             for (Object page : (List) obj) { //对每一个_item做filter
+                 i++;
                 Map map = (Map)filter;
                 boolean keep = true;
                 ONE: for (Object key : map.keySet()) {
                     Object value = map.get(key);
                     if (value instanceof String) {
-                        keep &= doFilterOnce((String)key, (String)value, page);
+                        keep &= doFilterOnce((String)key, (String)value, page, i);
                     } else if (value instanceof List) {
                         for (Object item : (List)value) {
                             if (item instanceof String ) {
-                                keep = doFilterOnce((String)key, (String)item, page);
+                                keep = doFilterOnce((String)key, (String)item, page, i);
                                 if (!keep) {
                                     break ONE;
                                 }
                             } else {
                                 String ope = (String)((Map)item).keySet().iterator().next();
                                 String express = (String)((Map)item).get(ope);
-                                keep = doFilterOnce((String)key, express, page);
+                                keep = doFilterOnce((String)key, express, page, i);
                                 if ("not".equalsIgnoreCase(ope) || "mustnot".equalsIgnoreCase(ope)) { //mast not
                                     keep = !keep;
                                     if (!keep) {
@@ -612,7 +620,7 @@ public class GatherStep {
                     } else {
                         String ope = (String)((Map)value).keySet().iterator().next();
                         String express = (String)((Map)value).get(ope);
-                        keep = doFilterOnce((String)key, express, page);
+                        keep = doFilterOnce((String)key, express, page, i);
                         if ("not".equalsIgnoreCase(ope) || "mustnot".equalsIgnoreCase(ope)) { //mast not
                             keep = !keep;
                             if (!keep) {
@@ -652,11 +660,19 @@ public class GatherStep {
         return resList;
     }
 
-    protected Boolean doFilterOnce(String key, String filterExpress, Object page) {
+    protected Boolean doFilterOnce(String key, String filterExpress, Object page, int index) {
         GatherDebug.debug(this, DebugLevel.STATEMENT, "filter " + key + ": " + filterExpress);
         if ("script".equalsIgnoreCase(key)) {
+          if (filterExpress.matches(">\\d+")) {
+            Integer limit = Integer.valueOf(filterExpress.substring(1));
+            return index > limit;
+          } else if (filterExpress.matches("<\\d+")) {
+            Integer limit = Integer.valueOf(filterExpress.substring(1));
+            return index < limit;
+          } else {
             String res = doScript(filterExpress, page);
             return Boolean.valueOf(res);
+          }
         } else if ("regex".equalsIgnoreCase(key)) {
             Pattern pattern = Pattern.compile(filterExpress);
             Matcher matcher = pattern.matcher(page.toString());
@@ -754,12 +770,18 @@ public class GatherStep {
      * 这个方法有问题，只要调用一遍step里的内容就改掉了，以后再也不会重新计算了。
      * @param keys
      */
-    protected void beforeGatherExpressCalcu(String ... keys) {
+    protected void beforeGatherExpressCalcu(Map map,  String ... keys) {
         for (String key : keys) {
-            doExpressCalcu(step, key);
+            doExpressCalcu(map, key);
         }
     }
 
+    protected void doExpressCalcu(Map parent) {
+        for (Object key : parent.keySet()) {
+            doExpressCalcu(parent, (String)key);
+        }
+    }
+    
     protected void doExpressCalcu(Map parent,String key) {
         Object obj = parent.get(key);
         if (obj == null) {
@@ -897,16 +919,18 @@ public class GatherStep {
         if (StringUtils.isNotBlank(resourceName)) {
             resource = beeGather.getResourceMng().getResource(resourceName, false);
         }
+        int i = 0;
         for (Object page : pages) {
+            i++;
             removeProperties(page);
-            if (StringUtils.isNotBlank(filterExpress) && !doFilterOnce("script", filterExpress, page)) {
+            if (StringUtils.isNotBlank(filterExpress) && !doFilterOnce("script", filterExpress, page, i)) {
                 continue;
             }
             if (var != null) {
                 var.add(page);
             }
             if (resource != null) {
-                saveToResource(resourceName, page, ourl, saveDefMap);
+                resource.persist(this, "it", page, saveDefMap);
             } else if (StringUtils.isNotBlank(endpoint)) {
                 saveToResource("camel", page, ourl, saveDefMap);
             }
@@ -922,12 +946,12 @@ public class GatherStep {
             toList.add(page);
         }
     }
-
+    
     protected void saveToResource(String name, Object page, Object ourl, Map saveDefMap) {
         BeeResource resource = beeGather.getResourceMng().getResource(name, false);
         if (resource != null) {
             beeGather.getVars().remove(name);
-            resource.persist("it", page, saveDefMap);
+            resource.persist(this, "it", page, saveDefMap);
         } else {
            throw new RuntimeException("can not find resource: " + name);
         }
@@ -1361,14 +1385,19 @@ public class GatherStep {
         TagNode[] allNode = tagNode.getAllElements(true);
         for (TagNode node : allNode) {
             if ("img".equalsIgnoreCase(node.getName())) {
-                String imgUrl = node.getAttributeByName("src");
+                String attributeName = "src";
+                String imgUrl = node.getAttributeByName(attributeName);
+                if (imgUrl == null) {
+                    attributeName = "data-src";
+                    imgUrl = node.getAttributeByName(attributeName);
+                }
                 if (StringUtils.isNotBlank(imgUrl)) {
-                    if (!imgUrl.toLowerCase().startsWith("http:")) {
+                    if (!imgUrl.toLowerCase().startsWith("http")) {
                         imgUrl = StringUtils.substringBeforeLast(ourl.toString(), "/") + "/" + imgUrl;
                     }
                     LOGGER.info("image:" + imgUrl);
                     BeeResource beeResource = beeGather.getResourceMng().getResource(imgUrl, false);
-                    String str = (String)beeResource.loadResource(ImmutableMap.of("dataimage", Boolean.TRUE));
+                    String str = (String)beeResource.loadResource(this, ImmutableMap.of("dataimage", Boolean.TRUE));
                     node.removeAttribute("src");
                     node.addAttribute("src", str);
                 }

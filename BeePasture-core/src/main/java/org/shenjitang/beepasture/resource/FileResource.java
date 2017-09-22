@@ -29,6 +29,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.codehaus.plexus.util.StringUtils;
 import org.ho.yaml.Yaml;
+import org.shenjitang.beepasture.core.GatherStep;
 import org.shenjitang.beepasture.resource.util.ExcelParser;
 import org.shenjitang.commons.csv.CSVUtils;
 
@@ -64,7 +65,7 @@ public class FileResource extends BeeResource {
     }
 
     @Override
-    public void persist(String varName, Object obj, Map persistParams) {
+    public void persist(GatherStep gatherStep, String varName, Object obj, Map persistParams) {
         Map allParam = new HashMap();
         allParam.putAll(this.params);
         allParam.putAll(persistParams);
@@ -114,7 +115,7 @@ public class FileResource extends BeeResource {
     }
 
     @Override
-    public Object loadResource(Map loadParam) throws Exception {
+    public Object loadResource(GatherStep gatherStep, Map loadParam) throws Exception {
         Map iparams = new HashMap();
         
         String query  = uri.getQuery();
@@ -148,7 +149,7 @@ public class FileResource extends BeeResource {
     }
 
     @Override
-    public Iterator<Object> iterate(Map loadParam) throws Exception {
+    public Iterator<Object> iterate(GatherStep gatherStep, Map loadParam) throws Exception {
         Map iparams = new HashMap();
         
         String query  = uri.getQuery();
