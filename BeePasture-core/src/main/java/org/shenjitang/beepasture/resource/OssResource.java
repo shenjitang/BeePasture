@@ -34,7 +34,7 @@ public class OssResource extends BeeResource {
     }
 
     @Override
-    public void persist(GatherStep gatherStep, String varName, Object obj, Map params) {
+    protected void _persist(GatherStep gatherStep, String varName, Object obj, Map params) {
         String encoding = (String)params.get("encoding");
 //        if (StringUtils.isBlank(encoding)) {
 //            encoding = "GBK";

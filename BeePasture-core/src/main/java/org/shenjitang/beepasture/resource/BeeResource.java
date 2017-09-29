@@ -70,9 +70,25 @@ public abstract class BeeResource {
         }
     }
     
-    abstract public void persist(GatherStep gatherStep, String varName, Object obj, Map params);
+    abstract protected void _persist(GatherStep gatherStep, String varName, Object obj, Map params);
     abstract public Object loadResource(GatherStep gatherStep, Map loadParam) throws Exception;
     abstract public Iterator<Object> iterate(GatherStep gatherStep, Map param) throws Exception;
+    
+    public void persist(GatherStep gatherStep, String varName, Object obj, Map params) {
+        if (obj instanceof Map && ((Map)obj).containsKey("_local")) {
+            ((Map)obj).remove("_local");
+        }
+        if (obj instanceof List) {
+            for (Object item : (List)obj) {
+                if (item instanceof Map) {
+                    if (((Map)item).containsKey("_local")) {
+                        ((Map)item).remove("_local");
+                    }
+                }
+            }
+        }
+        _persist(gatherStep, varName, obj, params);
+    }
     
     public void afterIterate() {
         

@@ -38,6 +38,7 @@ import org.shenjitang.beepasture.resource.util.ResourceUtils;
 import org.shenjitang.beepasture.util.ParseUtils;
 import org.shenjitang.commons.csv.CSVUtils;
 import com.google.common.collect.Lists;
+import java.lang.reflect.Array;
 
 /**
  *
@@ -106,6 +107,10 @@ public class GatherStep {
             activeTime = System.currentTimeMillis();
             if (ourl instanceof Map) {
                 withVarCurrent = (Map)ourl;
+                if (withVarCurrent.containsKey("_local")) {
+                    templateParamMap.putAll((Map)withVarCurrent.get("_local"));
+                    templateParamMap.put("_local", (Map)withVarCurrent.get("_local"));
+                }
             }
             templateParamMap.put("_this", ourl);
             if (withVar != null) {
@@ -115,6 +120,10 @@ public class GatherStep {
             cloneStep();
             if (step.containsKey("local")) {
                 templateParamMap.putAll((Map)step.get("local"));
+                if (!templateParamMap.containsKey("_local")) {
+                    templateParamMap.put("_local", new HashMap());
+                }
+                ((Map)templateParamMap.get("_local")).putAll((Map)step.get("local"));
             }
             if (withVar != null) {
                 step.put("withVarCurrent", withVarCurrent);
@@ -904,6 +913,9 @@ public class GatherStep {
         if ("_this".equalsIgnoreCase(varName) || "_this".equalsIgnoreCase(toName)) {
             Map page = (Map)pages.get(pages.size() - 1);
             withVarCurrent.putAll(page);
+            if (withVarCurrent.containsKey("_local")) {
+                withVarCurrent.put("_local", withVarCurrent.get("_local"));
+            }
             return;
         }
         BeeResource resource = null;
@@ -927,6 +939,9 @@ public class GatherStep {
                 continue;
             }
             if (var != null) {
+                if(page instanceof Map && templateParamMap.containsKey("_local")) {
+                    ((Map)page).put("_local", templateParamMap.get("_local"));
+                }
                 var.add(page);
             }
             if (resource != null) {
@@ -1074,7 +1089,21 @@ public class GatherStep {
         }
         List returnList = new ArrayList();
         for (Object it : its ) {
-            returnList.add(setPageProperties(it, ourl, propertyMap));
+            if (it.getClass().isArray()) {
+                Map oit = new HashMap();
+                for (int i = 0; i < Array.getLength(it); i++) {
+                    oit.put("f" + i, Array.get(it, i));
+                }
+                returnList.add(setPageProperties(oit, ourl, propertyMap));
+            } else if (it instanceof List) {
+                Map oit = new HashMap();
+                for (int i = 0; i < ((List)it).size(); i++) {
+                    oit.put("f" + i, ((List)it).get(i));
+                }
+                returnList.add(setPageProperties(oit, ourl, propertyMap));
+            } else {
+                returnList.add(setPageProperties(it, ourl, propertyMap));
+            }
         }
         return returnList;
     }

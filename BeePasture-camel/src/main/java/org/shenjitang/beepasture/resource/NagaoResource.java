@@ -70,7 +70,7 @@ public class NagaoResource extends BeeResource {
 
     
     @Override
-    public void persist(GatherStep gatherStep, String varName, Object obj, Map params) {
+    protected void _persist(GatherStep gatherStep, String varName, Object obj, Map params) {
         if ("__start__".equalsIgnoreCase((String)obj)) {
             nagao = new NagaoAlgorithm(N, threshold, stopzi);
         } else if ("__end__".equalsIgnoreCase((String)obj)) {

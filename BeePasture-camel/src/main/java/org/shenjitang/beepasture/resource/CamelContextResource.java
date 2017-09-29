@@ -50,7 +50,7 @@ public class CamelContextResource extends BeeResource {
     }
     
     @Override
-    public void persist(GatherStep gatherStep, String varName, Object obj, Map params) {
+    protected void _persist(GatherStep gatherStep, String varName, Object obj, Map params) {
         String to = (String)params.get("route");
         if (to == null) {
             to = (String)params.get("endpoint");

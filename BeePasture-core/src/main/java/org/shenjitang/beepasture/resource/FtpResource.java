@@ -95,7 +95,7 @@ public class FtpResource extends BeeResource {
     }
 
     @Override
-    public void persist(GatherStep gatherStep, String varName, Object obj, Map localParams) {
+    protected void _persist(GatherStep gatherStep, String varName, Object obj, Map localParams) {
         String filename = getFilename(localParams);
         String localfile = getLocalfile(localParams, null);
         if (StringUtils.isBlank(localfile)) {

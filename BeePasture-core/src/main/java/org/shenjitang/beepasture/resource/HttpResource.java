@@ -47,7 +47,7 @@ public class HttpResource extends BeeResource implements Runnable {
     }
     
     @Override
-    public void persist(GatherStep gatherStep, String varName, Object obj, Map params) {
+    protected void _persist(GatherStep gatherStep, String varName, Object obj, Map params) {
         System.out.println(varName);
         String url = (String)params.get("to");
 //        String method = (String)params.get("method");

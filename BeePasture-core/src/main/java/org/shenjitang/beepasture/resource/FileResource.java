@@ -65,7 +65,7 @@ public class FileResource extends BeeResource {
     }
 
     @Override
-    public void persist(GatherStep gatherStep, String varName, Object obj, Map persistParams) {
+    protected void _persist(GatherStep gatherStep, String varName, Object obj, Map persistParams) {
         Map allParam = new HashMap();
         allParam.putAll(this.params);
         allParam.putAll(persistParams);

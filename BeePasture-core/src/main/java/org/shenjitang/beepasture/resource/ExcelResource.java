@@ -16,7 +16,7 @@ import org.shenjitang.beepasture.resource.util.ExcelParser;
 public class ExcelResource extends FileResource {
 
     @Override
-    public void persist(GatherStep gatherStep, String varName, Object obj, Map params) {
+    protected void _persist(GatherStep gatherStep, String varName, Object obj, Map params) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

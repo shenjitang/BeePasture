@@ -41,7 +41,7 @@ public class DirResource extends BeeResource {
     }
 
     @Override
-    public void persist(GatherStep gatherStep, String varName, Object obj, Map persistParams) {
+    protected void _persist(GatherStep gatherStep, String varName, Object obj, Map persistParams) {
         throw new UnsupportedOperationException("Dir 资源不支持写操作");
     }
 
