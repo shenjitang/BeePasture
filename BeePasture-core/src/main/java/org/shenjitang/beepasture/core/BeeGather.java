@@ -166,6 +166,10 @@ public class BeeGather {
             mergeReourceMap.putAll(resource);
             mergeReourceMap.putAll(resourceMap);
             persist(resourceName, mergeReourceMap, varName, vars.get(topVarName));
+        } else if (objPersist instanceof List) {
+            for (Object saveStep : (List)objPersist) {
+                saveVar(varName, saveStep);
+            }
         } else {
             throw new RuntimeException("不支持的persist: " + objPersist.toString());
         }

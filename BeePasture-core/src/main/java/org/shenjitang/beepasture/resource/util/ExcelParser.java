@@ -140,16 +140,11 @@ public class ExcelParser {
                         for (int k = 0; k < row.getLastCellNum(); k++) {
                             XSSFCell cell = row.getCell(k);
                             if (null != cell) {
-                            	 if(cell.toString().endsWith(".0")) {
-                                     rowArray.add(cell.toString().substring(0,cell.toString().length()-2));
-                                 	//rowArray[k] = cell.toString().substring(0,cell.toString().length()-2);
-                                 }else {
-                                     rowArray.add(cell.toString());
-                                 	//rowArray[k] = cell.toString();
-                                 }
-//                                rowArray[k] = cell.getStringCellValue();
-//                         	   	rowArray[k] = getCellText2007(cell);
-//                            		rowArray[k] = getContent(cell);
+//                            	 if(cell.toString().endsWith(".0")) {
+//                                     rowArray.add(cell.toString().substring(0,cell.toString().length()-2));
+//                                 }else {
+                                     rowArray.add(getContent(cell));
+//                                 }
                             } else {
                                 rowArray.add("");
                             }
