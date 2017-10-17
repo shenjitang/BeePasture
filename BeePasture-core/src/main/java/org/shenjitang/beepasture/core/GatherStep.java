@@ -676,7 +676,7 @@ public class GatherStep {
           }
         } else if ("regex".equalsIgnoreCase(key)) {
             Pattern pattern = Pattern.compile(filterExpress);
-            Matcher matcher = pattern.matcher(page.toString());
+            Matcher matcher = pattern.matcher(JSON.toJSONString(page));
             return matcher.find();
         } else {
             throw new RuntimeException("不支持的filter检查方式：" + key);
@@ -901,7 +901,6 @@ public class GatherStep {
             }
         }
 
-        String filterExpress = (String)saveDefMap.get("filter");
         if ("_this".equalsIgnoreCase(varName) || "_this".equalsIgnoreCase(toName)) {
             Map page = (Map)pages.get(pages.size() - 1);
             withVarCurrent.putAll(page);
@@ -921,12 +920,22 @@ public class GatherStep {
             resource = beeGather.getResourceMng().getResource(resourceName, false);
         }
         int i = 0;
+        Object filterExpress = saveDefMap.get("filter");
+        pages = doFilter(pages, filterExpress);
         for (Object page : pages) {
             i++;
             removeProperties(page);
-            if (StringUtils.isNotBlank(filterExpress) && !doFilterOnce("script", filterExpress, page, i)) {
-                continue;
-            }
+//            if (filterExpress != null) {
+//                if (filterExpress instanceof String) {
+//                    if (StringUtils.isNotBlank((String)filterExpress) && !doFilterOnce("script", (String)filterExpress, page, i)) {
+//                        continue;
+//                    }
+//                } else if (filterExpress instanceof Map) {
+//                    for ()
+//                } else {
+//                    throw new RuntimeException("gather-save-filter mast be string or map");
+//                }
+//            }
             if (var != null) {
                 var.add(page);
             }
