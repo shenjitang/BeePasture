@@ -103,6 +103,7 @@ public class GatherStep {
         rurl = ParseUtils.maybeScript(rurl) ? doScript(rurl): rurl;
         List urls = withVar == null? getUrlsFromStepUrl(rurl, rStep) : withVar;
         for (int i = 0; i < urls.size(); i++) {
+            int oldSize = urls.size();
             ourl = urls.get(i);
             activeTime = System.currentTimeMillis();
             if (ourl instanceof Map) {
@@ -131,9 +132,13 @@ public class GatherStep {
                 break;
             }
             activeTime = System.currentTimeMillis();
-            if (free) {
-                urls.remove(i);
+            if (urls.size() < oldSize) { //过滤掉了
                 i--;
+            } else {
+                if (free) {
+                    urls.remove(i);
+                    i--;
+                }
             }
         }
     }

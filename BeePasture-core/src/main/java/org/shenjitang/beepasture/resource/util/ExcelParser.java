@@ -56,6 +56,7 @@ public class ExcelParser {
 
     public static Map<String, List<List<String>>> parseExcel(File excelFile, String[] pages) throws Exception {
         String extension = FilenameUtils.getExtension(excelFile.getPath());
+        System.out.println("========" + excelFile + "         extension=" + extension);
         if ("xlsx".equalsIgnoreCase(extension)) { // 2007
             return parse2007(excelFile, pages);
         } else { // 97

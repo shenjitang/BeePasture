@@ -23,7 +23,7 @@ public class Main {
     
     public static void main( String[] args ) throws Exception {
         String fileEncoding = System.getProperty("fileEncoding", "utf8");
-        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\test\\http_test.yml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\全国县以上农村低保情况_月度.yaml";
         if (args.length > 0) {
             fileName = args[0];
         }

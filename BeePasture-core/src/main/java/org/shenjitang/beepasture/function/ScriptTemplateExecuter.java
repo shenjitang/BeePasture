@@ -54,6 +54,7 @@ public class ScriptTemplateExecuter {
             gt.registerFunctionPackage("str", StringFunctions.class);
             gt.registerFunctionPackage("StringUtils", StringUtils.class);
             gt.registerFunction("dateAdd", new DateAddFunction());
+            gt.registerFunction("lastDayOfMonth", new LastDayOfMonthFunction());
             gt.registerFunction("smartDate", new SmartDateFunction());
             //gt.registerFunctionPackage("it", it);
             for (Object key : params.keySet()) {
@@ -100,6 +101,7 @@ public class ScriptTemplateExecuter {
         gt.registerFunctionPackage("str", StringFunctions.class);
         gt.registerFunctionPackage("StringUtils", StringUtils.class);
         gt.registerFunction("dateAdd", new DateAddFunction());
+        gt.registerFunction("lastDayOfMonth", new LastDayOfMonthFunction());
         //gt.registerFunctionPackage("it", it);
         for (String key : params.keySet()) {
             Object o = params.get(key);
@@ -135,6 +137,7 @@ public class ScriptTemplateExecuter {
         gt.registerFunctionPackage("str", StringFunctions.class);
         gt.registerFunctionPackage("StringUtils", StringUtils.class);
         gt.registerFunction("dateAdd", new DateAddFunction());
+        gt.registerFunction("lastDayOfMonth", new LastDayOfMonthFunction());
         //gt.registerFunctionPackage("it", it);
         for (String key : params.keySet()) {
             Object o = params.get(key);
