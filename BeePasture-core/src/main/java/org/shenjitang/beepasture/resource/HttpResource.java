@@ -7,6 +7,7 @@ package org.shenjitang.beepasture.resource;
 
 import java.io.IOException;
 import java.nio.CharBuffer;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import org.apache.commons.logging.Log;
@@ -15,6 +16,7 @@ import org.codehaus.plexus.util.StringUtils;
 import org.shenjitang.beepasture.core.BeeGather;
 import org.shenjitang.beepasture.core.GatherStep;
 import org.shenjitang.beepasture.http.HttpService;
+import org.shenjitang.beepasture.http.HttpServiceMng;
 import org.shenjitang.beepasture.http.HttpTools;
 import org.shenjitang.beepasture.http.OkHttpTools;
 
@@ -25,27 +27,25 @@ import org.shenjitang.beepasture.http.OkHttpTools;
  */
 public class HttpResource extends BeeResource implements Runnable {
     protected static final Log LOGGER = LogFactory.getLog(HttpResource.class);
-    //private ScriptTemplateExecuter template = new ScriptTemplateExecuter();
-    //protected HttpService httpTools;
     protected long count;
     protected long RENEWHTTPTOOLS_COUNT = 100L;
     protected Thread httpThread;
     protected Map loadParam;
-    protected volatile boolean startRun = false; 
+    protected volatile boolean startRun = false;
     protected Object result;
     protected long timeout = 60000L;
     protected static long threadCount = 0;
     protected boolean ssl = false;
-    
+
     public HttpResource() {
         //httpTools = new OkHttpTools(false);
     }
-    
+
     @Override
     public void init(String url, Map param) throws Exception {
         super.init(url, param);
     }
-    
+
     @Override
     protected void _persist(GatherStep gatherStep, String varName, Object obj, Map params) {
         System.out.println(varName);
@@ -54,9 +54,9 @@ public class HttpResource extends BeeResource implements Runnable {
         Map heads = (Map)params.get("head");
         try {
 //            if ("post".equalsIgnoreCase(method)) {
-                HttpService httpTools = new HttpTools(ssl);
+                HttpService httpTools = new OkHttpTools(ssl);
                 String page = httpTools.doPost((String) url, obj.toString(), heads, null);
-//            } else {               
+//            } else {
 //            }
         } catch (Exception e) {
             LOGGER.warn(url, e);
@@ -68,16 +68,12 @@ public class HttpResource extends BeeResource implements Runnable {
         this.loadParam = loadParam;
         startThread();
         return waiteForResult(timeout);
-        
+
     }
 
     private Object loadResource() throws Exception {
         ++count;
-        HttpService httpTools = new HttpTools(ssl);//OkHttpTools(ssl);
-//        if (++count % RENEWHTTPTOOLS_COUNT == 0L) {
-//            LOGGER.info("renew httptool count=" + count);
-//            httpTools = new HttpTools();
-//        }
+        HttpService httpTools = HttpServiceMng.get(uri);
         Map withVarCurrent = (Map)loadParam.get("withVarCurrent");
         String charset = (String)loadParam.get("charset");
         Map heads = (Map) loadParam.get("head");
@@ -86,10 +82,11 @@ public class HttpResource extends BeeResource implements Runnable {
         }
         Map download = (Map) loadParam.get("download");
         if (download != null) {
+            String dir = getDir(withVarCurrent, loadParam, download);
             String fileName = getFileName(withVarCurrent, loadParam, download);
-            httpTools.downloadFile(url.toString(), fileName);
+            httpTools.downloadFile(url.toString(), heads, dir, fileName);
             String filenameToVar = (String) download.get("filename");
-            if (StringUtils.isNotBlank(filenameToVar)) { 
+            if (StringUtils.isNotBlank(filenameToVar)) {
                 if (withVarCurrent != null) {
                     withVarCurrent.put(filenameToVar, fileName);
                 } else {
@@ -121,10 +118,26 @@ public class HttpResource extends BeeResource implements Runnable {
         }
         return page;
     }
-    
-    protected String getFileName(Map withVarCurrent, Map loadParam, Map download) {
+
+    protected String getDir(Map withVarCurrent, Map loadParam, Map download) {
         String fileName = null;
         String to = (String)download.get("to");
+        if (withVarCurrent != null) {
+            fileName = (String)withVarCurrent.get(to);
+        }
+        if (StringUtils.isBlank(fileName)) {
+            fileName = to;
+        }
+        //fileName = template.expressCalcu(fileName, url, null);
+        return fileName;
+    }
+
+    protected String getFileName(Map withVarCurrent, Map loadParam, Map download) {
+        String fileName = null;
+        String to = (String)download.get("filename");
+        if (to == null) {
+            to = (String)download.get("fileName");
+        }
         if (withVarCurrent != null) {
             fileName = (String)withVarCurrent.get(to);
         }

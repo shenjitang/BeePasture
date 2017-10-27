@@ -5,9 +5,6 @@
  */
 package org.shenjitang.beepasture.resource;
 
-import org.shenjitang.beepasture.http.OkHttpTools;
-
-
 /**
  *
  * @author xiaolie
@@ -16,7 +13,6 @@ public class HttpsResource extends HttpResource {
 
     public HttpsResource() throws Exception {
         ssl = true;
-        //httpTools = new OkHttpTools(true);
     }
     
 }

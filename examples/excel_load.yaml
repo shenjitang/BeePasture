@@ -1,13 +1,15 @@
 resource: 
     file1: 
-        url: "excel://D:/temp/chenlei/rzrqjygk20160708.xls"
+#        url: "excel://D:/temp/chenlei/rzrqjygk20160708.xls"
+        url: "excel://D:/temp/P020170918303367362349.xlsx"
 
 gather:
     - url: file1
       save: 
           to: data
     - with: data
-      url: 明细信息
+#      url: 明细信息
+      url: Sheet1
       save:
           to: data1
         

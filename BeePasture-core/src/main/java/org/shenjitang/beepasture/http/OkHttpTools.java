@@ -11,10 +11,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import okhttp3.Cookie;
+import okhttp3.CookieJar;
 import okhttp3.FormBody;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -35,6 +43,7 @@ public class OkHttpTools implements HttpService {
     private OkHttpClient httpClient;
     private static Proxy httpProxy;
     private static Proxy httpsProxy;
+    private Map<String, List<Cookie>> cookieStore = new HashMap();
     
     static {
         if (System.getProperty("httpProxy", "true").equalsIgnoreCase("true")) {
@@ -77,7 +86,22 @@ public class OkHttpTools implements HttpService {
             LOGGER.info("================use proxy: " + proxy.address().toString() + " ================");
             builder = builder.proxy(proxy);
         }
-        httpClient = builder.build();
+        httpClient = builder.cookieJar(new CookieJar() {
+            @Override
+            public void saveFromResponse(HttpUrl httpUrl, List<Cookie> list) {
+                LOGGER.info("================set cookie to " + httpUrl.host() + " ================");
+                cookieStore.put(httpUrl.host(), list);
+            }
+
+            @Override
+            public List<Cookie> loadForRequest(HttpUrl httpUrl) {
+                List<Cookie> cookies = cookieStore.get(httpUrl.host());
+                LOGGER.info("================locad cookie from " + httpUrl.host() + " === " + (cookies == null ? "null" : cookies.size()));
+                return cookies != null ? cookies : new ArrayList<Cookie>();
+            }
+            
+        }).build();
+        LOGGER.info("================ httpClient " + httpClient.toString() + " ================");
     }
     
     
@@ -89,6 +113,7 @@ public class OkHttpTools implements HttpService {
 
     @Override
     public String doPost(String url, String postBody, Map<String, String> heads, String encoding) throws Exception {
+        System.out.println("POST: " + postBody);
         MediaType mediaType = getMediaType(heads);
         Request request = buildHeadInRequest(url, heads).post(RequestBody.create(mediaType, postBody)).build();
         return execute(request, encoding);
@@ -127,13 +152,38 @@ public class OkHttpTools implements HttpService {
     }  
     
     @Override
-    public void downloadFile(String url, String dir) throws IOException {
-        Request request = buildHeadInRequest(url, null).build();
+    public void downloadFile(String url, Map requestHeaders, String dir, String filename) throws IOException {
+        Request request = buildHeadInRequest(url, requestHeaders).build();
         try (Response response = httpClient.newCall(request).execute()) {
             if (response.isSuccessful()) {
+                Headers headers = response.headers();
+                System.out.println("===========response headers=============");
+                for (String headName : headers.names()) {
+                    String headValue = headers.get(headName);
+                    System.out.println(headName + ": " + headValue);
+                }
+                System.out.println("===========end=============");
+                if (StringUtils.isBlank(filename)) {
+                    String contentDisp = response.header("Content-Disposition");
+                    if (StringUtils.isNotBlank(contentDisp)) {
+                        String[] pair = contentDisp.split(";");
+                        for (String kv : pair) {
+                            String[] kva = kv.split("=");
+                            if (kva.length == 2) {
+                                if ("filename".equalsIgnoreCase(kva[0].trim())) {
+                                    filename = kva[1];
+                                }
+                            }
+                        }
+                    }
+                }
+                if (StringUtils.isBlank(filename)) {
+                    URL ourl = new URL(url);
+                    filename = ourl.getHost().replaceAll(".", "_") + "_" + System.currentTimeMillis();
+                }
                 InputStream input = response.body().byteStream();
                 try {  
-                    File file = new File(dir);  
+                    File file = new File(dir, filename);  
                     FileOutputStream output = FileUtils.openOutputStream(file);  
                     try {  
                         IOUtils.copy(input, output);  
@@ -180,7 +230,10 @@ public class OkHttpTools implements HttpService {
     }
     
     private MediaType getMediaType (Map<String, String> heads) {
-        String mediaType = (String)heads.get("Content-Type");
+        String mediaType = null;
+        if (heads != null) {
+            mediaType = (String)heads.get("Content-Type");
+        }
         if (StringUtils.isBlank(mediaType)) {
             mediaType = "text/plain; charset=utf-8";
         }

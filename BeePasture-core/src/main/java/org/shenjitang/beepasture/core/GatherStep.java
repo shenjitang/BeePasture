@@ -145,7 +145,7 @@ public class GatherStep {
 
     public void cloneStep() {
             step = (Map)cloneMap(rStep);
-            beforeGatherExpressCalcu(step, "download", "sql", "local");
+            beforeGatherExpressCalcu(step, "download", "sql", "local", "post");
     }
 
     /**
@@ -1141,12 +1141,15 @@ public class GatherStep {
                     } else if (withVarCurrent != null && withVarCurrent.containsKey(def)) {
                         result.put(key, withVarCurrent.get(def));
                         continue;
-                    } else if (def.contains("/")) {
-                        m1.put("xpath", def);
+//                    } else if (def.contains("/")) {
+//                        m1.put("xpath", def);
                     } else if (def.startsWith("$.") || def.startsWith("$[")){
                         m1.put("jsonpath", propertyPropDef);
-                    } else {
+                    } else if (ParseUtils.maybeScript(def)) {
                         m1.put("script", propertyPropDef);
+                    } else {
+                        result.put(key, def);
+                        continue;
                     }
                     propertyPropDef = m1;
                 }

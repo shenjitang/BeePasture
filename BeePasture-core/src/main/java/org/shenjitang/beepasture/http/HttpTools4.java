@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -79,15 +80,41 @@ public class HttpTools4 implements HttpService {
         }
     }
     @Override
-    public void downloadFile(String url, String dir) throws IOException {  
+    public void downloadFile(String url, Map requestHeaders, String dir, String filename) throws IOException {  
         HttpGet httpget = new HttpGet(url);  
+        if (requestHeaders != null) {
+            for (Object key : requestHeaders.keySet()) {
+                httpget.setHeader(key.toString(), requestHeaders.get(key).toString());
+            }
+        }
         try {
             HttpResponse response = httpClient.execute(httpget);  
+            if (StringUtils.isBlank(filename)) {
+                Header header = response.getLastHeader("Content-Disposition");
+                if (header != null) {
+                    String contentDisp = header.getValue();
+                    if (org.apache.commons.lang.StringUtils.isNotBlank(contentDisp)) {
+                        String[] pair = contentDisp.split(";");
+                        for (String kv : pair) {
+                            String[] kva = kv.split("=");
+                            if (kva.length == 2) {
+                                if ("filename".equalsIgnoreCase(kva[0].trim())) {
+                                    filename = kva[1];
+                                }
+                            }
+                        }
+                    }
+                }
+                if (StringUtils.isBlank(filename)) {
+                    URL ourl = new URL(url);
+                    filename = ourl.getHost().replaceAll(".", "_")+ "_" + System.currentTimeMillis();
+                }
+            }
             HttpEntity entity = response.getEntity();  
             InputStream input = null;  
             try {  
                 input = entity.getContent();  
-                File file = new File(dir);  
+                File file = new File(dir, filename);  
                 FileOutputStream output = FileUtils.openOutputStream(file);  
                 try {  
                     IOUtils.copy(input, output);  

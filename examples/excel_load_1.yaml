@@ -6,12 +6,20 @@ gather:
       save:
           to: data
           format: excel
+          property: 
+              filename: 'rzrqjygk${dateAdd(-1), "yyyy-MM-dd"}.xls'
     - with: data
       url: "明细信息"
       direct: true
       save:
           filter: '>1'
           to: data1
+          property: 
+              code: "${_item.f0}"
+              name: "${_item.f1}"
+              money: "${_item.f2}"
+              fname: "${_this.filename}"
+          removeProperty: []
 
 persist:
-    data1: "file://excel.txt?encoding=utf8&format=yaml"
+    data1: "file://excel.yaml?encoding=utf8&format=yaml"
