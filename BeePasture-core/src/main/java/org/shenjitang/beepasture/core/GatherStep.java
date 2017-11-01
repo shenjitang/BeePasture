@@ -6,8 +6,6 @@
 package org.shenjitang.beepasture.core;
 
 import com.alibaba.fastjson.JSON;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.jayway.jsonpath.JsonPath;
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -707,7 +705,9 @@ public class GatherStep {
             } else if ("unmarshal".equalsIgnoreCase(key.toString())) {
                 return doUnmarshal(pages, (Map)extract.get("unmarshal"));
             } else if ("dataimage".equalsIgnoreCase(key.toString())) {
-                return dataimageAll(pages);
+                return new HrefElementCorrector(this).dataimageAll(pages);
+            } else if ("saveAttach".equalsIgnoreCase(key.toString())) {
+                return new HrefElementCorrector(this).attachmentUrlCorrectAll(pages, (Map)extract.get(key));
             } else if ("convert".equalsIgnoreCase(key.toString())) {
               List list = new ArrayList();
               String type = (String)extract.get("convert");
@@ -738,7 +738,7 @@ public class GatherStep {
     protected Object propertyExtract(Map extract, Object it) {
         try {
             for (Object key: extract.keySet()) {
-                String express = (String)extract.get(key);
+                Object value = extract.get(key);
                 if ("xpath".equalsIgnoreCase(key.toString())) {
                     TagNode node = null;
                     if (it instanceof TagNode) {
@@ -746,24 +746,27 @@ public class GatherStep {
                     } else {
                         node = pageAnalyzer.toTagNode(it.toString());
                     }
-                    return pageAnalyzer.getText(node, express);
+                    return pageAnalyzer.getText(node, (String)value);
                 } else if ("jsonpath".equalsIgnoreCase(key.toString())) {
-                    return JsonPath.read(it, express);
+                    return JsonPath.read(it, (String)value);
                 } else if ("javascript".equalsIgnoreCase(key.toString())) {
                     templateParamMap.put("it", it);
-                    return JavaScriptExecuter.exec(express, templateParamMap);
+                    return JavaScriptExecuter.exec((String)value, templateParamMap);
                 } else if ("script".equalsIgnoreCase(key.toString())) {
                     templateParamMap.put("it", it);
-                    return template.expressCalcu(express, templateParamMap);
+                    return template.expressCalcu((String)value, templateParamMap);
                 } else if ("regex".equalsIgnoreCase(key.toString())) {
-                    Pattern pattern = Pattern.compile(express);
+                    Pattern pattern = Pattern.compile((String)value);
                     Matcher matcher = pattern.matcher(it.toString());
                     if (matcher.find()) {
                         return matcher.group();
                     }
                 } else if ("dataimage".equalsIgnoreCase(key.toString())) {
                     LOGGER.info(">>>>>>>>>>>>>dataimage:" + it.toString());
-                    return dataimage(it);
+                    return (new HrefElementCorrector(this)).dataimage(it);
+                } else if ("saveAttach".equalsIgnoreCase(key.toString())) {
+                    LOGGER.info(">>>>>>>>>>>>>saveAttach:" + it.toString());
+                    return (new HrefElementCorrector(this)).attachmentUrlCorrect(it, (Map)value);
                 }
             }
         } catch (Exception e) {
@@ -1390,61 +1393,6 @@ public class GatherStep {
 
     private Map cloneMap(Map rStep) {
         return (Map)Yaml.load(Yaml.dump(rStep));
-    }
-
-    private List dataimageAll(List pages) {
-        List list = new ArrayList();
-        for (Object page : pages) {
-            list.add(dataimage(page));
-        }
-        return list;
-    }
-
-    private TagNode dataimage(Object page) {
-            try {
-                if (page instanceof TagNode) {
-                    return dataimage((TagNode)page);
-                } else {
-                    return dataimage(page.toString());
-                }
-            } catch (Exception e) {
-                LOGGER.warn("dataimage", e);
-            }
-            return null;
-    }
-
-    private TagNode dataimage(TagNode tagNode) throws Exception {
-        TagNode[] allNode = tagNode.getAllElements(true);
-        for (TagNode node : allNode) {
-            if ("img".equalsIgnoreCase(node.getName())) {
-                String attributeName = "src";
-                String imgUrl = node.getAttributeByName(attributeName);
-                if (imgUrl == null) {
-                    attributeName = "data-src";
-                    imgUrl = node.getAttributeByName(attributeName);
-                }
-                if (StringUtils.isNotBlank(imgUrl)) {
-                    if (!imgUrl.toLowerCase().startsWith("http")) {
-                        imgUrl = StringUtils.substringBeforeLast(ourl.toString(), "/") + "/" + imgUrl;
-                    }
-                    LOGGER.info("image:" + imgUrl);
-                    BeeResource beeResource = beeGather.getResourceMng().getResource(imgUrl, false);
-                    String str = (String)beeResource.loadResource(this, ImmutableMap.of("dataimage", Boolean.TRUE));
-                    node.removeAttribute("src");
-                    node.addAttribute("src", str);
-                }
-            }
-        }
-        return tagNode;
-    }
-
-    private TagNode dataimage(String str) throws Exception {
-//        if (!str.startsWith("<")) {
-//            str = "<div id=\"auto-add\">" + str + "</div>";
-//        }
-        TagNode node = pageAnalyzer.toTagNode(str);
-        return dataimage(node);
-//        throw new RuntimeException("data-image 目前只能处理TagNode");
     }
 
     private void removeChild(TagNode page, String tagNode) {

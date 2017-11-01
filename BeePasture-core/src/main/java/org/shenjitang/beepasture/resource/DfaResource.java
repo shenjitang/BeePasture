@@ -82,7 +82,7 @@ public class DfaResource extends BeeResource {
     }
     
     @Override
-    protected void _persist(GatherStep gatherStep, String varName, Object obj, Map flowParams) {
+    public void persist(GatherStep gatherStep, String varName, Object obj, Map flowParams) {
         List fields = getList(flowParams, "target");
         List headList = new ArrayList();
         if (fields.size() > 0) {

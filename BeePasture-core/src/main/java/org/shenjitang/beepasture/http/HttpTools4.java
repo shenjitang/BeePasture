@@ -80,7 +80,7 @@ public class HttpTools4 implements HttpService {
         }
     }
     @Override
-    public void downloadFile(String url, Map requestHeaders, String dir, String filename) throws IOException {  
+    public String downloadFile(String url, Map requestHeaders, String dir, String filename) throws IOException {  
         HttpGet httpget = new HttpGet(url);  
         if (requestHeaders != null) {
             for (Object key : requestHeaders.keySet()) {
@@ -131,6 +131,7 @@ public class HttpTools4 implements HttpService {
                 LOGGER.warn("download httpclient.close", e);
             }
         }
+        return filename;
     }  
     
     public void download2(String url, final String fileName) throws Exception {
@@ -375,6 +376,11 @@ public class HttpTools4 implements HttpService {
             IOUtils.closeQuietly(input);  
             LOGGER.info("dataImage from url=>" + url);
         }  
+    }
+
+    @Override
+    public Map<String, String> doHead(String url, Map heads) throws Exception {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
  
 }

@@ -70,13 +70,9 @@ public abstract class BeeResource {
         }
     }
     
-    abstract protected void _persist(GatherStep gatherStep, String varName, Object obj, Map params);
+    abstract public void persist(GatherStep gatherStep, String varName, Object obj, Map params);
     abstract public Object loadResource(GatherStep gatherStep, Map loadParam) throws Exception;
     abstract public Iterator<Object> iterate(GatherStep gatherStep, Map param) throws Exception;
-    
-    public void persist(GatherStep gatherStep, String varName, Object obj, Map params) {
-        _persist(gatherStep, varName, obj, params);
-    }
     
     public void afterIterate() {
         
@@ -171,4 +167,12 @@ public abstract class BeeResource {
         return obj;
     }
 
+
+    public String getUrl() {
+        return url;
+    }
+
+    public URI getUri() {
+        return uri;
+    }
 }

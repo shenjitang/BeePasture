@@ -6,6 +6,8 @@
 package org.shenjitang.beepasture.util;
 
 import com.google.common.collect.Lists;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -147,7 +149,46 @@ public class ParseUtils {
         }
     }
     
+    public static String ucs22str(String inStr, String encoding) throws UnsupportedEncodingException {
+        StringBuffer sb = new StringBuffer();
+        Pattern pattern = Pattern.compile("&#x([0-9a-f][0-9a-f][0-9a-f][0-9a-f]);");  
+        Matcher matcher = pattern.matcher(inStr);
+        int lastIndex = 0;
+        while(matcher.find()) { 
+            String zhi = matcher.group(1);
+            byte[] bytes = hexStringToBytes(zhi);
+            //String c = new String(bytes, encoding);
+            char iv = (char) Integer.valueOf(zhi, 16).intValue();
+            String c = "" + iv;
+            lastIndex = matcher.end();
+            matcher.appendReplacement(sb, c); 
+        }
+        sb.append(inStr.substring(lastIndex));
+        return sb.toString();
+    }
+    
+    public static byte[] hexStringToBytes(String hexString) {
+        if (hexString == null || hexString.equals("")) {
+            return null;
+        }
+        hexString = hexString.toUpperCase();
+        int length = hexString.length() / 2;
+        char[] hexChars = hexString.toCharArray();
+        byte[] d = new byte[length];
+        for (int i = 0; i < length; i++) {
+            int pos = i * 2;
+            d[i] = (byte) (charToByte(hexChars[pos]) << 4 | charToByte(hexChars[pos + 1]));
+        }
+        return d;
+    }
+    private static byte charToByte(char c) {
+        return (byte) "0123456789ABCDEF".indexOf(c);
+    }
     public static void main(String[] args) throws Exception {
+        String str = "aaaa&#xe10b;-&#xefad;-&#xe7a5;&#xe3c4;&#xe294;&#xe10b;cccc";
+        System.out.println(ucs22str(str, "gbk"));
+        System.out.println(ucs22str(str, "utf8"));
+//        str = str.replaceAll("&#x", "%");
         /*
         System.out.println(correctDateStr("2013-7-23 8:12:5"));
         System.out.println(correctDateStr("a2013-7-23 8:12:5"));

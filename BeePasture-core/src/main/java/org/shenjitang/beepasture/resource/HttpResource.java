@@ -47,14 +47,15 @@ public class HttpResource extends BeeResource implements Runnable {
     }
 
     @Override
-    protected void _persist(GatherStep gatherStep, String varName, Object obj, Map params) {
+    public void persist(GatherStep gatherStep, String varName, Object obj, Map params) {
         System.out.println(varName);
         String url = (String)params.get("to");
 //        String method = (String)params.get("method");
         Map heads = (Map)params.get("head");
         try {
 //            if ("post".equalsIgnoreCase(method)) {
-                HttpService httpTools = new OkHttpTools(ssl);
+                //HttpService httpTools = new OkHttpTools(ssl);
+                HttpService httpTools = HttpServiceMng.get(uri);
                 String page = httpTools.doPost((String) url, obj.toString(), heads, null);
 //            } else {
 //            }

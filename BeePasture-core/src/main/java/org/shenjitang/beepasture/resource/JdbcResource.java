@@ -48,7 +48,7 @@ public class JdbcResource extends BeeResource {
     }
 
     @Override
-    protected void _persist(GatherStep gatherStep, String varName, Object obj, Map persistParams) {
+    public void persist(GatherStep gatherStep, String varName, Object obj, Map persistParams) {
         String topVarName = varName.split("[.]")[0];
         String tailVarName = null;
         if (topVarName.length() < varName.length()) {

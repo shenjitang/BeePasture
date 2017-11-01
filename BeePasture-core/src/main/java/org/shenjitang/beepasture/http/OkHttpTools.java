@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -33,6 +34,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.shenjitang.beepasture.core.HrefElementCorrector;
 
 /**
  *
@@ -112,6 +114,27 @@ public class OkHttpTools implements HttpService {
     }
 
     @Override
+    public Map<String, String> doHead(String url, Map heads) throws Exception {
+        Map<String, String> headMap = new HashMap();
+        Request request = buildHeadInRequest(url, heads).head().build();
+        try (Response response = httpClient.newCall(request).execute()) {
+            if (response.isSuccessful()) {
+                Headers headers = response.headers();
+                System.out.println("===========response headers=============");
+                for (String headName : headers.names()) {
+                    String headValue = headers.get(headName);
+                    System.out.println(headName + ": " + headValue);
+                    headMap.put(headName, headValue);
+                }
+                System.out.println("===========end=============");
+            } else {
+                LOGGER.warn("FAIL GET " + request.url().toString() + " " + response.code());
+            }
+        }
+        return headMap;
+    }
+
+    @Override
     public String doPost(String url, String postBody, Map<String, String> heads, String encoding) throws Exception {
         System.out.println("POST: " + postBody);
         MediaType mediaType = getMediaType(heads);
@@ -151,9 +174,44 @@ public class OkHttpTools implements HttpService {
         return "";
     }  
     
+    protected String fetchFilename(String url, Response response) {
+        //从response的head Content-Disposition中得到文件名。
+        String contentDisp = response.header("Content-Disposition");
+        if (StringUtils.isNotBlank(contentDisp)) {
+            String[] pair = contentDisp.split(";");
+            for (String kv : pair) {
+                String[] kva = kv.split("=");
+                if (kva.length == 2) {
+                    if ("filename".equalsIgnoreCase(kva[0].trim())) {
+                        return kva[1];
+                    }
+                }
+            }
+        }
+        //从url中得到文件名
+        String urlLastPart = StringUtils.substringAfterLast(url, "/");
+        if (urlLastPart.contains(".")) {
+            return urlLastPart;
+        }
+        //实在不行就算一个
+        URI uri = URI.create(url);
+        String contentType = response.header("Content-Type");
+        String extName = HrefElementCorrector.CONTENT_TYPE_MAP.get(contentType);
+        if (extName == null) {
+            try {
+                extName = contentType.split("/")[1].trim();
+            } catch (Exception e) {
+                LOGGER.warn(contentType, e);
+            }
+        }
+        return uri.getHost().replaceAll("\\.", "_") + "_" + System.currentTimeMillis() + "." + extName;
+        
+    }
+    
     @Override
-    public void downloadFile(String url, Map requestHeaders, String dir, String filename) throws IOException {
+    public String downloadFile(String url, Map requestHeaders, String dir, String filename) throws IOException {
         Request request = buildHeadInRequest(url, requestHeaders).build();
+        final StringBuilder returnFilename = new StringBuilder();
         try (Response response = httpClient.newCall(request).execute()) {
             if (response.isSuccessful()) {
                 Headers headers = response.headers();
@@ -164,26 +222,11 @@ public class OkHttpTools implements HttpService {
                 }
                 System.out.println("===========end=============");
                 if (StringUtils.isBlank(filename)) {
-                    String contentDisp = response.header("Content-Disposition");
-                    if (StringUtils.isNotBlank(contentDisp)) {
-                        String[] pair = contentDisp.split(";");
-                        for (String kv : pair) {
-                            String[] kva = kv.split("=");
-                            if (kva.length == 2) {
-                                if ("filename".equalsIgnoreCase(kva[0].trim())) {
-                                    filename = kva[1];
-                                }
-                            }
-                        }
-                    }
-                }
-                if (StringUtils.isBlank(filename)) {
-                    URL ourl = new URL(url);
-                    filename = ourl.getHost().replaceAll(".", "_") + "_" + System.currentTimeMillis();
+                    filename = fetchFilename(url, response);
                 }
                 InputStream input = response.body().byteStream();
+                File file = new File(dir, filename);  
                 try {  
-                    File file = new File(dir, filename);  
                     FileOutputStream output = FileUtils.openOutputStream(file);  
                     try {  
                         IOUtils.copy(input, output);  
@@ -194,10 +237,12 @@ public class OkHttpTools implements HttpService {
                     IOUtils.closeQuietly(input);  
                     LOGGER.info("dataImage from url=>" + url);
                 }  
+                returnFilename.append(file.getCanonicalPath());
             } else {
                 LOGGER.warn("FAIL GET " + request.url().toString() + " " + response.code());
             }
         }
+        return returnFilename.toString();
     }
 
     private Request.Builder buildHeadInRequest(String url, Map heads) {

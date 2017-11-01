@@ -138,7 +138,7 @@ public class HttpTools implements HttpService {
     }
     
     @Override
-    public void downloadFile(String url, Map requestHeaders, String dir, String filename) throws IOException {  
+    public String downloadFile(String url, Map requestHeaders, String dir, String filename) throws IOException {  
         HttpGet httpget = new HttpGet(url);  
         if (requestHeaders != null) {
             for (Object key : requestHeaders.keySet()) {
@@ -185,7 +185,8 @@ public class HttpTools implements HttpService {
         } finally {  
             IOUtils.closeQuietly(input);  
             LOGGER.info("download from url=>" + url + " to dir=>" + dir + " to file=>" + filename);
-        }  
+        }
+        return filename;
     }  
   
     public void download2(String url, final String fileName) throws Exception {
@@ -542,6 +543,11 @@ public class HttpTools implements HttpService {
         head.put("HOST", "www.jd.com:443");
         String content = tools.doSSLGet("https://www.jd.com/:443", head, "gbk");
         System.out.println(content);
+    }
+
+    @Override
+    public Map<String, String> doHead(String url, Map heads) throws Exception {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
  
 }
