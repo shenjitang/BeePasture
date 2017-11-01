@@ -48,8 +48,9 @@ public class FileResource extends BeeResource {
     @Override
     public void init(String url, Map param) throws Exception {
         super.init(url, param); //To change body of generated methods, choose Tools | Templates.
-        this.fileName = uri.getAuthority() + uri.getPath();
-        if (this.fileName == null) {
+        if (uri.getAuthority() != null && uri.getPath() != null) {
+            this.fileName = uri.getAuthority() + uri.getPath();
+        } else {
             this.fileName = uri.getSchemeSpecificPart();
         }
         file = new File(this.fileName);

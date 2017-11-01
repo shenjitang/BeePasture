@@ -190,7 +190,7 @@ public class OkHttpTools implements HttpService {
         }
         //从url中得到文件名
         String urlLastPart = StringUtils.substringAfterLast(url, "/");
-        if (urlLastPart.contains(".")) {
+        if (urlLastPart.contains(".") && !urlLastPart.contains("?")) {
             return urlLastPart;
         }
         //实在不行就算一个

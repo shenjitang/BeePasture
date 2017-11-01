@@ -85,8 +85,8 @@ public class HttpResource extends BeeResource implements Runnable {
         if (download != null) {
             String dir = getDir(withVarCurrent, loadParam, download);
             String fileName = getFileName(withVarCurrent, loadParam, download);
-            httpTools.downloadFile(url.toString(), heads, dir, fileName);
-            String filenameToVar = (String) download.get("filename");
+            fileName = httpTools.downloadFile(url.toString(), heads, dir, fileName);
+            String filenameToVar = (String) download.get("filename2var");
             if (StringUtils.isNotBlank(filenameToVar)) {
                 if (withVarCurrent != null) {
                     withVarCurrent.put(filenameToVar, fileName);
@@ -94,7 +94,10 @@ public class HttpResource extends BeeResource implements Runnable {
                     BeeGather.getInstance().getVar(filenameToVar).add(fileName);
                 }
             }
-            String fileUrl = "file://" + fileName;
+            //String fileUrl = "file://" + fileName;
+            //if (fileName.length() > 1 && fileName.charAt(1)==':') {
+            String fileUrl = "file://" + fileName.replaceAll("\\\\", "/");
+            //}
             FileResource fileResource = new FileResource();
             fileResource.init(fileUrl, null);
             Map saveMap = (Map)loadParam.get("save");

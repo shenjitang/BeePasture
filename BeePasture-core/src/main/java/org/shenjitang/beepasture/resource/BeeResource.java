@@ -57,7 +57,7 @@ public abstract class BeeResource {
                 }
                 
             } catch (IllegalArgumentException e) {
-                System.out.println(e.toString());
+                LOGGER.warn("", e);
             }
         }
         if (param != null) {
