@@ -8,6 +8,7 @@ package org.shenjitang.beepasture.core;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.io.File;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -75,7 +76,12 @@ public class HrefElementCorrector {
                     continue;
                 }
                 if (!href.toLowerCase().startsWith("http")) {
-                    href = StringUtils.substringBeforeLast(gatherStep.ourl.toString(), "/") + "/" + href;
+                    if (href.startsWith("/")) {
+                        URI uri = URI.create(gatherStep.ourl.toString());
+                        href = uri.getScheme() + "://" + uri.getHost() + href;
+                    } else {
+                        href = StringUtils.substringBeforeLast(gatherStep.ourl.toString(), "/") + "/" + href;
+                    }
                 }
                 LOGGER.info("attach url: " + href);
                 String fileName = downloadIfIs(href);
@@ -151,7 +157,12 @@ public class HrefElementCorrector {
                 }
                 if (StringUtils.isNotBlank(imgUrl)) {
                     if (!imgUrl.toLowerCase().startsWith("http")) {
-                        imgUrl = StringUtils.substringBeforeLast(gatherStep.ourl.toString(), "/") + "/" + imgUrl;
+                        if (imgUrl.startsWith("/")) {
+                            URI uri = URI.create(gatherStep.ourl.toString());
+                            imgUrl = uri.getScheme() + "://" + uri.getHost() + imgUrl;
+                        } else {
+                            imgUrl = StringUtils.substringBeforeLast(gatherStep.ourl.toString(), "/") + "/" + imgUrl;
+                        }
                     }
                     LOGGER.info("image:" + imgUrl);
                     BeeResource beeResource = gatherStep.beeGather.getResourceMng().getResource(imgUrl, false);
