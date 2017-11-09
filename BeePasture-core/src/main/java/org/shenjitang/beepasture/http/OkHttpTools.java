@@ -224,6 +224,7 @@ public class OkHttpTools implements HttpService {
                 if (StringUtils.isBlank(filename)) {
                     filename = fetchFilename(url, response);
                 }
+                filename = filename.replaceAll(" ", "");
                 InputStream input = response.body().byteStream();
                 File file = new File(dir, filename);  
                 try {  
@@ -235,7 +236,7 @@ public class OkHttpTools implements HttpService {
                     }  
                 } finally {  
                     IOUtils.closeQuietly(input);  
-                    LOGGER.info("dataImage from url=>" + url);
+//                    LOGGER.info("dataImage from url=>" + url);
                 }  
                 returnFilename.append(file.getCanonicalPath());
             } else {

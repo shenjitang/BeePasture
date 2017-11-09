@@ -17,27 +17,16 @@ import java.util.Set;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFCell;
-import org.apache.poi.hssf.usermodel.HSSFComment;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
-import org.apache.poi.hssf.usermodel.HSSFErrorConstants;
+import org.apache.poi.ss.usermodel.FormulaError;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.hssf.usermodel.HSSFDataFormat;
 import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-//import com.richeninfo.anaplatform.dbmgr.service.BindDataLogic;
-//import com.richeninfo.anaplatform.etl.utils.PoiSheetUtil;
-//import com.richeninfo.anaplatform.etl.utils.RZDCElementConstants;
-//import com.richeninfo.anaplatform.etl.webgather.tools.PathUtils;
-//import com.richeninfo.anaplatform.gather.util.BaseUtils;
-//import com.richeninfo.sgrid.util.ParseUtils;
-
-import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -332,26 +321,26 @@ public class ExcelParser {
 	 */
 	private static String convertError(byte errorCellValue) {
 		String content = null;
-		switch (errorCellValue) {
-			case HSSFErrorConstants.ERROR_NULL:
+		switch (FormulaError.forInt(errorCellValue)) {
+			case NULL:
 				content = "#NULL!";
 				break;
-			case HSSFErrorConstants.ERROR_DIV_0:
+			case DIV0:
 				content = "#DIV/0!";
 				break;
-			case HSSFErrorConstants.ERROR_VALUE:
+			case VALUE:
 				content = "#VALUE!";
 				break;
-			case HSSFErrorConstants.ERROR_REF:
+			case REF:
 				content = "#REF!";
 				break;
-			case HSSFErrorConstants.ERROR_NAME:
+			case NAME:
 				content = "#NAME?";
 				break;
-			case HSSFErrorConstants.ERROR_NUM:
+			case NUM:
 				content = "#NUM!";
 				break;
-			case HSSFErrorConstants.ERROR_NA:
+			case NA:
 				content = "#N/A";
 				break;
 			default:

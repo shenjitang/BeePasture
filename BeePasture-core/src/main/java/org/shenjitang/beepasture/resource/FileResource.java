@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -27,6 +28,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.tika.Tika;
 import org.codehaus.plexus.util.StringUtils;
 import org.ho.yaml.Yaml;
 import org.shenjitang.beepasture.core.GatherStep;
@@ -144,6 +146,19 @@ public class FileResource extends BeeResource {
             return JSON.parse(str);
         } else if ("excel".equalsIgnoreCase(format)) {
             return ExcelParser.parseExcel(file, null);
+        } else if ("auto".equalsIgnoreCase(format)) {
+            Tika tika = new Tika();
+            try (InputStream stream = FileResource.class.getResourceAsStream(file.getName())) {
+                return tika.parseToString(stream);
+            }
+//            String ext = FilenameUtils.getExtension(file.getName());
+//            if ("xls".equalsIgnoreCase(ext) || "xlsx".equalsIgnoreCase(ext)) {
+//                return ExcelParser.parseExcel(file, null);
+//            } else if ("pdf".equalsIgnoreCase(ext)) {
+//                throw new RuntimeException("尚未实现");
+//            } else {
+//                return FileUtils.readFileToString(file, encoding);
+//            }
         } else { //default = plant
             return FileUtils.readFileToString(file, encoding);
         }    

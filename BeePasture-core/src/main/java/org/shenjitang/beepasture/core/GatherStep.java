@@ -64,6 +64,7 @@ public class GatherStep {
     protected final Map templateParamMap = new HashMap();
     protected final String script; //yamel中script或template的值（脚本中的源句）
     protected Integer id;
+    protected ThreadLocal attachContent = new ThreadLocal();
     public static volatile long activeTime = System.currentTimeMillis();
 
     public GatherStep(Map step, Integer id) {
@@ -756,11 +757,13 @@ public class GatherStep {
                     templateParamMap.put("it", it);
                     return template.expressCalcu((String)value, templateParamMap);
                 } else if ("regex".equalsIgnoreCase(key.toString())) {
-                    Pattern pattern = Pattern.compile((String)value);
-                    Matcher matcher = pattern.matcher(it.toString());
-                    if (matcher.find()) {
-                        return matcher.group();
-                    }
+                    return doRegex(it.toString(), value);
+//                    
+//                    Pattern pattern = Pattern.compile((String)value);
+//                    Matcher matcher = pattern.matcher(it.toString());
+//                    if (matcher.find()) {
+//                        return matcher.group();
+//                    }
                 } else if ("dataimage".equalsIgnoreCase(key.toString())) {
                     LOGGER.info(">>>>>>>>>>>>>dataimage:" + it.toString());
                     return (new HrefElementCorrector(this)).dataimage(it);
@@ -1272,6 +1275,16 @@ public class GatherStep {
                 LOGGER.warn("提取字段：" + key + " 出现异常", e);
             }
             GatherDebug.debug(this, DebugLevel.STATEMENT, "提取完字段：" + key + " = " + ov);
+        }
+        Map attachContentMap = (Map)attachContent.get();
+        if (attachContentMap != null) {
+            try {
+                String propName = (String)attachContentMap.get("property");
+                String content = (String)attachContentMap.get("content");
+                result.put(propName, content);
+            } finally {
+                attachContent.remove();
+            }
         }
         return result;
     }

@@ -6,21 +6,22 @@
 package org.shenjitang.beepasture.core;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import java.io.File;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.tika.Tika;
 import org.htmlcleaner.TagNode;
 import org.shenjitang.beepasture.http.HttpService;
 import org.shenjitang.beepasture.http.HttpServiceMng;
 import org.shenjitang.beepasture.resource.BeeResource;
+import org.shenjitang.beepasture.resource.FileResource;
 
 /**
  *
@@ -110,6 +111,23 @@ public class HrefElementCorrector {
                     targetHref += osskey;
                     aNode.removeAttribute("href");
                     aNode.addAttribute("href", targetHref);
+                    String parseTo = (String)params.get("parseTo");
+                    if (StringUtils.isNotBlank(parseTo)) {
+                        Map contentMap = (Map)gatherStep.attachContent.get();
+                        if (contentMap == null) {
+                            contentMap = new HashMap();
+                            contentMap.put("property", parseTo);
+                            contentMap.put("content", "");
+                        }
+                        Tika tika = new Tika();
+                        try (InputStream stream = FileResource.class.getResourceAsStream(fileName)) {
+                            String content = (String)contentMap.get("content");
+                            content += tika.parseToString(stream);
+                            contentMap.put("content", content);
+                            
+                        }
+                        gatherStep.attachContent.set(contentMap);
+                    }
                 }
             } catch (Exception e) {
                 LOGGER.warn("check head for judge download", e);
