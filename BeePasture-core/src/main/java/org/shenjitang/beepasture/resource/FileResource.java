@@ -9,6 +9,7 @@ import org.shenjitang.beepasture.resource.util.ResourceUtils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializeConfig;
 import com.alibaba.fastjson.serializer.SimpleDateFormatSerializer;
+import com.google.common.collect.Sets;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,6 +24,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -181,6 +183,11 @@ public class FileResource extends BeeResource {
         iparams.putAll(loadParam);
         return new FileLIneIterator(iparams);
     }
+
+    @Override
+    public Set<String> getParamKeys() {
+            return Sets.newHashSet("encoding", "format", "dataFormat");
+    }
     
     public class FileLIneIterator implements Iterator<Object> {
         String encoding;
@@ -211,7 +218,6 @@ public class FileResource extends BeeResource {
 
         @Override
         public void remove() {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
         
     }

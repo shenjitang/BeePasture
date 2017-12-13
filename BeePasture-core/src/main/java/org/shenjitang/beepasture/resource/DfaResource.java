@@ -5,6 +5,7 @@
  */
 package org.shenjitang.beepasture.resource;
 
+import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -116,5 +117,9 @@ public class DfaResource extends BeeResource {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    @Override
+    public Set<String> getParamKeys() {
+        return Sets.newHashSet("words");
+    }
     
 }

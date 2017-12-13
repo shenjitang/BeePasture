@@ -138,7 +138,7 @@ public class HttpTools implements HttpService {
     }
     
     @Override
-    public String downloadFile(String url, Map requestHeaders, String dir, String filename) throws IOException {  
+    public String downloadFile(String url, Map requestHeaders, String dir, String filename, String postBody) throws IOException {  
         HttpGet httpget = new HttpGet(url);  
         if (requestHeaders != null) {
             for (Object key : requestHeaders.keySet()) {

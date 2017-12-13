@@ -36,7 +36,9 @@ import org.shenjitang.beepasture.resource.util.ResourceUtils;
 import org.shenjitang.beepasture.util.ParseUtils;
 import org.shenjitang.commons.csv.CSVUtils;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.lang.reflect.Array;
+import java.util.Set;
 
 /**
  *
@@ -66,6 +68,10 @@ public class GatherStep {
     protected Integer id;
     protected ThreadLocal attachContent = new ThreadLocal();
     public static volatile long activeTime = System.currentTimeMillis();
+    private Map previousItem;
+    public final Set<String> EXTRACT_KEYS = Sets.newHashSet("xpath", "jsonpath", 
+            "regex", "script", "javascript", "js", "constant", "marshal", 
+            "unmarshal", "dataimage", "saveAttach", "convert", "split");
 
     public GatherStep(Map step, Integer id) {
         this.id = id;
@@ -75,7 +81,11 @@ public class GatherStep {
         String withVarName = (String) getValue(step, "with", (String) null);
         if (StringUtils.isNotBlank(withVarName)) {
             if (beeGather.getResourceMng().getResource(withVarName, false) == null) {
-                withVar = Lists.newArrayList((List)beeGather.getVars().get(withVarName)) ;
+                if (beeGather.getVars().get(withVarName) == null) {
+                    withVar = new ArrayList();
+                } else {
+                    withVar = Lists.newArrayList((List)beeGather.getVars().get(withVarName)) ;
+                }
             }
         }
         rurl = (String) rStep.get("url");
@@ -176,22 +186,16 @@ public class GatherStep {
             List pages = ParseUtils.toList(page);
             try {
                 List extractList = (List)step.get("extract");
-                if (extractList != null) {
-                    for (Object extract : extractList) {
-                        pages = extract((Map)extract, pages);
-//                        GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
-                    }
+                if (extractList == null) {
+                    extractList = guessExtract(step);
+                }
+                for (Object extract : extractList) {
+                    pages = extract((Map) extract, pages);
                 }
             } catch (ClassCastException e) {
                 throw new RuntimeException("关键字extract的值必须是数组，不可以是map或别的类型！", e);
             }
             pages = doFilter(pages, step.get("filter"));
-            pages = doXpath(pages);
-            pages = doRegex(pages, step.get("regex"));
-            pages = doScript(pages, changeValueFromObj(script, ourl));
-            pages = doJavaScript(pages, (String) step.get("javascript"));
-            pages = doMarshal(pages, (Map)step.get("marshal"));
-            pages = doUnmarshal(pages, (Map)step.get("unmarshal"));
             save(pages, ourl);
         } catch (Exception e) {
             LOGGER.warn("", e);
@@ -222,19 +226,13 @@ public class GatherStep {
                             templateParamMap.put("_page", page);
                             List pages = ParseUtils.toList(page);
                             List extractList = (List)step.get("extract");
-                            if (extractList != null) {
-                                for (Object extract : extractList) {
-                                    pages = extract((Map)extract, pages);
-//                                    GatherDebug.debug(this, "执行完语句：" + JSON.toJSONString(extract));
-                                }
+                            if (extractList == null) {
+                                extractList = guessExtract(step);
+                            }
+                            for (Object extract : extractList) {
+                                pages = extract((Map) extract, pages);
                             }
                             pages = doFilter(pages, step.get("filter"));
-                            pages = doXpath(pages);
-                            pages = doRegex(pages, step.get("regex"));
-                            pages = doScript(pages, changeValueFromObj(script, ourl));
-                            pages = doJavaScript(pages, (String) step.get("javascript"));
-                            pages = doMarshal(pages, (Map)step.get("marshal"));
-                            pages = doUnmarshal(pages, (Map)step.get("unmarshal"));
                             save(pages, ourl);
                         }
                         beeResource.afterIterate();
@@ -950,10 +948,20 @@ public class GatherStep {
             if (var != null) {
                 var.add(page);
             }
+            if (resource == null && StringUtils.isNotBlank(endpoint)) {
+                resource = beeGather.getResourceMng().getResource("camel", false);
+            }
             if (resource != null) {
-                resource.persist(this, "it", page, saveDefMap);
-            } else if (StringUtils.isNotBlank(endpoint)) {
-                saveToResource("camel", page, ourl, saveDefMap);
+//                Set<String> paramKeys = resource.getParamKeys();
+//                for (String key : paramKeys) {
+//                    Object value = saveDefMap.get(key);
+//                    if (value != null && value instanceof String && ParseUtils.maybeScript(value.toString())) {
+//                        String nvalue = template.expressCalcu((String)value, templateParamMap);
+//                        saveDefMap.put(key, nvalue);
+//                    }
+//                }
+                templateParamMap.put("it", page);
+                resource.saveTo(this, templateParamMap, saveDefMap);
             }
         }
     }
@@ -968,16 +976,6 @@ public class GatherStep {
         }
     }
     
-    protected void saveToResource(String name, Object page, Object ourl, Map saveDefMap) {
-        BeeResource resource = beeGather.getResourceMng().getResource(name, false);
-        if (resource != null) {
-            beeGather.getVars().remove(name);
-            resource.persist(this, "it", page, saveDefMap);
-        } else {
-           throw new RuntimeException("can not find resource: " + name);
-        }
-    }
-
     protected void removeProperties(Object value) {
         List removePropertyList = (List) save.get("removeProperty");
         if (removePropertyList != null) {
@@ -1131,86 +1129,48 @@ public class GatherStep {
                 Object propertyPropDef = propertyMap.get(key);
                 if (propertyPropDef instanceof String) {
                     String def = (String)propertyPropDef;
-                    Map m1 = new HashMap();
                     if ("_this".equalsIgnoreCase(def)) {
                         result.put(key, templateParamMap.get("_this"));
-                        continue;
                     } else if ("_page".equalsIgnoreCase(def)) {
                         result.put(key, templateParamMap.get("_page"));
-                        continue;
                     } else if ("_item".equalsIgnoreCase(def)) {
                         result.put(key, it);
-                        continue;
                     } else if ("it".equalsIgnoreCase(def)) {
                         result.put(key, it);
-                        continue;
                     } else if (withVarCurrent != null && withVarCurrent.containsKey(def)) {
                         result.put(key, withVarCurrent.get(def));
-                        continue;
-//                    } else if (def.contains("/")) {
-//                        m1.put("xpath", def);
-                    } else if (def.startsWith("$.") || def.startsWith("$[")){
-                        m1.put("jsonpath", propertyPropDef);
-                    } else if (ParseUtils.maybeScript(def)) {
-                        m1.put("script", propertyPropDef);
                     } else {
                         result.put(key, def);
-                        continue;
                     }
-                    propertyPropDef = m1;
+                    continue;
                 }
-                Map propValue = (Map)propertyPropDef;
-                String type = (String) propValue.get("type");
-                List extractList = (List)propValue.get("extract");
-                if (extractList != null) {
-                    if ("_page".equalsIgnoreCase((String)propValue.get("with"))) {
-                        ov = templateParamMap.get("_page");
-                    } else if ("_this".equalsIgnoreCase((String)propValue.get("with"))) {
-                        ov = templateParamMap.get("_this");
-                    } else {
-                        ov = it;
-                    }
-                    //ov 是 it,如果it是map，ov是map.get(key)
-                    for (Object extract : extractList) {
-                        if (ov instanceof Map) {
-                            ov = ((Map)ov).get(key);
-                        }
-                        ov = propertyExtract((Map)extract, ov);
-                        //templateParamMap.put("it", ov);
-                        GatherDebug.debug(this, DebugLevel.STATEMENT, "执行完语句：" + JSON.toJSONString(extract));
-                    }
+                Map propsMap = (Map)propertyPropDef;
+                Object defVal = propsMap.get("default");
+                String type = (String) propsMap.get("type");
+                List extractList = (List)propsMap.get("extract");
+                if (extractList == null) {
+                    extractList = guessExtract(propsMap);
+                }
+                if ("_page".equalsIgnoreCase((String) propsMap.get("with"))) {
+                    ov = templateParamMap.get("_page");
+                } else if ("_this".equalsIgnoreCase((String) propsMap.get("with"))) {
+                    ov = templateParamMap.get("_this");
                 } else {
-                    String propScript = beeGather.getScript(propValue);
-                    Object aim = it;
-                    if ("_page".equalsIgnoreCase((String)propValue.get("with"))) {
-                        aim = templateParamMap.get("_page");
-                    } else if ("_this".equalsIgnoreCase((String)propValue.get("with"))) {
-                        aim = templateParamMap.get("_this");
+                    ov = it;
+                }
+                //ov 是 it,如果it是map，ov是map.get(key)
+                for (Object extract : extractList) {
+                    if (ov instanceof Map) {
+                        ov = ((Map) ov).get(key);
                     }
-                    if (aim instanceof String) {
-                        ov = xpathPropertyObj((String) aim, propValue);
-                    } else if (aim instanceof TagNode) {
-                        ov = xpathPropertyObj((TagNode) aim, propValue);
-                    } else if (aim instanceof Map) {
-                        ov = ((Map) aim).get(key);
-                    }
-//                    if (ov == null && aim instanceof String) {
-//                        ov = aim;
-//                    }
-                    if (StringUtils.isNotBlank(propScript)) {
-                        templateParamMap.put("it", ov);
-                        ov = template.expressCalcu(propScript, templateParamMap);
-                    }
-                    String javaScriptExpress = (String)propValue.get("javascript");
-                    if (StringUtils.isNotBlank(javaScriptExpress)) {
-                        templateParamMap.put("it", ov);
-                        ov = JavaScriptExecuter.exec(javaScriptExpress, templateParamMap);
-                    }
+                    ov = propertyExtract((Map) extract, ov);
+                    //templateParamMap.put("it", ov);
+                    GatherDebug.debug(this, DebugLevel.STATEMENT, "执行完语句：" + JSON.toJSONString(extract));
                 }
                 if (StringUtils.isNotBlank(type) && ov != null) {
                     try {
                         if ("date".equalsIgnoreCase(type)) {
-                            String format = getValue(propValue, "format", "yyyy-MM-dd HH:mm:ss");
+                            String format = getValue(propsMap, "format", "yyyy-MM-dd HH:mm:ss");
                             if ("millisecond".equalsIgnoreCase(format) || "ms".equalsIgnoreCase(format)) {
                                 Long ms = Long.valueOf(ov.toString());
                                 ov = new Date();
@@ -1220,26 +1180,26 @@ public class GatherStep {
                                 ov = new Date();
                                 ((Date)ov).setTime(ms);
                             } else {
-                                String locate = (String)(propValue).get("locate");
-                                SimpleDateFormat sdf = null;
+                                String locate = (String)(propsMap).get("locate");
                                 if (StringUtils.isBlank(locate)) {
-                                    if (ov.toString().contains("MMM")) {
+                                    if (format != null && format.contains("MMM")) {//原来应该是写错了if (ov.toString().contains("MMM")) {
                                         locate = "ENGLISH";
                                     }
                                 }
+                                SimpleDateFormat sdf = null;
                                 if (StringUtils.isBlank(locate)) {
                                     sdf = new SimpleDateFormat(format);
                                 } else {
                                     sdf = new SimpleDateFormat(format, Locale.forLanguageTag(locate));
                                 }
                                 if (StringUtils.isNotBlank(ov.toString())) {
-                                    ov = sdf.parse(ParseUtils.correctDateStr(ov.toString()));
+                                    ov = sdf.parse(ov.toString());//ov = sdf.parse(ParseUtils.correctDateStr(ov.toString()));
                                 } else {
                                     ov = null;
                                 }
                             }
                         } else if ("String[]".equalsIgnoreCase(type)) {
-                            String split = getValue(propValue, "split", ",");
+                            String split = getValue(propsMap, "split", ",");
                             ov = ((String) ov).split(split);
                         } else if ("bool".equalsIgnoreCase(type) || "Boolean".equalsIgnoreCase(type)) {
                             ov = Boolean.valueOf(ov.toString());
@@ -1256,7 +1216,7 @@ public class GatherStep {
                         } else if ("float".equalsIgnoreCase(type)) {
                                 ov = Float.valueOf(ov.toString());
                         } else if ("number".equalsIgnoreCase(type)) {
-                                String format = getValue(propValue, "format", null);
+                                String format = getValue(propsMap, "format", null);
                                 java.text.DecimalFormat df = new java.text.DecimalFormat(format);
                                 try {
                                     ov = df.parse(ov.toString());
@@ -1268,6 +1228,17 @@ public class GatherStep {
                     } catch (Exception e) {
                         LOGGER.warn("page:" + it, e);
                         ov = null;
+                    }
+                }
+                if (defVal != null && previousItem != null && (ov == null || "".equalsIgnoreCase(ov.toString()))) {
+                    if ("previous".equalsIgnoreCase(defVal.toString())) {
+                        ov = previousItem.get(key);
+                    } else {
+                        if (defVal instanceof Map) {
+                            if (((Map) defVal).keySet().iterator().next().toString().equalsIgnoreCase("constant")) {
+                                ov = ((Map) defVal).get("constant");
+                            }
+                        }
                     }
                 }
                 result.put(key, ov);
@@ -1286,7 +1257,20 @@ public class GatherStep {
                 attachContent.remove();
             }
         }
+        previousItem = result;
         return result;
+    }
+    
+    private List guessExtract(Map propsMap) {
+        List extract = new ArrayList();
+        for (Object key : propsMap.keySet()) {
+            if (EXTRACT_KEYS.contains(((String)key).toLowerCase())) {
+                Map map = new HashMap();
+                map.put(key, propsMap.get(key));
+                extract.add(map);
+            }
+        }
+        return extract;
     }
 
     public Object xpathPropertyObj(String page, Object propertyParam) {

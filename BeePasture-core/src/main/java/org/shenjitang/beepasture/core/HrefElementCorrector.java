@@ -205,7 +205,7 @@ public class HrefElementCorrector {
         String contentType = responseHeads.get("Content-Type");
         if (CONTENT_TYPE_MAP.containsKey(contentType)) {
         //if (responseHeads.containsKey("Content-Disposition")) {
-            return httpTools.downloadFile(href, null, "./temp", null);
+            return httpTools.downloadFile(href, null, "./temp", null, null);
         }
         return null;
     }

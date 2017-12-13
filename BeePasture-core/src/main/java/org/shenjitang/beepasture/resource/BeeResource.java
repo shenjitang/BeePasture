@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -73,6 +74,11 @@ public abstract class BeeResource {
     abstract public void persist(GatherStep gatherStep, String varName, Object obj, Map params);
     abstract public Object loadResource(GatherStep gatherStep, Map loadParam) throws Exception;
     abstract public Iterator<Object> iterate(GatherStep gatherStep, Map param) throws Exception;
+    abstract public Set<String> getParamKeys();
+
+    public void saveTo(GatherStep gatherStep, Map objMap, Map params) {
+        persist(gatherStep, "it", objMap.get("it"), params);
+    }
     
     public void afterIterate() {
         

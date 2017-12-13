@@ -5,6 +5,7 @@
  */
 package org.shenjitang.beepasture.resource;
 
+import com.google.common.collect.Sets;
 import java.util.Iterator;
 import java.util.Map;
 import java.io.FileOutputStream;
@@ -13,6 +14,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.HashMap;
+import java.util.Set;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -130,9 +132,9 @@ public class FtpResource extends BeeResource {
     }
     
     private String getLocalfile(Map loadParam, String filename) {
-        String localfile = (String)loadParam.get("localfile");
+        String localfile = (String)loadParam.get("localFile");
         if (StringUtils.isBlank(localfile)) {
-            localfile = (String)params.get("localfile");
+            localfile = (String)params.get("localFile");
             if (StringUtils.isBlank(localfile) && StringUtils.isNotBlank(filename)) {
                 localfile = FilenameUtils.getName(filename);
             }
@@ -146,7 +148,7 @@ public class FtpResource extends BeeResource {
             connect();
         }
         String filename = getFilename(localParam);
-        String localfile = (String)localParam.get("localfile");
+        String localfile = (String)localParam.get("localFile");
         if (StringUtils.isBlank(localfile)) {
             localfile = FilenameUtils.getName(filename);
         }
@@ -203,5 +205,10 @@ public class FtpResource extends BeeResource {
     
     public static void main(String[] args) {
         System.out.println(FilenameUtils.getName("/baa/sss/abc.txt"));
+    }
+
+    @Override
+    public Set<String> getParamKeys() {
+        return Sets.newHashSet("filename", "localFile");
     }
 }

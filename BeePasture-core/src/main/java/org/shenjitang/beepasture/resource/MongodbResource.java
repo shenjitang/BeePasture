@@ -4,6 +4,7 @@
  * and open the template in the editor.
  */
 package org.shenjitang.beepasture.resource;
+import com.google.common.collect.Sets;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import java.math.BigDecimal;
@@ -12,6 +13,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.shenjitang.beepasture.core.GatherStep;
 import org.shenjitang.mongodbutils.MongoDbOperater;
@@ -121,6 +123,11 @@ public class MongodbResource extends BeeResource {
     @Override
     public Iterator<Object> iterate(GatherStep gatherStep, Map param) throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Set<String> getParamKeys() {
+        return Sets.newHashSet("database", "collection", "sql");
     }
 
 }

@@ -5,6 +5,7 @@
  */
 package org.shenjitang.beepasture.resource;
 
+import com.google.common.collect.Sets;
 import java.io.File;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -13,6 +14,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOCase;
 import org.apache.commons.io.filefilter.FileFilterUtils;
@@ -59,8 +61,8 @@ public class DirResource extends BeeResource {
                 iparams.put(nvp.getName(), nvp.getValue());
             }
         }
-        IOFileFilter fileFilter = getFileFilter((String)iparams.get("filefilter"));
-        IOFileFilter dirFilter = getFileFilter((String)iparams.get("dirfilter"));
+        IOFileFilter fileFilter = getFileFilter((String)iparams.get("fileFilter"));
+        IOFileFilter dirFilter = getFileFilter((String)iparams.get("dirFilter"));
         return FileUtils.listFiles(new File(fileName), fileFilter, dirFilter);
     }
     
@@ -143,6 +145,11 @@ public class DirResource extends BeeResource {
     @Override
     public Iterator<Object> iterate(GatherStep gatherStep, Map param) throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Set<String> getParamKeys() {
+        return Sets.newHashSet("fileFilter", "dirFilter");
     }
         
 }

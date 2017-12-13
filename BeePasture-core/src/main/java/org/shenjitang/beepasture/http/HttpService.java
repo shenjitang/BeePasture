@@ -13,7 +13,7 @@ import java.util.Map;
  * @author xiaolie
  */
 public interface HttpService {
-    public String downloadFile(String url, Map requestHeaders, String dir, String filename) throws IOException;
+    public String downloadFile(String url, Map requestHeaders, String dir, String filename, String postBody) throws IOException;
     public String dataImage(String url) throws IOException;
     public String doGet(String url, Map heads, String encoding) throws Exception;
     public Map<String, String> doHead(String url, Map heads) throws Exception;

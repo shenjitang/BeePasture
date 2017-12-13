@@ -5,11 +5,13 @@
  */
 package org.shenjitang.beepasture.resource;
 
+import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.nio.CharBuffer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.plexus.util.StringUtils;
@@ -75,6 +77,7 @@ public class HttpResource extends BeeResource implements Runnable {
     private Object loadResource() throws Exception {
         ++count;
         HttpService httpTools = HttpServiceMng.get(uri);
+        String postBody = (String) loadParam.get("post");
         Map withVarCurrent = (Map)loadParam.get("withVarCurrent");
         String charset = (String)loadParam.get("charset");
         Map heads = (Map) loadParam.get("head");
@@ -85,7 +88,7 @@ public class HttpResource extends BeeResource implements Runnable {
         if (download != null) {
             String dir = getDir(withVarCurrent, loadParam, download);
             String fileName = getFileName(withVarCurrent, loadParam, download);
-            fileName = httpTools.downloadFile(url.toString(), heads, dir, fileName);
+            fileName = httpTools.downloadFile(url.toString(), heads, dir, fileName, postBody);
             String filenameToVar = (String) download.get("filename2var");
             if (StringUtils.isNotBlank(filenameToVar)) {
                 if (withVarCurrent != null) {
@@ -110,7 +113,6 @@ public class HttpResource extends BeeResource implements Runnable {
             return httpTools.dataImage(url);
         }
         String page = null;
-        String postBody = (String) loadParam.get("post");
         if (org.apache.commons.lang3.StringUtils.isNotBlank(postBody)) {
             LOGGER.info("=> POST " + url);
             page = httpTools.doPost((String) url, postBody, heads, null);
@@ -204,5 +206,10 @@ public class HttpResource extends BeeResource implements Runnable {
         httpThread = new Thread(this, "httpResource-thread-" + threadCount++);
         httpThread.setDaemon(true);
         httpThread.start();
+    }
+
+    @Override
+    public Set<String> getParamKeys() {
+        return Sets.newHashSet();
     }
 }

@@ -13,6 +13,8 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -182,8 +184,34 @@ public class OkHttpTools implements HttpService {
             for (String kv : pair) {
                 String[] kva = kv.split("=");
                 if (kva.length == 2) {
-                    if ("filename".equalsIgnoreCase(kva[0].trim())) {
-                        return kva[1];
+                    if (kva[0].trim().startsWith("filename")) {
+                        String fnameDes[] = kva[1].split("'");
+                        if (fnameDes.length == 1) {
+                            String contentType = response.header("Content-Type");
+                            if (kva[1].contains("%") && contentType != null && contentType.contains("charset=")) {
+                                int idx = contentType.indexOf("charset=");
+                                String charset = contentType.substring(idx + 8).trim();
+                                String realFilename;
+                                try {
+                                    realFilename = URLDecoder.decode(kva[1], charset);
+                                } catch (Exception e) {
+                                    LOGGER.warn(kva[1], e);
+                                    realFilename = kva[1].replaceAll("%", "_");
+                                }
+                                return realFilename.replaceAll("\\*", "");
+                            } else {
+                                return kva[1];
+                            }
+                        } else {
+                            String charset = fnameDes[0];
+                            String fn = fnameDes[fnameDes.length - 1];
+                            try {
+                                String realFilename = URLDecoder.decode(fn, charset);
+                                return realFilename.replaceAll("\\*", "");
+                            } catch (Exception e) {
+                                LOGGER.warn(kva[1], e);
+                            }
+                        }
                     }
                 }
             }
@@ -209,8 +237,13 @@ public class OkHttpTools implements HttpService {
     }
     
     @Override
-    public String downloadFile(String url, Map requestHeaders, String dir, String filename) throws IOException {
-        Request request = buildHeadInRequest(url, requestHeaders).build();
+    public String downloadFile(String url, Map requestHeaders, String dir, String filename, String postBody) throws IOException {
+        Request.Builder builder = buildHeadInRequest(url, requestHeaders);
+        if (postBody != null) {
+            MediaType mediaType = getMediaType(requestHeaders);
+            builder = builder.post(RequestBody.create(mediaType, postBody));
+        }
+        Request request = builder.build();
         final StringBuilder returnFilename = new StringBuilder();
         try (Response response = httpClient.newCall(request).execute()) {
             if (response.isSuccessful()) {

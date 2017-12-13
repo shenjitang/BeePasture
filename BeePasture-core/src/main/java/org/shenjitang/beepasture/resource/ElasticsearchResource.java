@@ -6,6 +6,7 @@
 package org.shenjitang.beepasture.resource;
 
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.collect.Sets;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.index.IndexRequest;
@@ -253,4 +255,10 @@ public class ElasticsearchResource extends BeeResource {
     public Iterator<Object> iterate(GatherStep gatherStep, Map param) throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+
+    @Override
+    public Set<String> getParamKeys() {
+        return Sets.newHashSet("_index", "_type", "_id");
+    }
+
 }

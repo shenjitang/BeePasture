@@ -6,12 +6,14 @@
 package org.shenjitang.beepasture.resource;
 
 import com.aliyun.oss.OSSClient;
+import com.google.common.collect.Sets;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.codehaus.plexus.util.StringUtils;
 import org.shenjitang.beepasture.core.GatherStep;
@@ -82,6 +84,11 @@ public class OssResource extends BeeResource {
     @Override
     public Iterator<Object> iterate(GatherStep gatherStep, Map param) throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Set<String> getParamKeys() {
+        return Sets.newHashSet("encoding", "bucket", "key");
     }
     
 }
