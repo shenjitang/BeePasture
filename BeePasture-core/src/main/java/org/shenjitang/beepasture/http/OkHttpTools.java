@@ -269,7 +269,6 @@ public class OkHttpTools implements HttpService {
                     }  
                 } finally {  
                     IOUtils.closeQuietly(input);  
-//                    LOGGER.info("dataImage from url=>" + url);
                 }  
                 returnFilename.append(file.getCanonicalPath());
             } else {

@@ -21,6 +21,7 @@ import org.shenjitang.beepasture.http.HttpService;
 import org.shenjitang.beepasture.http.HttpServiceMng;
 import org.shenjitang.beepasture.http.HttpTools;
 import org.shenjitang.beepasture.http.OkHttpTools;
+import org.shenjitang.beepasture.resource.util.ResourceUtils;
 
 
 /**
@@ -99,7 +100,20 @@ public class HttpResource extends BeeResource implements Runnable {
             }
             //String fileUrl = "file://" + fileName;
             //if (fileName.length() > 1 && fileName.charAt(1)==':') {
+            LOGGER.info("download file:" + fileName);
             String fileUrl = "file://" + fileName.replaceAll("\\\\", "/");
+            LOGGER.info("download file url:" + fileUrl);
+            Map<String, String> fileUrlParams = new HashMap();
+            String format = (String)download.get("format");
+            if (format != null) {
+                fileUrlParams.put("format", format);
+            }
+            String encoding = (String)download.get("encoding");
+            if (encoding != null) {
+                fileUrlParams.put("encoding", encoding);
+            }
+            fileUrl = ResourceUtils.assembleUrl(fileUrl, fileUrlParams);
+            LOGGER.info("download file url with params:" + fileUrl);
             //}
             FileResource fileResource = new FileResource();
             fileResource.init(fileUrl, null);

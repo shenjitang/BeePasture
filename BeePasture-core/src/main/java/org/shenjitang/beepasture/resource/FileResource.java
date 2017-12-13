@@ -31,6 +31,9 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.tika.Tika;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.sax.BodyContentHandler;
 import org.codehaus.plexus.util.StringUtils;
 import org.ho.yaml.Yaml;
 import org.shenjitang.beepasture.core.GatherStep;
@@ -148,11 +151,10 @@ public class FileResource extends BeeResource {
             return JSON.parse(str);
         } else if ("excel".equalsIgnoreCase(format)) {
             return ExcelParser.parseExcel(file, null);
+        } else if ("pdf".equalsIgnoreCase(format)) {
+            return parse(file);
         } else if ("auto".equalsIgnoreCase(format)) {
-            Tika tika = new Tika();
-            try (InputStream stream = FileResource.class.getResourceAsStream(file.getName())) {
-                return tika.parseToString(stream);
-            }
+            return parse(file);
 //            String ext = FilenameUtils.getExtension(file.getName());
 //            if ("xls".equalsIgnoreCase(ext) || "xlsx".equalsIgnoreCase(ext)) {
 //                return ExcelParser.parseExcel(file, null);
@@ -165,6 +167,16 @@ public class FileResource extends BeeResource {
             return FileUtils.readFileToString(file, encoding);
         }    
     }
+    
+    public static String parse(File file) throws Exception {
+        AutoDetectParser parser = new AutoDetectParser();
+        BodyContentHandler handler = new BodyContentHandler();
+        Metadata metadata = new Metadata();
+        try (InputStream stream = new FileInputStream(file)) {
+            parser.parse(stream, handler, metadata);
+            return handler.toString();
+        }
+    }    
 
     @Override
     public Iterator<Object> iterate(GatherStep gatherStep, Map loadParam) throws Exception {

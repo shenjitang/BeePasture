@@ -59,6 +59,19 @@ public class ResourceUtils {
         }
         return sub1.substring(0, idx2);
     }
+
+    public static String assembleUrl(String fileUrl, Map<String, String> fileUrlParams) {
+        if (fileUrlParams == null || fileUrlParams.isEmpty()) {
+            return fileUrl;
+        }
+        StringBuilder sb = new StringBuilder().append(fileUrl).append("?");
+        for (String key : fileUrlParams.keySet()) {
+            String value = fileUrlParams.get(key);
+            sb.append(key).append("=").append(value).append("&");
+        }
+        sb.deleteCharAt(sb.length() - 1);
+        return sb.toString();
+    }
     
 
 }
