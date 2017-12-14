@@ -16,6 +16,7 @@ import org.beetl.core.Configuration;
 import org.beetl.core.GroupTemplate;
 import org.beetl.core.Template;
 import org.beetl.core.resource.StringTemplateResourceLoader;
+import org.shenjitang.beepasture.util.ParseUtils;
 
 
 /**
@@ -40,43 +41,37 @@ public class ScriptTemplateExecuter {
     
 
     public String expressCalcu(String str, Map params) {
-        try {
-            Configuration cfg = Configuration.defaultConfiguration();
-            GroupTemplate gt = new GroupTemplate(resourceLoader, cfg);
+        if (ParseUtils.maybeScript(str)) {
+            try {
+                Configuration cfg = Configuration.defaultConfiguration();
+                GroupTemplate gt = new GroupTemplate(resourceLoader, cfg);
 
-            Long time = System.currentTimeMillis();
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(time);
-            //if (!params.containsKey("time")) {
-            params.put("time", time);
-            //}
-            gt.registerFunctionPackage("sys", System.class);
-            gt.registerFunctionPackage("str", StringFunctions.class);
-            gt.registerFunctionPackage("StringUtils", StringUtils.class);
-            gt.registerFunction("dateAdd", new DateAddFunction());
-            gt.registerFunction("lastDayOfMonth", new LastDayOfMonthFunction());
-            gt.registerFunction("smartDate", new SmartDateFunction());
-            //gt.registerFunctionPackage("it", it);
-            for (Object key : params.keySet()) {
-                Object o = params.get(key);
-                if (o != null) {
-                    if (o instanceof List && ((List)o).size() == 1) {
-                        gt.registerFunctionPackage((String)key, ((List)o).get(0));
-                    } else {
-                        gt.registerFunctionPackage((String)key, o);
+                gt.registerFunctionPackage("System", System.class);
+                gt.registerFunctionPackage("str", StringFunctions.class);
+                gt.registerFunctionPackage("StringUtils", StringUtils.class);
+                gt.registerFunction("dateAdd", new DateAddFunction());
+                gt.registerFunction("lastDayOfMonth", new LastDayOfMonthFunction());
+                gt.registerFunction("smartDate", new SmartDateFunction());
+                //gt.registerFunctionPackage("it", it);
+                for (Object key : params.keySet()) {
+                    Object o = params.get(key);
+                    if (o != null) {
+                        if (o instanceof List && ((List)o).size() == 1) {
+                            gt.registerFunctionPackage((String)key, ((List)o).get(0));
+                        } else {
+                            gt.registerFunctionPackage((String)key, o);
+                        }
                     }
                 }
+                Template t = gt.getTemplate(str);
+                t.binding(params);
+                String result = t.render();
+                return result;
+            } catch (Exception e) {
+                LOGGER.warn(str, e);
             }
-            Template t = gt.getTemplate(str);
-            t.binding(params);
-            String result = t.render();
-            params.remove("time");
-            return result;
-        } catch (Exception e) {
-            LOGGER.warn(str, e);
-            params.remove("time");
-            return str;
         }
+        return str;
     }
     
     public String expressCalcu(String str, Object it, Map<String, Object> inParams) throws Exception {
