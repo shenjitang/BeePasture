@@ -16,6 +16,8 @@ import org.beetl.core.Configuration;
 import org.beetl.core.GroupTemplate;
 import org.beetl.core.Template;
 import org.beetl.core.resource.StringTemplateResourceLoader;
+import org.shenjitang.beepasture.debug.DebugLevel;
+import org.shenjitang.beepasture.debug.GatherDebug;
 import org.shenjitang.beepasture.util.ParseUtils;
 
 
@@ -26,22 +28,12 @@ import org.shenjitang.beepasture.util.ParseUtils;
 public class ScriptTemplateExecuter {
     private static final Log LOGGER = LogFactory.getLog(ScriptTemplateExecuter.class);
     private final StringTemplateResourceLoader resourceLoader = new StringTemplateResourceLoader();		
-    private String it;
     public ScriptTemplateExecuter() {
-        
     }
     
-    public ScriptTemplateExecuter(String it) {
-        this.it = it;
-    }
-    
-    public void setIt(String it) {
-        this.it = it;
-    }
-    
-
-    public String expressCalcu(String str, Map params) {
-        if (ParseUtils.maybeScript(str)) {
+    public String expressCalcu(String script, Map params) {
+        if (ParseUtils.maybeScript(script)) {
+            GatherDebug.debug(DebugLevel.STATEMENT, "script: " + script);
             try {
                 Configuration cfg = Configuration.defaultConfiguration();
                 GroupTemplate gt = new GroupTemplate(resourceLoader, cfg);
@@ -63,15 +55,15 @@ public class ScriptTemplateExecuter {
                         }
                     }
                 }
-                Template t = gt.getTemplate(str);
+                Template t = gt.getTemplate(script);
                 t.binding(params);
                 String result = t.render();
                 return result;
             } catch (Exception e) {
-                LOGGER.warn(str, e);
+                LOGGER.warn(script, e);
             }
         }
-        return str;
+        return script;
     }
     
     public String expressCalcu(String str, Object it, Map<String, Object> inParams) throws Exception {

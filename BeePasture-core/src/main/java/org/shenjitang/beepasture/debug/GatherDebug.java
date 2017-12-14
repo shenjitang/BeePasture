@@ -12,7 +12,6 @@ import java.io.InputStreamReader;
 import java.util.Iterator;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
 import org.shenjitang.beepasture.core.BeeGather;
 import org.shenjitang.beepasture.core.GatherStep;
 import org.shenjitang.beepasture.resource.util.ResourceUtils;
@@ -25,8 +24,13 @@ public class GatherDebug {
     static Boolean debug = Boolean.valueOf(System.getProperty("debug", "false"));
     private static String msg = "";
     private static DebugLevel level = DebugLevel.STATEMENT;
+    private static GatherStep gatherStep;
 
     public GatherDebug() {
+    }
+    
+    public static void setGatherStep(GatherStep gatherStep) {
+        GatherDebug.gatherStep = gatherStep;
     }
     
     public static void help() {
@@ -44,7 +48,7 @@ public class GatherDebug {
 
     }
     
-    public static void debug(GatherStep gatherStep, DebugLevel currentLevel, String desc) {
+    public static void debug(DebugLevel currentLevel, String desc) {
         if (!debug) {
             return;
         }
@@ -87,7 +91,7 @@ public class GatherDebug {
                         key = pres[2];
                     }
                     String express = ResourceUtils.substringTail(cmd, "=").trim();
-                    Object content = getContent(gatherStep, varname);
+                    Object content = getContent(varname);
                     if ("xpath".equalsIgnoreCase(key)) {
                         List res = gatherStep.doXpath(content.toString(), express);
                         System.out.println(JSON.toJSONString(res));
@@ -97,8 +101,8 @@ public class GatherDebug {
                     } else if ("regex".equalsIgnoreCase(key)) {
                         String res = gatherStep.doRegex(content.toString(), express);
                         System.out.println(JSON.toJSONString(res));
-                    } else if ("script".equalsIgnoreCase(key)) {
-                        Object res = gatherStep.doScript(getContent(gatherStep, "it"), getContent(gatherStep, "_page"), getContent(gatherStep, "_this"));
+                    } else if ("script".equalsIgnoreCase(key)) { //t script=[value]
+                        Object res = gatherStep.doScript(express);
                         System.out.println(JSON.toJSONString(res));
                     }
                 } else if (cmd.toLowerCase().startsWith("l")) {
@@ -158,7 +162,7 @@ public class GatherDebug {
         }
     }
     
-    private static Object getContent(GatherStep gatherStep, String key) {
+    private static Object getContent(String key) {
         Object content = gatherStep.getTemplateParamMap().get(key);
         if (content == null) {
             content = BeeGather.getInstance().getVars().get(key);
