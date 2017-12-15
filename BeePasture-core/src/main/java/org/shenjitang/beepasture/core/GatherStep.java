@@ -66,7 +66,7 @@ public class GatherStep {
     private Map previousItem;
     public final Set<String> EXTRACT_KEYS = Sets.newHashSet("xpath", "jsonpath", 
             "regex", "script", "javascript", "js", "constant", "marshal", 
-            "unmarshal", "dataimage", "saveAttach", "convert", "split");
+            "unmarshal", "dataimage", "undataimage", "saveAttach", "convert", "split");
 
     public GatherStep(Map step, Integer id) {
         this.id = id;
@@ -635,6 +635,7 @@ public class GatherStep {
             } else if ("xpath".equalsIgnoreCase(key.toString())) {
                 return doXpath(pages, (String)extract.get(key));
             } else if ("jsonpath".equalsIgnoreCase(key.toString())) {
+            
                 return doJsonpath(pages, (String)extract.get(key));
             } else if ("javascript".equalsIgnoreCase(key.toString())) {
                 return doJavaScript(pages,(String)extract.get(key));
@@ -648,6 +649,8 @@ public class GatherStep {
                 return doUnmarshal(pages, (Map)extract.get("unmarshal"));
             } else if ("dataimage".equalsIgnoreCase(key.toString())) {
                 return new HrefElementCorrector(this).dataimageAll(pages);
+            } else if ("undataimage".equalsIgnoreCase(key.toString())) {
+                return new HrefElementCorrector(this).undataimageAll(pages);
             } else if ("saveAttach".equalsIgnoreCase(key.toString())) {
                 return new HrefElementCorrector(this).attachmentUrlCorrectAll(pages, (Map)extract.get(key));
             } else if ("convert".equalsIgnoreCase(key.toString())) {
@@ -705,6 +708,8 @@ public class GatherStep {
 //                    }
                 } else if ("dataimage".equalsIgnoreCase(key.toString())) {
                     return (new HrefElementCorrector(this)).dataimage(it);
+                } else if ("undataimage".equalsIgnoreCase(key.toString())) {
+                    return (new HrefElementCorrector(this)).undataimage(it);
                 } else if ("saveAttach".equalsIgnoreCase(key.toString())) {
                     return (new HrefElementCorrector(this)).attachmentUrlCorrect(it, (Map)value);
                 }
@@ -841,23 +846,10 @@ public class GatherStep {
         if (StringUtils.isNotBlank(resourceName)) {
             resource = beeGather.getResourceMng().getResource(resourceName, false);
         }
-        int i = 0;
         Object filterExpress = saveDefMap.get("filter");
         pages = doFilter(pages, filterExpress);
         for (Object page : pages) {
-            i++;
             removeProperties(page);
-//            if (filterExpress != null) {
-//                if (filterExpress instanceof String) {
-//                    if (StringUtils.isNotBlank((String)filterExpress) && !doFilterOnce("script", (String)filterExpress, page, i)) {
-//                        continue;
-//                    }
-//                } else if (filterExpress instanceof Map) {
-//                    for ()
-//                } else {
-//                    throw new RuntimeException("gather-save-filter mast be string or map");
-//                }
-//            }
             if (var != null) {
                 var.add(page);
             }
@@ -865,14 +857,6 @@ public class GatherStep {
                 resource = beeGather.getResourceMng().getResource("camel", false);
             }
             if (resource != null) {
-//                Set<String> paramKeys = resource.getParamKeys();
-//                for (String key : paramKeys) {
-//                    Object value = saveDefMap.get(key);
-//                    if (value != null && value instanceof String && ParseUtils.maybeScript(value.toString())) {
-//                        String nvalue = template.expressCalcu((String)value, templateParamMap);
-//                        saveDefMap.put(key, nvalue);
-//                    }
-//                }
                 templateParamMap.put("it", page);
                 resource.saveTo(this, templateParamMap, saveDefMap);
             }
@@ -880,7 +864,6 @@ public class GatherStep {
     }
 
     protected void saveToVar(String varName, Object page, Object ourl) {
-        //varName = doScript(varName, page);
         if ("_this".equalsIgnoreCase(varName)) {
             withVarCurrent.putAll((Map) page);
         } else {
@@ -959,7 +942,6 @@ public class GatherStep {
     }
 
     protected List doUnmarshal(List its, Map unmarshalMap) {
-//        Map unmarshalMap = (Map)save.get("unmarshal");
         if (unmarshalMap != null) {
             List returnList = new ArrayList();
             for (Object it : its ) {
@@ -971,7 +953,6 @@ public class GatherStep {
     }
 
     protected List doMarshal(List its, Map marshalMap) {
-//        Map marshalMap = (Map)save.get("unmarshal");
         if (marshalMap != null) {
             List returnList = new ArrayList();
             for (Object it : its ) {

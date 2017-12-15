@@ -10,9 +10,11 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -198,6 +200,60 @@ public class HrefElementCorrector {
         return dataimage(node);
     }
 
+    List undataimageAll(List pages) {
+        List list = new ArrayList();
+        for (Object page : pages) {
+            list.add(undataimage(page));
+        }
+        return list;
+    }
+
+    TagNode undataimage(Object page) {
+            try {
+                if (page instanceof TagNode) {
+                    return undataimage((TagNode)page);
+                } else {
+                    return undataimage(page.toString());
+                }
+            } catch (Exception e) {
+                LOGGER.warn("undataimage", e);
+            }
+            return null;
+    }
+
+    TagNode undataimage(TagNode tagNode) throws Exception {
+        TagNode[] allNode = tagNode.getAllElements(true);
+        for (TagNode node : allNode) {
+            if ("img".equalsIgnoreCase(node.getName())) {
+                String attributeName = "src";
+                String imgUrl = node.getAttributeByName(attributeName);
+                if (imgUrl == null) {
+                    attributeName = "data-src";
+                    imgUrl = node.getAttributeByName(attributeName);
+                }
+                if (StringUtils.isNotBlank(imgUrl)) {
+                    String typeStr = StringUtils.substringBefore(imgUrl, ",");
+                    typeStr = StringUtils.substringBetween(typeStr, "/", ";");
+                    String base64Str = StringUtils.substringAfter(imgUrl, ",");
+                    byte[] imgBytes = Base64.getDecoder().decode(base64Str);
+                    File path = new File("./_files");
+                    FileUtils.forceMkdir(path);
+                    String filename = System.currentTimeMillis() + "." + typeStr;
+                    File file = new File(path, filename);
+                    FileUtils.writeByteArrayToFile(file, imgBytes);
+                    node.removeAttribute("src");
+                    node.addAttribute("src", file.getPath());
+                }
+            }
+        }
+        return tagNode;
+    }
+
+    TagNode undataimage(String str) throws Exception {
+        TagNode node = gatherStep.pageAnalyzer.toTagNode(str);
+        return undataimage(node);
+    }    
+    
     private String downloadIfIs(String href) throws Exception  {
         BeeResource beeResource = gatherStep.beeGather.getResourceMng().getResource(href, false);
         HttpService httpTools = HttpServiceMng.get(beeResource.getUri());
