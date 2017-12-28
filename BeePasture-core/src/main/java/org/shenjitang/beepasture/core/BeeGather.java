@@ -65,7 +65,7 @@ public class BeeGather {
         instance = this;
         program = (Map)Yaml.load(gather);
         LOGGER.debug(program);
-        loadResources();//(Map)program.get("resource");
+        loadResources();
         if (resources != null) {
             if (resourcesList == null) {
                 resourceMng.init(resources);
@@ -197,11 +197,6 @@ public class BeeGather {
             }
         } else if(res instanceof Map) { 
             resources = (Map)res;
-//            resourcesList = new ArrayList();
-//            for (Object key : resources.keySet()) {
-//                Map value = (Map)resources.get(key);
-//                resourcesList.add(value);
-//            }
         }
     }
  
@@ -212,7 +207,5 @@ public class BeeGather {
     protected Map initVars(Map vars, Map resources) throws Exception{
         return ParseUtils.replaceByArray(vars);
     }
-
-
     
 }

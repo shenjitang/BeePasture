@@ -177,7 +177,9 @@ public class HrefElementCorrector {
                 }
                 if (StringUtils.isNotBlank(imgUrl)) {
                     if (!imgUrl.toLowerCase().startsWith("http")) {
-                        if (imgUrl.startsWith("/")) {
+                        if (imgUrl.startsWith("//")) {
+                            imgUrl = "http:" + imgUrl;
+                        } else if (imgUrl.startsWith("/")) {
                             URI uri = URI.create(gatherStep.ourl.toString());
                             imgUrl = uri.getScheme() + "://" + uri.getHost() + imgUrl;
                         } else {

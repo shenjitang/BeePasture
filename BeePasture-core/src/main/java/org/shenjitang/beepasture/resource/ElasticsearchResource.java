@@ -207,7 +207,7 @@ public class ElasticsearchResource extends BeeResource {
     @Override
     public Object loadResource(GatherStep gatherStep, Map loadParam) throws Exception {
         List resultList = new ArrayList();
-        Object queryFragments = loadParam.get("query");
+        Object queryFragments = loadParam.get("search");
         SearchRequestBuilder builder = client.prepareSearch(index);
         if (StringUtils.isNotBlank(type)) {
             builder = builder.setTypes(type);

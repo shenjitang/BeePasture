@@ -38,6 +38,7 @@ import org.shenjitang.commons.csv.CSVUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.lang.reflect.Array;
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -67,6 +68,7 @@ public class GatherStep {
     public final Set<String> EXTRACT_KEYS = Sets.newHashSet("xpath", "jsonpath", 
             "regex", "script", "javascript", "js", "constant", "marshal", 
             "unmarshal", "dataimage", "undataimage", "saveAttach", "convert", "split");
+    public final Set<String> GATHER_KEYS = Sets.newHashSet("url", "with", "local", "extract", "save");
 
     public GatherStep(Map step, Integer id) {
         this.id = id;
@@ -83,7 +85,11 @@ public class GatherStep {
                 }
             }
         }
-        rurl = (String) rStep.get("url");
+        if (rStep.get("url") instanceof String) {
+            rurl = (String) rStep.get("url");
+        } else if (withVar == null && rStep.get("url") instanceof List) {
+            withVar = (List)rStep.get("url");
+        }
         free = rStep.get("free") != null;
         limit = GatherStep.getLongValue(rStep, "limit");
         save = (Map) rStep.get("save");
@@ -99,7 +105,9 @@ public class GatherStep {
 
     public void execute() throws Exception {
         GatherDebug.setGatherStep(this);
-        rurl = ParseUtils.maybeScript(rurl) ? doScript(rurl): rurl;
+        if (rurl != null) {
+            rurl = ParseUtils.maybeScript(rurl) ? doScript(rurl): rurl;
+        }
         List urls = withVar == null? getUrlsFromStepUrl(rurl, rStep) : withVar;
         for (int i = 0; i < urls.size(); i++) {
             int oldSize = urls.size();
@@ -155,19 +163,17 @@ public class GatherStep {
             Object page = ourl;
             Boolean direct = ResourceUtils.get(step, "direct", false);
             if (!direct) {
-                if (ourl instanceof File) {
-                    ourl = "file://" + ((File)ourl).getAbsolutePath();
-                } else {
-                    ourl = template.expressCalcu((String) ourl, beeGather.getVars());
-                }
                 if (ourl instanceof String) {
+                    ourl = template.expressCalcu((String) ourl, beeGather.getVars());
                     if (beeGather.containsResource((String)ourl) || ResourceMng.maybeResource(ourl.toString())) {
                         try {
-                            page = loadResource((String)ourl);
+                            page = loadResource((String)ourl, step);
                         } catch (Exception e) {
                             LOGGER.warn("unknown resource:" + ourl, e);
                         }
                     }
+                } else if (ourl instanceof File) {
+                    ourl = "file://" + ((File)ourl).getAbsolutePath();
                 }
             }
             templateParamMap.put("_page", page);
@@ -202,7 +208,7 @@ public class GatherStep {
                 String url = (String)ourl;
                 if (beeGather.containsResource(url) || ResourceMng.maybeResource(url)) {
                     try {
-                        Map loadParam = getLoadParam();
+                        Map loadParam = getLoadParam(step);
                         BeeResource beeResource = beeGather.getResourceMng().getResource(url, false);
                         Iterator ite = beeResource.iterate(this, loadParam);
                         if (ite == null) {
@@ -244,25 +250,34 @@ public class GatherStep {
                 Lists.newArrayList(url);
     }
 
-    protected Map getLoadParam() {
-        //资源装载的params里的参数，如果是对vars的引用，就要替换成vars里的值。
+    protected Map getLoadParam(Map resourceMap) {
         Map loadParam = new HashMap();
-        Map map = step.get("param") == null ? step : (Map) step.get("param");
-        for (Object key : map.keySet()) {
-            Object value = map.get(key);
-            if (beeGather.getVars().containsKey(value)) {
-                loadParam.put(key, beeGather.getVar((String) value));
-            } else {
-                loadParam.put(key, value);
+        if (resourceMap.get("param") != null) {
+            loadParam.putAll((Map) resourceMap.get("param"));
+        } else {
+            for (Object key : resourceMap.keySet()) {
+                if (!GATHER_KEYS.contains(key)) {
+                    loadParam.put(key, resourceMap.get(key));
+                }
             }
         }
+//资源装载的params里的参数，如果是对vars的引用，就要替换成vars里的值。   这个不做了！
+//        Map map = resourceMap.get("param") == null ? resourceMap : (Map) resourceMap.get("param");
+//        for (Object key : map.keySet()) {
+//            Object value = map.get(key);
+//            if (beeGather.getVars().containsKey(value)) {
+//                loadParam.put(key, beeGather.getVar((String) value));
+//            } else {
+//                loadParam.put(key, value);
+//            }
+//        }
         return loadParam;
     }
 
-    protected Object loadResource(String url) throws Exception {
+    protected Object loadResource(String url, Map resourceMap) throws Exception {
         GatherDebug.debug(DebugLevel.STATEMENT, "加载资源：" + url);
         BeeResource beeResource = beeGather.getResourceMng().getResource(url, false);
-        return beeResource.loadResource(this, getLoadParam());
+        return beeResource.loadResource(this, getLoadParam(resourceMap));
     }
 
     public List doXpath(List page, String xpath) {
@@ -497,137 +512,108 @@ public class GatherStep {
         }
         return null;
     }
+    
+    private FilterResult doFilterOnePage(String action, String key, Object page, Object filter, int i) throws Exception {
+        if (filter instanceof String) {
+            return new FilterResult(doFilterOnce(key, (String)filter, page, i), action) ;
+        } else if (filter instanceof List) {
+            boolean keep = false;
+            for (Object f : (List)filter) {
+                FilterResult res = doFilterOnePage(action, key, page, f, i);
+                if ((res.getAction().equals(FilterResult.MUST) && !res.getValue()) ||
+                    (res.getAction().equals(FilterResult.MUST_NOT) && res.getValue()) ||
+                    (res.getAction().equals(FilterResult.NOT) && res.getValue())) {
+                    return res;
+                } else if ((res.getAction().equals(FilterResult.SHOULD))) {
+                    keep |= res.getValue();
+                } else if ((res.getAction().equals(FilterResult.SHOULD_NOT) && !res.getValue())) {
+                    keep |= (!res.getValue());
+                } else if ((res.getAction().equals(FilterResult.MUST) && res.getValue())) {
+                    keep &= res.getValue();
+                } else if (res.getAction().equals(FilterResult.MUST_NOT) && !res.getValue()) {
+                    keep &= (!res.getValue());
+                }
+            }
+            return new FilterResult(keep, action);
+        } else if (filter instanceof Map) {
+            Map filterMap = (Map)filter;
+            if (filterMap.size() > 1) throw new RuntimeException("filter map size must be 1!");
+            String theKey = (String)filterMap.keySet().iterator().next();
+            String theAction = FilterResult.valueOfAction(theKey);
+            Object value = filterMap.get(theKey);
+            if (theAction == null) {
+                return new FilterResult(doFilterOnce(theKey, value, page, i), action);
+            } else {
+                return doFilterOnePage(theAction, key, page, value, i);
+            }
+        } else {
+            throw new RuntimeException("filter's value must be List or Map or String!");
+        }
+    }
 
     public List doFilter(List obj, Object filter) {
         if (filter == null) {
             return obj;
         }
         List resList = new ArrayList();
-        if (filter instanceof String) {
-            int i = 0;
-            for (Object page : (List) obj) {
-                i++;
-                if (doFilterOnce("script", (String)filter, page, i)) {
+        int i = 0;
+        boolean keepOne = false;
+        for (Object page : (List) obj) {
+            try {
+                if (doFilterOnePage(null, null, page, filter, i++).isKeep()) {
+                    keepOne = true;
                     resList.add(page);
                     LOGGER.debug("keep item: " + page.toString());
                 } else {
-                    if (withVar != null) {
-                        try {
-                            ((List)withVar).remove(withVarCurrent);
-                        } catch (Exception e) {
-                            LOGGER.warn("这里必须是list。不是list，肯定有问题，需要检查。", e);
-                        }
-                    }
                     LOGGER.info("skip item: " + page.toString());
                 }
+            } catch (Exception e) {
+                LOGGER.warn(filter, e);
+                LOGGER.info("exception, skip item: " + page.toString());
             }
-        } else {
-            int i = 0;
-            for (Object page : (List) obj) { //对每一个_item做filter
-                 i++;
-                Map map = (Map)filter;
-                boolean keep = true;
-                ONE: for (Object key : map.keySet()) {
-                    Object value = map.get(key);
-                    if (value instanceof String) {
-                        keep &= doFilterOnce((String)key, (String)value, page, i);
-                    } else if (value instanceof List) {
-                        for (Object item : (List)value) {
-                            if (item instanceof String ) {
-                                keep = doFilterOnce((String)key, (String)item, page, i);
-                                if (!keep) {
-                                    break ONE;
-                                }
-                            } else {
-                                String ope = (String)((Map)item).keySet().iterator().next();
-                                String express = (String)((Map)item).get(ope);
-                                keep = doFilterOnce((String)key, express, page, i);
-                                if ("not".equalsIgnoreCase(ope) || "mustnot".equalsIgnoreCase(ope)) { //mast not
-                                    keep = !keep;
-                                    if (!keep) {
-                                        break ONE;
-                                    }
-                                } else if ("should".equalsIgnoreCase(ope)){
-                                    if (keep) {
-                                        break ONE;
-                                    }
-                                } else if ("shouldnot".equalsIgnoreCase(ope)){
-                                    keep = !keep;
-                                    if (keep) {
-                                        break ONE;
-                                    }
-                                } else { //master
-                                    if (!keep) {
-                                        break ONE;
-                                    }
-                                }
-                            }
-                            String ope = (String)((Map)item).keySet().iterator().next();
-                        }
-                    } else {
-                        String ope = (String)((Map)value).keySet().iterator().next();
-                        String express = (String)((Map)value).get(ope);
-                        keep = doFilterOnce((String)key, express, page, i);
-                        if ("not".equalsIgnoreCase(ope) || "mustnot".equalsIgnoreCase(ope)) { //mast not
-                            keep = !keep;
-                            if (!keep) {
-                                break;
-                            }
-                        } else if ("should".equalsIgnoreCase(ope)){
-                            if (keep) {
-                                break;
-                            }
-                        } else if ("shouldnot".equalsIgnoreCase(ope)){
-                            keep = !keep;
-                            if (keep) {
-                                break;
-                            }
-                        } else { //master
-                            if (!keep) {
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (keep) {
-                    LOGGER.debug("keep item: " + page.toString());
-                    resList.add(page);
-                } else {
-                    if (withVar != null) {
-                        try {
-                            ((List)withVar).remove(withVarCurrent);
-                        } catch (Exception e) {
-                            LOGGER.warn("这里必须是list。不是list，肯定有问题，需要检查。", e);
-                        }
-                    }
-                    LOGGER.info("skip item: " + page.toString());
-                }
-            }
+        }
+        if (!keepOne && withVar != null && withVar instanceof List) {
+            ((List) withVar).remove(withVarCurrent);
         }
         return resList;
     }
 
-    protected Boolean doFilterOnce(String key, String filterExpress, Object page, int index) {
+    protected boolean doFilterOnce(String key, Object filterExpress, Object page, int index) throws Exception {
+        if (key == null) {
+            key = "script";
+        }
         GatherDebug.debug(DebugLevel.STATEMENT, "filter " + key + ": " + filterExpress);
         if ("script".equalsIgnoreCase(key)) {
-          if (filterExpress.matches(">\\d+")) { // >22
-            return index > Integer.valueOf(filterExpress.substring(1)); 
-          } else if (filterExpress.matches("<\\d+")) { // <22
-            return index < Integer.valueOf(filterExpress.substring(1));
-          } else {
-            templateParamMap.put("it", page);
-            String res = template.expressCalcu(filterExpress, templateParamMap);
-            return Boolean.valueOf(res);
-          }
+            String express = (String) filterExpress;
+            if (express.matches(">\\d+")) { // >22
+                return index > Integer.valueOf(express.substring(1));
+            } else if (express.matches("<\\d+")) { // <22
+                return index < Integer.valueOf(express.substring(1));
+            } else {
+                templateParamMap.put("it", page);
+                String res = template.expressCalcu(express, templateParamMap);
+                return Boolean.valueOf(res);
+            }
         } else if ("regex".equalsIgnoreCase(key)) {
-            Pattern pattern = Pattern.compile(filterExpress);
+            Pattern pattern = Pattern.compile((String)filterExpress);
             Matcher matcher = pattern.matcher(JSON.toJSONString(page));
             return matcher.find();
+        } else if ("exist".equalsIgnoreCase(key)) {
+            beforeGatherExpressCalcu((Map)filterExpress, "sql", "search");
+            String resource = (String)((Map)filterExpress).get("resource");
+            Object checkResult = loadResource(resource, (Map)filterExpress);
+            if (checkResult == null) {
+                return false;
+            }
+            if (checkResult instanceof Collection) {
+                return !((Collection)checkResult).isEmpty();
+            } 
+            return true;
         } else {
             throw new RuntimeException("不支持的filter检查方式：" + key);
         }
     }
-
+    
     protected List extract(Map extract, List pages) {
         for (Object key: extract.keySet()) {
             if ("filter".equalsIgnoreCase(key.toString())) {
@@ -635,7 +621,6 @@ public class GatherStep {
             } else if ("xpath".equalsIgnoreCase(key.toString())) {
                 return doXpath(pages, (String)extract.get(key));
             } else if ("jsonpath".equalsIgnoreCase(key.toString())) {
-            
                 return doJsonpath(pages, (String)extract.get(key));
             } else if ("javascript".equalsIgnoreCase(key.toString())) {
                 return doJavaScript(pages,(String)extract.get(key));
@@ -700,12 +685,6 @@ public class GatherStep {
                     return template.expressCalcu((String)value, templateParamMap);
                 } else if ("regex".equalsIgnoreCase(key.toString())) {
                     return doRegex(it.toString(), value);
-//                    
-//                    Pattern pattern = Pattern.compile((String)value);
-//                    Matcher matcher = pattern.matcher(it.toString());
-//                    if (matcher.find()) {
-//                        return matcher.group();
-//                    }
                 } else if ("dataimage".equalsIgnoreCase(key.toString())) {
                     return (new HrefElementCorrector(this)).dataimage(it);
                 } else if ("undataimage".equalsIgnoreCase(key.toString())) {
@@ -751,7 +730,7 @@ public class GatherStep {
                 if (o instanceof String) {
                     if (ParseUtils.maybeScript((String)o)) {
                         ((List)obj).remove(i);
-                        String v = doScript((String)obj);
+                        String v = doScript((String)o);
                         ((List)obj).add(i, v);
                     }
                 } else if (o instanceof Map) {
@@ -857,8 +836,12 @@ public class GatherStep {
                 resource = beeGather.getResourceMng().getResource("camel", false);
             }
             if (resource != null) {
-                templateParamMap.put("it", page);
-                resource.saveTo(this, templateParamMap, saveDefMap);
+                if (page == null) {
+                    LOGGER.warn("page is null!!!  orul:  " + JSON.toJSON(ourl));
+                } else {
+                    templateParamMap.put("it", page);
+                    resource.saveTo(this, templateParamMap, saveDefMap);
+                }
             }
         }
     }

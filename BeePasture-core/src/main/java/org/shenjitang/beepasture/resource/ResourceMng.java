@@ -18,7 +18,6 @@ import org.apache.commons.lang3.StringUtils;
  * @author xiaolie
  */
 public class ResourceMng {
-    //private Map resourceDefine;
     private final Map<String, BeeResource> resourceMap = new HashMap();
     private final static Pattern RESOURCE_PATTERN = Pattern.compile("^[a-zA-z0-9]{2,18}:[^\\s]*");
     
@@ -87,14 +86,14 @@ public class ResourceMng {
             Map one = (Map)oone;
             String name = (String)one.get("name");
             if (StringUtils.isBlank(name)) {
-                name = (String)one.get("url");
+                URI uri = URI.create((String)one.get("url"));
+                name = uri.getHost();
             }
             initOneResource(name, one, true);
         }
     }
 
     public void init(Map resources) {
-//        this.resourceDefine = resources;
         try {
             for (Object key : resources.keySet() ) {
                 initOneResource((String)key, (Map)resources.get(key), true);

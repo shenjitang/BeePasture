@@ -55,15 +55,16 @@ public class HttpResource extends BeeResource implements Runnable {
         String url = (String)params.get("to");
 //        String method = (String)params.get("method");
         Map heads = (Map)params.get("head");
+        HttpService httpTools = null;
         try {
 //            if ("post".equalsIgnoreCase(method)) {
                 //HttpService httpTools = new OkHttpTools(ssl);
-                HttpService httpTools = HttpServiceMng.get(uri);
+                httpTools = HttpServiceMng.get(uri);
                 String page = httpTools.doPost((String) url, obj.toString(), heads, null);
 //            } else {
 //            }
         } catch (Exception e) {
-            LOGGER.warn(url, e);
+            LOGGER.warn(url + " httpTools:" + httpTools + " uri:" + uri, e);
         }
     }
 

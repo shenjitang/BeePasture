@@ -13,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -171,11 +172,34 @@ public class JdbcResource extends BeeResource {
             Object obj = params.get(i);
             if (obj == null) {
                 stmt.setString(i + 1, null);
+            } else if (obj instanceof Map) {
+                String type = (String)((Map)obj).get("type");
+                Object value = (String)((Map)obj).get("value");
+                if ("long".equalsIgnoreCase(type)) {
+                    stmt.setBigDecimal(i + 1, BigDecimal.valueOf(Long.valueOf(value.toString())));
+                } else if ("int".equalsIgnoreCase(type) || "integer".equalsIgnoreCase(type)
+                         || "float".equalsIgnoreCase(type) || "double".equalsIgnoreCase(type)
+                         || "integer".equalsIgnoreCase(type)) {
+                    stmt.setInt(i + 1, Integer.valueOf(value.toString()));
+                } else if ("boolean".equalsIgnoreCase(type) || "bool".equalsIgnoreCase(type)) {
+                    stmt.setBoolean(i + 1, Boolean.valueOf(value.toString()));
+                } else if ("date".equalsIgnoreCase(type)) {
+                    java.sql.Date d = new java.sql.Date(((Date) value).getTime());
+                    stmt.setDate(i + 1, d);
+                } else if ("time".equalsIgnoreCase(type)) {
+                    java.sql.Time t = new java.sql.Time(((Date) value).getTime());
+                    stmt.setTime(i + 1, t);
+                } else if ("timestamp".equalsIgnoreCase(type)) {
+                    Timestamp time = new Timestamp(((Date) value).getTime());
+                    stmt.setTimestamp(i + 1, time);    
+                } else {
+                    stmt.setString(i + 1, value.toString());
+                }
             } else if (obj instanceof Integer) {
                 stmt.setInt(i + 1, (Integer) obj);
             } else if (obj instanceof Date) {
-                java.sql.Date d = new java.sql.Date(((Date) obj).getTime());
-                stmt.setDate(i + 1, d);
+                Timestamp time = new Timestamp(((Date) obj).getTime());
+                stmt.setTimestamp(i + 1, time);    
             } else if (obj instanceof Long) {
                 stmt.setBigDecimal(i + 1, BigDecimal.valueOf((Long) obj));
             } else if (obj instanceof Double) {

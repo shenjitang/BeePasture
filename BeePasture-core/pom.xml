@@ -123,11 +123,35 @@
     <groupId>org.apache.tika</groupId>
     <artifactId>tika-parsers</artifactId>
     <version>1.16</version>
+   <exclusions>
+    <exclusion>
+     <groupId>com.fasterxml.jackson.core</groupId>
+     <artifactId>jackson-core</artifactId>
+    </exclusion>
+   </exclusions>
   </dependency>
     <dependency>
         <groupId>org.elasticsearch</groupId>
         <artifactId>elasticsearch</artifactId>
       <version>2.2.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.dataformat</groupId>
+          <artifactId>jackson-dataformat-cbor</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.dataformat</groupId>
+          <artifactId>jackson-dataformat-smile</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.dataformat</groupId>
+          <artifactId>jackson-dataformat-yaml</artifactId>
+        </exclusion>
+       <exclusion>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+       </exclusion>
+      </exclusions>
     </dependency>
 <!--    <dependency>
         <groupId>org.wltea.ik-analyzer</groupId>
@@ -196,6 +220,26 @@
         <groupId>xml-apis</groupId>
         <artifactId>xml-apis</artifactId>
       <version>1.4.01</version>
+    </dependency>
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+      <version>2.8.10</version>
+    </dependency>
+    <dependency>
+        <groupId>com.fasterxml.jackson.dataformat</groupId>
+        <artifactId>jackson-dataformat-cbor</artifactId>
+      <version>2.8.9</version>
+    </dependency>
+    <dependency>
+        <groupId>com.fasterxml.jackson.dataformat</groupId>
+        <artifactId>jackson-dataformat-smile</artifactId>
+      <version>2.8.9</version>
+    </dependency>
+    <dependency>
+        <groupId>com.fasterxml.jackson.dataformat</groupId>
+        <artifactId>jackson-dataformat-yaml</artifactId>
+      <version>2.8.9</version>
     </dependency>
 </dependencies>
 <repositories>
