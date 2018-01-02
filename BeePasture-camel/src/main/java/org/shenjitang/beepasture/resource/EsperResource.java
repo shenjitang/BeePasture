@@ -5,9 +5,11 @@
  */
 package org.shenjitang.beepasture.resource;
 
+import com.google.common.collect.Sets;
 import java.io.File;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -46,7 +48,7 @@ public class EsperResource extends BeeResource {
     }
     
     @Override
-    protected void _persist(GatherStep gatherStep, String varName, Object obj, Map params) {
+    public void persist(GatherStep gatherStep, String varName, Object obj, Map params) {
         try {
             esperProcess.streamIn((Map)obj, params);
         } catch (Exception e) {
@@ -63,6 +65,11 @@ public class EsperResource extends BeeResource {
     @Override
     public Iterator<Object> iterate(GatherStep gatherStep, Map param) throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Set<String> getParamKeys() {
+        return Sets.newHashSet();
     }
 
 }

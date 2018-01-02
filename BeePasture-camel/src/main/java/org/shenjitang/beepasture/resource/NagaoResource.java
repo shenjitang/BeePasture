@@ -5,10 +5,12 @@
  */
 package org.shenjitang.beepasture.resource;
 
+import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.commons.lang.StringUtils;
 import org.shenjitang.beepasture.algorithm.NagaoAlgorithm;
 import org.shenjitang.beepasture.core.BeeGather;
@@ -70,7 +72,7 @@ public class NagaoResource extends BeeResource {
 
     
     @Override
-    protected void _persist(GatherStep gatherStep, String varName, Object obj, Map params) {
+    public void persist(GatherStep gatherStep, String varName, Object obj, Map params) {
         if ("__start__".equalsIgnoreCase((String)obj)) {
             nagao = new NagaoAlgorithm(N, threshold, stopzi);
         } else if ("__end__".equalsIgnoreCase((String)obj)) {
@@ -96,6 +98,11 @@ public class NagaoResource extends BeeResource {
     @Override
     public Iterator<Object> iterate(GatherStep gatherStep, Map param) throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Set<String> getParamKeys() {
+        return Sets.newHashSet("N", "threshold", "stopzi", "stopwords");
     }
 
     

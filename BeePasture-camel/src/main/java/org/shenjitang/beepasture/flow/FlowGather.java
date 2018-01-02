@@ -5,6 +5,7 @@
  */
 package org.shenjitang.beepasture.flow;
 
+import com.beust.jcommander.internal.Lists;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.URI;
@@ -18,6 +19,8 @@ import org.apache.camel.Exchange;
 import org.apache.camel.impl.DefaultCamelContext;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.ho.yaml.Yaml;
 import org.shenjitang.beepasture.core.BeeGather;
 import org.shenjitang.beepasture.core.GatherStep;
@@ -31,6 +34,7 @@ import org.springframework.context.support.FileSystemXmlApplicationContext;
  * @author xiaolie
  */
 public class FlowGather extends BeeGather {
+    protected static final Log LOGGER = LogFactory.getLog(FlowGather.class);
     
     private CamelContext camelContext;
     private ApplicationContext springContext;
@@ -133,25 +137,29 @@ public class FlowGather extends BeeGather {
     protected void startProcess(final Map processMap) throws ClassNotFoundException {
         final String flowUrl = getEndpoint(processMap);
         final String bodyType = (String)processMap.get("type");
-        final Class clazz = bodyType == null?null:Class.forName(bodyType);
         Thread th = new Thread(new Runnable() {
             @Override
             public void run() {
                 while(true) {
                     try {
                         Exchange exchange = camelResource.receive(flowUrl);
-                        Object body = clazz == null? exchange.getIn().getBody() : exchange.getIn().getBody(clazz);
-                        if (body instanceof org.fusesource.hawtbuf.Buffer) {
-                            try {
-                                body = new String(((org.fusesource.hawtbuf.Buffer)body).getData(), "utf8");
-                            } catch (Exception e) {
-                                e.printStackTrace();
+                        Object body = bodyType == null ? exchange.getIn().getBody() : exchange.getIn().getBody(Class.forName(bodyType));
+                        if(body != null) {
+                            if (body instanceof org.fusesource.hawtbuf.Buffer) {
+                                try {
+                                    body = new String(((org.fusesource.hawtbuf.Buffer)body).getData(), "utf8");
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
                             }
+                            Map<String, Object> headers = exchange.getIn().getHeaders();
+                            doProcess(processMap, body, headers);
+                            //exchange.getOut().
+                        } else {
+                            LOGGER.warn(flowUrl + " body is null!");
                         }
-                        Map<String, Object> headers = exchange.getIn().getHeaders();
-                        doProcess(processMap, body, headers);
-                        //exchange.getOut().
                     } catch (Throwable th) {
+                        LOGGER.warn(flowUrl, th);
                         th.printStackTrace();
                     }
                 }
@@ -163,9 +171,10 @@ public class FlowGather extends BeeGather {
     }
 
     private void doProcess(final Map processMap, final Object body, final Map<String, Object> headers) throws Exception{
+        processMap.put("_with", body);
         GatherStep gatherStep = new GatherStep(processMap, id++);
-        gatherStep.cloneStep();
-        gatherStep.onceGather(body);
+        gatherStep.execute();
+        //gatherStep.onceGather(processMap.get("url"));
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -189,8 +198,9 @@ public class FlowGather extends BeeGather {
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\dce_03.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\100ppi_info_es.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\24h_gl.yaml";
-        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\es2file.yml";
+        //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\es2file.yml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\es2tagservice.yml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\wechat\\weichat2es_flow.yaml";
         if (args.length > 0) {
             fileName = args[0];
         }

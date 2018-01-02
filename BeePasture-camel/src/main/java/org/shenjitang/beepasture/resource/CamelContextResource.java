@@ -5,11 +5,13 @@
  */
 package org.shenjitang.beepasture.resource;
 
+import com.google.common.collect.Sets;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.camel.CamelContext;
 import org.apache.camel.ConsumerTemplate;
 import org.apache.camel.Exchange;
@@ -48,9 +50,9 @@ public class CamelContextResource extends BeeResource {
     public void init(String url, Map param) throws Exception {
         super.init(url, param);
     }
-    
+
     @Override
-    protected void _persist(GatherStep gatherStep, String varName, Object obj, Map params) {
+    public void persist(GatherStep gatherStep, String varName, Object obj, Map params) {
         String to = (String)params.get("route");
         if (to == null) {
             to = (String)params.get("endpoint");
@@ -93,7 +95,7 @@ public class CamelContextResource extends BeeResource {
     }
     
     protected Object subBodyMap(Object item, List fields) throws Exception {
-        if (fields == null) {
+        if (fields == null || fields.isEmpty()) {
             return item;
         }
         Map resultMap = new HashMap();
@@ -129,6 +131,11 @@ public class CamelContextResource extends BeeResource {
     @Override
     public Iterator<Object> iterate(GatherStep gatherStep, Map param) throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Set<String> getParamKeys() {
+        return Sets.newHashSet("endpoint", "route", "header", "body");
     }
 
 }
