@@ -19,4 +19,6 @@ public interface HttpService {
     public Map<String, String> doHead(String url, Map heads) throws Exception;
     public String doPost(String url, String postBody, Map<String, String> heads, String encoding) throws Exception;
     public String doPost(String url, Map<String, String> formParams, Map<String, String> heads, String encoding) throws Exception;
+
+    public String printRequest();
 }

@@ -171,12 +171,19 @@ public class GatherStep {
         GatherDebug.debug(DebugLevel.STEP, "开始执行step：" + rurl);
         try {
             Object page = ourl;
-            Boolean direct = ResourceUtils.get(step, "direct", false);
+            Boolean direct = step.get("url") == null? true : ResourceUtils.get(step, "direct", false);
             if (!direct) {
+                if (ourl instanceof List && ((List)ourl).size() == 1) {
+                    ourl = ((List)ourl).get(0);
+                }
                 if (ourl instanceof File) {
                     ourl = "file://" + ((File)ourl).getAbsolutePath();
-                } else {
+                } else if (ourl instanceof String) {
                     ourl = template.expressCalcu((String) ourl, templateParamMap);
+                } else {
+                    LOGGER.warn(Yaml.dump(step));
+                    LOGGER.warn("url must be String or File , url:" + JSON.toJSONString(ourl));
+                    throw new RuntimeException("unknow ourl type :" + ourl.getClass().getName());
                 }
                 if (beeGather.containsResource((String) ourl) || ResourceMng.maybeResource((String)ourl)) {
                     try {
@@ -831,6 +838,8 @@ public class GatherStep {
         if ("_this".equalsIgnoreCase(varName) || "_this".equalsIgnoreCase(toName)) {
             Map page = (Map)pages.get(pages.size() - 1);
             withVarCurrent.putAll(page);
+            pages.clear();
+            pages.add(withVarCurrent);
         } else {
             if (StringUtils.isNotBlank(varName)) {
                 var = beeGather.getVar(varName);

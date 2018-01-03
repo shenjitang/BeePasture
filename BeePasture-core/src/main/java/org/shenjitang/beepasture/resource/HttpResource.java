@@ -12,6 +12,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import okhttp3.Request;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.plexus.util.StringUtils;
@@ -136,6 +139,30 @@ public class HttpResource extends BeeResource implements Runnable {
             LOGGER.info("=> GET " + url);
             page = httpTools.doGet((String) url, heads, charset);
             LOGGER.debug("GET " + url + " finish  " + (page == null ? "null" : (page.length() > 50 ? page.substring(0, 40) + "   ......" : page)));
+        }
+        Map checkMap = (Map)loadParam.get("check");
+        if (checkMap != null) {
+            String action = null;
+            Boolean checkResult = Boolean.FALSE;
+            for (Object key : checkMap.keySet()) {
+                String value = (String)checkMap.get(key);
+                if (key.equals("regex")) {
+                    Pattern pattern = Pattern.compile(value);
+                    Matcher matcher = pattern.matcher(page);
+                    checkResult = matcher.find();
+                } else if (key.equals("action")) {
+                    action = value;
+                }
+            }
+            if (checkResult) {
+                String requestStr = httpTools.printRequest(); 
+                LOGGER.error("check error");
+                LOGGER.error(requestStr);
+                LOGGER.error(page);
+                if ("exit".equals(action)) {
+                    System.exit(-4);
+                }
+            }
         }
         return page;
     }

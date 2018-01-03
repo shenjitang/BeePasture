@@ -241,6 +241,7 @@ public class FlowGather extends BeeGather {
 
     private void exit() {
         while (System.currentTimeMillis() - GatherStep.activeTime < waitBeforeExit) {
+            System.out.println("******************* waitBeforeExit=" + waitBeforeExit + "    now to activeTime=" + (System.currentTimeMillis() - GatherStep.activeTime));
             try {
                 Thread.sleep(waitBeforeExit);
             } catch (Exception e) {}

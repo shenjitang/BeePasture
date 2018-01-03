@@ -48,6 +48,7 @@ public class OkHttpTools implements HttpService {
     private static Proxy httpProxy;
     private static Proxy httpsProxy;
     private Map<String, List<Cookie>> cookieStore = new HashMap();
+    private ThreadLocal requestLocal = new ThreadLocal();
     
     static {
         if (System.getProperty("httpProxy", "true").equalsIgnoreCase("true")) {
@@ -108,7 +109,20 @@ public class OkHttpTools implements HttpService {
         LOGGER.info("================ httpClient " + httpClient.toString() + " ================");
     }
     
-    
+    @Override
+    public String printRequest() {
+        StringBuilder sb = new StringBuilder();
+        Request request = (Request)requestLocal.get();
+        sb.append(request.method()).append(" ").append(request.url().toString()).append("\n");
+        Headers headers = request.headers();
+        sb.append("===========request headers=============\n");
+        for (String headName : headers.names()) {
+            String headValue = headers.get(headName);
+            sb.append(headName).append(": ").append(headValue).append("\n");
+        }
+        return sb.toString();
+    }
+        
     @Override
     public String doGet(String url, Map heads, String encoding) throws Exception {
         Request request = buildHeadInRequest(url, heads).build();
@@ -292,6 +306,7 @@ public class OkHttpTools implements HttpService {
     }
     
     private String execute(Request request, final String encoding) throws Exception {
+        requestLocal.set(request);
         try (Response response = httpClient.newCall(request).execute()) {
             if (response.isSuccessful()) {
                 if (StringUtils.isBlank(encoding)) {
