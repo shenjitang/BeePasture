@@ -126,7 +126,8 @@ public class GatherStep {
                 ourl = ((Map) ourl).get(rurl);
             }
             templateParamMap.put("it", ourl);
-            cloneStep();
+            step = beforeGatherExpressCalcu(rStep, "download", "sql", "local", "post");
+            //cloneStep();
             if (step.containsKey("local")) {
                 templateParamMap.putAll((Map)step.get("local"));
             }
@@ -586,6 +587,7 @@ public class GatherStep {
         boolean keepOne = false;
         for (Object page : (List) obj) {
             try {
+                templateParamMap.put("it", page);
                 if (doFilterOnePage(null, null, page, filter, i++).isKeep()) {
                     keepOne = true;
                     resList.add(page);
@@ -605,6 +607,7 @@ public class GatherStep {
     }
 
     protected boolean doFilterOnce(String key, Object filterExpress, Object page, int index) throws Exception {
+        templateParamMap.put("it", page);
         if (key == null) {
             key = "script";
         }
@@ -616,7 +619,6 @@ public class GatherStep {
             } else if (express.matches("<\\d+")) { // <22
                 return index < Integer.valueOf(express.substring(1));
             } else {
-                templateParamMap.put("it", page);
                 String res = template.expressCalcu(express, templateParamMap);
                 return Boolean.valueOf(res);
             }
@@ -625,9 +627,10 @@ public class GatherStep {
             Matcher matcher = pattern.matcher(JSON.toJSONString(page));
             return matcher.find();
         } else if ("exist".equalsIgnoreCase(key)) {
-            beforeGatherExpressCalcu((Map)filterExpress, "sql", "search");
-            String resource = (String)((Map)filterExpress).get("resource");
-            Object checkResult = loadResource(resource, (Map)filterExpress);
+            Map express = beforeGatherExpressCalcu((Map)filterExpress, "sql", "search");
+            LOGGER.debug("filter=>" + JSON.toJSONString(express));
+            String resource = (String)(express).get("resource");
+            Object checkResult = loadResource(resource, express);
             if (checkResult == null) {
                 return false;
             }
@@ -729,10 +732,12 @@ public class GatherStep {
      * 这个方法有问题，只要调用一遍step里的内容就改掉了，以后再也不会重新计算了。
      * @param keys
      */
-    protected void beforeGatherExpressCalcu(Map map,  String ... keys) {
+    protected Map beforeGatherExpressCalcu(Map map,  String ... keys) {
+        Map result = cloneMap(map);
         for (String key : keys) {
-            doExpressCalcu(map, key);
+            doExpressCalcu(result, key);
         }
+        return result;
     }
 
     protected void doExpressCalcu(Map parent) {
