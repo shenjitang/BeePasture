@@ -50,21 +50,20 @@ public class BeeGather {
         return instance;
     }
 
-    public void setGather(String gather) {
-        this.gather = gather;
-    }
-
-    public BeeGather() {
-    }
-
     public BeeGather(String yamlString) {
         this.gather = yamlString;
+        program = (Map)Yaml.load(gather);
+        Map sysProperties = (Map)program.get("properties");
+        if (sysProperties != null) {
+            sysProperties.forEach((k, v) -> {
+                System.setProperty((String)k, (String)v);
+            });
+        }
+        instance = this;
+        LOGGER.debug(program);
     }
 
      public void init() throws Exception {
-        instance = this;
-        program = (Map)Yaml.load(gather);
-        LOGGER.debug(program);
         loadResources();
         if (resources != null) {
             if (resourcesList == null) {

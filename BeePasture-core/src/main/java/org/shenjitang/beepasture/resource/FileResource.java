@@ -38,6 +38,7 @@ import org.codehaus.plexus.util.StringUtils;
 import org.ho.yaml.Yaml;
 import org.shenjitang.beepasture.core.GatherStep;
 import org.shenjitang.beepasture.resource.util.ExcelParser;
+import org.shenjitang.beepasture.util.ZipUtils;
 import org.shenjitang.commons.csv.CSVUtils;
 
 /**
@@ -55,21 +56,26 @@ public class FileResource extends BeeResource {
     @Override
     public void init(String url, Map param) throws Exception {
         super.init(url, param); //To change body of generated methods, choose Tools | Templates.
-        if (uri.getAuthority() != null && uri.getPath() != null) {
-            this.fileName = uri.getAuthority() + uri.getPath();
+        if (uri == null) {
+            if (url.startsWith("file://")) {
+                this.fileName = url.substring(7);
+            } else if (url.startsWith("file:")) {
+                this.fileName = url.substring(5);
+            } else {
+                this.fileName = url;
+            }
+            int idx = this.fileName.indexOf("?");
+            if (idx > 0) {
+                this.fileName = this.fileName.substring(0, idx);
+            }
         } else {
-            this.fileName = uri.getSchemeSpecificPart();
+            if (uri.getAuthority() != null && uri.getPath() != null) {
+                this.fileName = uri.getAuthority() + uri.getPath();
+            } else {
+                this.fileName = uri.getSchemeSpecificPart();
+            }
         }
         file = new File(this.fileName);
-//        String query  = uri.getQuery();
-//        if (StringUtils.isNotBlank(query)) {
-//            List<NameValuePair> queryPair = URLEncodedUtils.parse(query, Charset.forName("UTF-8"));
-//            if (queryPair != null) {
-//                for (NameValuePair nvp : queryPair) {
-//                    params.put(nvp.getName(), nvp.getValue());
-//                }
-//            }
-//        }
     }
 
     @Override
@@ -125,20 +131,25 @@ public class FileResource extends BeeResource {
     @Override
     public Object loadResource(GatherStep gatherStep, Map loadParam) throws Exception {
         Map iparams = new HashMap();
-        
-        String query  = uri.getQuery();
-        if (query != null) {
-            List<NameValuePair> queryPair = URLEncodedUtils.parse(query, Charset.forName("UTF-8"));
-            if (queryPair != null) {
-                for (NameValuePair nvp : queryPair) {
-                    iparams.put(nvp.getName(), nvp.getValue());
-                }
-            }
-        }
+        iparams.putAll(uriParams);
+//        String query  = uri.getQuery();
+//        if (query != null) {
+//            List<NameValuePair> queryPair = URLEncodedUtils.parse(query, Charset.forName("UTF-8"));
+//            if (queryPair != null) {
+//                for (NameValuePair nvp : queryPair) {
+//                    iparams.put(nvp.getName(), nvp.getValue());
+//                }
+//            }
+//        }
         iparams.putAll(loadParam);
         String encoding = ResourceUtils.get(iparams, "encoding", "GBK");
         String format = ResourceUtils.get(iparams, "format", "plant");
-        return readFile(file, encoding, format);
+        if (format.equalsIgnoreCase(FilenameUtils.getExtension(file.getName()))) {
+            String unzipFilepath = ResourceUtils.get(loadParam, "to", ".");//System.getProperty("java.io.tmpdir")
+            return ZipUtils.unzip(file, unzipFilepath, true, encoding);
+        } else {
+            return readFile(file, encoding, format);
+        }
     }
     
     public static Object readFile(File file, String encoding, String format) throws Exception {

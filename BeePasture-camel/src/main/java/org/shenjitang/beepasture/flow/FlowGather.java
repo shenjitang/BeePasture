@@ -44,10 +44,6 @@ public class FlowGather extends BeeGather {
     private Long waitBeforeExit;
     private static int id = 1;
 
-    public FlowGather() {
-        super();
-    }
-
     public void setWaitBeforeExit(Long waitBeforeExit) {
         this.waitBeforeExit = waitBeforeExit;
     }
@@ -58,9 +54,6 @@ public class FlowGather extends BeeGather {
 
     @Override
     public void init() throws Exception {
-        instance = this;
-        program = (Map)Yaml.load(gather);
-        LOGGER.debug(program);
         String oWaitTime = (String)program.get("exit");
         if (StringUtils.isNotBlank(oWaitTime)) {
             waitBeforeExit = getTimeLong(oWaitTime);

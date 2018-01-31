@@ -121,9 +121,10 @@ public class HttpResource extends BeeResource implements Runnable {
             //}
             FileResource fileResource = new FileResource();
             fileResource.init(fileUrl, null);
-            Map saveMap = (Map)loadParam.get("save");
-            if (saveMap != null) {
-                return fileResource.loadResource(null, saveMap);
+            //Map readMap = (Map)loadParam.get("read");
+            //if (readMap != null) {
+            if (download.containsKey("read")) {
+                return fileResource.loadResource(null, download);
             }
             return fileUrl;
         }

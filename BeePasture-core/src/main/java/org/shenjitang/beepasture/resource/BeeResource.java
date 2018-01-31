@@ -43,23 +43,29 @@ public abstract class BeeResource {
     public void init(String url, Map param) throws Exception {
         if (url != null) {
             this.url = url;
+            String query = null;
             try {
                 this.uri = URI.create(url);
-                
-                String query  = uri.getQuery();
-                if (org.codehaus.plexus.util.StringUtils.isNotBlank(query)) {
-                    List<NameValuePair> queryPair = URLEncodedUtils.parse(query, Charset.forName("UTF-8"));
-                    if (queryPair != null) {
-                        for (NameValuePair nvp : queryPair) {
-                            params.put(nvp.getName(), nvp.getValue());
-                            uriParams.put(nvp.getName(), nvp.getValue());
-                        }
-                    }
+                query  = uri.getQuery();
+            } catch (IllegalArgumentException e) {
+                if (url.startsWith("file:")) {
+                    query = StringUtils.substringAfterLast(url, "?");
+                } else {
+                    throw e;
                 }
                 
-            } catch (IllegalArgumentException e) {
-                LOGGER.warn("", e);
             }
+
+            if (StringUtils.isNotBlank(query)) {
+                List<NameValuePair> queryPair = URLEncodedUtils.parse(query, Charset.forName("UTF-8"));
+                if (queryPair != null) {
+                    for (NameValuePair nvp : queryPair) {
+                        params.put(nvp.getName(), nvp.getValue());
+                        uriParams.put(nvp.getName(), nvp.getValue());
+                    }
+                }
+            }
+
         }
         if (param != null) {
             this.params.putAll(param);

@@ -170,6 +170,9 @@ public class OkHttpTools implements HttpService {
 
     @Override
     public String dataImage(String url) throws IOException {  
+        if (url.contains("data:image")) {
+            return url.substring(url.indexOf("data:image"));
+        }
         String imgType = url.substring(url.lastIndexOf(".") + 1);
         Request request = buildHeadInRequest(url, null).build();
         try (Response response = httpClient.newCall(request).execute()) {
@@ -187,7 +190,7 @@ public class OkHttpTools implements HttpService {
                 LOGGER.warn("FAIL GET " + request.url().toString() + " " + response.code());
             }
         }
-        return "";
+        return url;
     }  
     
     protected String fetchFilename(String url, Response response) {
