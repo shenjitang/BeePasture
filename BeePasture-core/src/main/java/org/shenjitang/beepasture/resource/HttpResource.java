@@ -25,6 +25,7 @@ import org.shenjitang.beepasture.http.HttpServiceMng;
 import org.shenjitang.beepasture.http.HttpTools;
 import org.shenjitang.beepasture.http.OkHttpTools;
 import org.shenjitang.beepasture.resource.util.ResourceUtils;
+import org.shenjitang.beepasture.util.ParseUtils;
 
 
 /**
@@ -132,6 +133,8 @@ public class HttpResource extends BeeResource implements Runnable {
             return httpTools.dataImage(url);
         }
         String page = null;
+        //long period = ParseUtils.getTimeLong(System.getProperty("HttpPeriod", "0"));
+        //long beginTime = System.currentTimeMillis();
         if (org.apache.commons.lang3.StringUtils.isNotBlank(postBody)) {
             LOGGER.info("=> POST " + url);
             page = httpTools.doPost((String) url, postBody, heads, null);
@@ -139,8 +142,13 @@ public class HttpResource extends BeeResource implements Runnable {
         } else {
             LOGGER.info("=> GET " + url);
             page = httpTools.doGet((String) url, heads, charset);
-            LOGGER.debug("GET " + url + " finish  " + (page == null ? "null" : (page.length() > 50 ? page.substring(0, 40) + "   ......" : page)));
+            LOGGER.debug("GET " + url + " finish  " + (page == null ? "null" : (page.length() > 100 ? page.substring(0, 80) + "   ......" : page)));
         }
+//        long usedTime = System.currentTimeMillis() - beginTime;
+//        long sleepTime = period - usedTime;
+//        if (sleepTime > 0) {
+//            Thread.sleep(sleepTime);
+//        }
         Map checkMap = (Map)loadParam.get("check");
         if (checkMap != null) {
             String action = null;

@@ -25,6 +25,7 @@ import org.ho.yaml.Yaml;
 import org.shenjitang.beepasture.core.BeeGather;
 import org.shenjitang.beepasture.core.GatherStep;
 import org.shenjitang.beepasture.resource.CamelContextResource;
+import org.shenjitang.beepasture.util.ParseUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
@@ -56,7 +57,7 @@ public class FlowGather extends BeeGather {
     public void init() throws Exception {
         String oWaitTime = (String)program.get("exit");
         if (StringUtils.isNotBlank(oWaitTime)) {
-            waitBeforeExit = getTimeLong(oWaitTime);
+            waitBeforeExit = ParseUtils.getTimeLong(oWaitTime);
         }
         String springContextUrl = (String)program.get("camel");
         if (StringUtils.isNotBlank(springContextUrl)) {
@@ -179,7 +180,7 @@ public class FlowGather extends BeeGather {
         return camelContext;
     }
 
-    static Boolean debug = true;
+    static Boolean debug = false;
     public static void main( String[] args ) throws Exception {
         String fileEncoding = System.getProperty("fileEncoding", "utf8");
         Long waitBeforeExit = Long.valueOf(System.getProperty("waitBeforeExit", "1000"));
@@ -193,7 +194,7 @@ public class FlowGather extends BeeGather {
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\24h_gl.yaml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\es2file.yml";
         //String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\examples\\es2tagservice.yml";
-        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\wechat\\weichat2es_flow.yaml";
+        String fileName = "D:\\workspace\\神机堂\\GitHub\\BeePasture\\ry\\wechat\\weichat2es_flow_2.yaml";
         if (args.length > 0) {
             fileName = args[0];
         }
@@ -243,21 +244,5 @@ public class FlowGather extends BeeGather {
         System.exit(0);
     }
 
-    private Long getTimeLong(String oSleep) {
-        Long sleep;
-        String sSleep = oSleep.trim().toLowerCase();
-        if (sSleep.endsWith("ms")) {
-            sleep = Long.valueOf(sSleep.substring(0, sSleep.indexOf("ms")));
-        } else if (sSleep.endsWith("s")) {
-            sleep = Long.valueOf(sSleep.substring(0, sSleep.indexOf("s")));
-            sleep = sleep * 1000L;
-        } else if (sSleep.endsWith("m")) {
-            sleep = Long.valueOf(sSleep.substring(0, sSleep.indexOf("m")));
-            sleep = sleep * 60L * 1000L;
-        } else {
-            sleep = Long.valueOf(sSleep);
-        }
-        return sleep;
-    }
   
 }

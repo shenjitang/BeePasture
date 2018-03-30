@@ -14,6 +14,7 @@ import java.net.Socket;
 import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.shenjitang.beepasture.util.ParseUtils;
 
 /**
  *
@@ -24,8 +25,8 @@ public class ElectroHttpProxy implements Runnable {
     private Socket socket = null;
     private PrintWriter pw = null;
     private BufferedReader br = null;
-    private String electroHost = "localhost";
-    private int electroPort = 7080;
+    private final String electroHost;
+    private final int electroPort;
     private final static Object lock = new Object();
     private final static String END_MARK = "<<<__EOF__>>>";
     private Thread recevieThread = null;
@@ -34,6 +35,13 @@ public class ElectroHttpProxy implements Runnable {
     private String page = null;
 
     private ElectroHttpProxy() {
+        electroHost = System.getProperty("ElectroHttpProxyHost", "localhost");
+        electroPort = Integer.valueOf(System.getProperty("ElectroHttpProxyPort", "7080"));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("===============> shutdown free connection");
+            close();
+            System.out.println("===============> shutdown free finished");
+        }));
     }
     
     public static ElectroHttpProxy getInstance() {
@@ -67,6 +75,8 @@ public class ElectroHttpProxy implements Runnable {
     
     private void reOpenIfBreak() {
         if (isBreak()) {
+            close();
+            recevieThread.interrupt();
             open();
         }
     }
@@ -94,14 +104,26 @@ public class ElectroHttpProxy implements Runnable {
     }
     
     public synchronized String doGet(String url, Map heads, String encoding) throws Exception {
-        reOpenIfBreak();
+        LOGGER.info("=====doGet = " + url);
+        long period = ParseUtils.getTimeLong(System.getProperty("HttpPeriod", "0"));
+        long beginTime = System.currentTimeMillis();
+        //reOpenIfBreak();
         page = null;
-        pw.write(url + "\n" + END_MARK + "\n");
+        pw.write(url + END_MARK);
         pw.flush();
-        synchronized (sb) {
+        for (int i = 0; i < 120; i++) { //等待两分钟
             if (page == null) {
-                sb.wait(120000);//等待两分钟
+                synchronized (sb) {
+                    sb.wait(1000);
+                }
+            } else {
+                break;
             }
+        }
+        long usedTime = System.currentTimeMillis() - beginTime;
+        long sleepTime = period - usedTime;
+        if (sleepTime > 0) {
+            Thread.sleep(sleepTime);
         }
         return page;
     }
@@ -113,8 +135,9 @@ public class ElectroHttpProxy implements Runnable {
                 if (isBreak()) {
                     Thread.sleep(1000);
                 } else {
+                    String line = br.readLine();
+                        //LOGGER.debug("=====receive: " + line);
                     synchronized(sb) {
-                        String line = br.readLine();
                         if (line.contains(END_MARK)) {
                             sb.append(line.replaceAll("END_MARK", ""));
                             page = sb.toString();

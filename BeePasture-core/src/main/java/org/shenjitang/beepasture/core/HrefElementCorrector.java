@@ -169,12 +169,8 @@ public class HrefElementCorrector {
         TagNode[] allNode = tagNode.getAllElements(true);
         for (TagNode node : allNode) {
             if ("img".equalsIgnoreCase(node.getName())) {
-                String attributeName = "src";
-                String imgUrl = node.getAttributeByName(attributeName);
-                if (imgUrl == null) {
-                    attributeName = "data-src";
-                    imgUrl = node.getAttributeByName(attributeName);
-                }
+                String imgUrl = node.getAttributeByName("src");
+                String imgStr = "";
                 if (StringUtils.isNotBlank(imgUrl)) {
                     if (!imgUrl.toLowerCase().startsWith("http")) {
                         if (imgUrl.startsWith("//")) {
@@ -188,10 +184,34 @@ public class HrefElementCorrector {
                     }
                     LOGGER.info("image:" + imgUrl);
                     BeeResource beeResource = gatherStep.beeGather.getResourceMng().getResource(imgUrl, false);
-                    String str = (String)beeResource.loadResource(gatherStep, ImmutableMap.of("dataimage", Boolean.TRUE));
+                    imgStr = (String)beeResource.loadResource(gatherStep, ImmutableMap.of("dataimage", Boolean.TRUE));
                     node.removeAttribute("src");
-                    node.addAttribute("src", str);
+                    node.addAttribute("src", imgStr);
                 }
+                imgUrl = node.getAttributeByName("data-src");
+                if (StringUtils.isNotBlank(imgUrl)) {
+                    if (!imgUrl.toLowerCase().startsWith("http")) {
+                        if (imgUrl.startsWith("//")) {
+                            imgUrl = "http:" + imgUrl;
+                        } else if (imgUrl.startsWith("/")) {
+                            URI uri = URI.create(gatherStep.ourl.toString());
+                            imgUrl = uri.getScheme() + "://" + uri.getHost() + imgUrl;
+                        } else {
+                            imgUrl = StringUtils.substringBeforeLast(gatherStep.ourl.toString(), "/") + "/" + imgUrl;
+                        }
+                    }
+                    LOGGER.info("data-src image:" + imgUrl);
+                    BeeResource beeResource = gatherStep.beeGather.getResourceMng().getResource(imgUrl, false);
+                    String str = (String)beeResource.loadResource(gatherStep, ImmutableMap.of("dataimage", Boolean.TRUE));
+                    if (imgStr.length() < 150 && str.length() > 500) {
+                        node.removeAttribute("src");
+                        node.addAttribute("src", str);
+                    } else {
+                        node.removeAttribute("data-src");
+                        node.addAttribute("data-src", str);
+                    }
+                }
+                
             }
         }
         return tagNode;

@@ -72,16 +72,64 @@ public class StringFunctions {
 
     public static String unicode2str(String str) {
         StringBuilder sb = new StringBuilder();
-        int i = -1;
-        int pos = 0;
-
-        while((i=str.indexOf("\\u", pos)) != -1){
-            sb.append(str.substring(pos, i));
-            if(i+5 < str.length()){
-                pos = i+6;
-                sb.append((char)Integer.parseInt(str.substring(i+2, i+6), 16));
+        int tag = -1;
+        StringBuilder code = new StringBuilder();
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (tag < 0) {
+                if(c == '\\') {
+                    tag = 0;
+                } else {
+                    sb.append(c);
+                }
+            } else if (tag == 0) {
+                if (c == 'u') {
+                    tag = 1;
+                    if (code.length() > 0) {
+                        code.delete(0, code.length());
+                    }
+                } else {
+                    sb.append('\\').append(c);
+                    tag = -1;
+                }
+            } else if (tag < 4) {
+                if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+                    tag++;
+                    code.append(c);
+                } else {
+                    sb.append(code).append(c);
+                    tag = -1;
+                }
+            } else if (tag == 4) {
+                if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+                    code.append(c);
+                    sb.append((char)Integer.parseInt(code.toString(), 16));
+                } else {
+                    sb.append(code).append(c);
+                }
+                tag = -1;
+            } else {
+                throw new RuntimeException("十万个惊奇先生，这怎么可能！！！");
             }
         }
+        if (tag == 0) {
+            sb.append('\\');
+        } else if (tag == 1) {
+            sb.append('\\').append('u');
+        } else if (tag > 1) {
+            sb.append('\\').append('u').append(code);
+        }
+        
+//
+//        int i = -1;
+//        int pos = 0;
+//        while((i=str.indexOf("\\u", pos)) != -1){
+//            sb.append(str.substring(pos, i));
+//            if(i+5 < str.length()){
+//                pos = i+6;
+//                sb.append((char)Integer.parseInt(str.substring(i+2, i+6), 16));
+//            }
+//        }
         return sb.toString();
     }
 

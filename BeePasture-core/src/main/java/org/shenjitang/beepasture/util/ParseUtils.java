@@ -184,6 +184,24 @@ public class ParseUtils {
     private static byte charToByte(char c) {
         return (byte) "0123456789ABCDEF".indexOf(c);
     }
+    
+    public static Long getTimeLong(String oSleep) {
+        Long sleep;
+        String sSleep = oSleep.trim().toLowerCase();
+        if (sSleep.endsWith("ms")) {
+            sleep = Long.valueOf(sSleep.substring(0, sSleep.indexOf("ms")));
+        } else if (sSleep.endsWith("s")) {
+            sleep = Long.valueOf(sSleep.substring(0, sSleep.indexOf("s")));
+            sleep = sleep * 1000L;
+        } else if (sSleep.endsWith("m")) {
+            sleep = Long.valueOf(sSleep.substring(0, sSleep.indexOf("m")));
+            sleep = sleep * 60L * 1000L;
+        } else {
+            sleep = Long.valueOf(sSleep);
+        }
+        return sleep;
+    }
+    
     public static void main(String[] args) throws Exception {
         String str = "aaaa&#xe10b;-&#xefad;-&#xe7a5;&#xe3c4;&#xe294;&#xe10b;cccc";
         System.out.println(ucs22str(str, "gbk"));
