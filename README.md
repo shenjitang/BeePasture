@@ -5,6 +5,21 @@ BeePasture （蜜蜂牧场）
 request: jdk1.7   
 详细文档参见wiki   
    
+特性
+==========
+1. 支持同步(批处理)和异步（流处理）两种模式
+2. 支持各种常见的数据来源的读写（http, mqtt, activemq, file, mysql, oracle, sqlserver, mongodb, elastiasearch），能很方面的扩展新的来源。
+3. 集成apache camel，可以执行camel的xml脚本。beepasture的yaml脚本与camel脚本可以通过endpoint，比如seda, direct等相互调用。
+4. 内嵌支持xpath, jsonpath, regex, javascript, beetl等技术。
+5. 可以通过img标签的image-data属性保存图片内容。
+6. 支持上传阿里OSS，并将url修改为阿里OSS的地址。
+7. 丰富的过滤器方式，比如>2, <10, 2-10 表示处理那几条记录。也可以写正则匹配或脚本来判断是否处理。
+8. 内部集成IK分词器
+9. 支持一些常用算法，比如：DFA，Nagao，TFNeighbor等。
+10. 通过camel和mq可以组成微服务处理链，也就是蜂群功能。
+11. 通过和我的另一个项目蝴蝶（一个使用chrome内核开发的采集和自动化操作网页工具）配合。（在初步开发中）
+   
+   
 BeePasture-core
 ------
 命令行运行   
@@ -40,7 +55,9 @@ gather:
             templete: "${it.substring(1)}"
   # 获取城市列表 更多
   - url: cityUrlList
-    xpath: json($.msg.html);//a
+    extract: 
+      - jsonpath: $.msg.html
+      - xpath: //a
     save:
       to: city
       append: true
@@ -48,7 +65,7 @@ gather:
           title: //text()
           name: 
             xpath: @href
-            templete: "${it.substring(1)}"
+            script: "${it.substring(1)}"
             
 #保存
 persist:
@@ -77,18 +94,18 @@ resource:
 ```
 resource中的资源类型是以url参数中的schema部分指定的。支持的schema有：`jdbc,file,dir,mongodb`  
 
-# var：
+# var：   
 变量只有一种，所有变量都是数组，如果前一步得到的不是数组，就会放进数组，这个数组的size是1，数组里只可以是Map或String，如果数组里是Map，那么Map的key就是property
 --------
 ``` var
 var：
     cityList: []
-    cityUrlList: "A..Z http://www.dianping.com/ajax/json/index/citylist/getCitylist?_nr_force=${time}&do=getByPY&firstPY=${i}"
+    cityUrlList: "A..Z http://www.dianping.com/ajax/json/index/citylist/getCitylist?_nr_force=${sys.currentTimeMillis()}&do=getByPY&firstPY=${i}"
 ```
 `[]`表示数组  
 `n..n somestring${i}`也是数组
 上例是大众点评网上所有的城市列表，是个有26个成员的数组，其中${i}分别是A,B,C,D...Z。    
-`${time}`为当前时间戳
+`${sys.currentTimeMillis()}`为当前时间戳
 `n..n`是数组中的不同部分的定义，可以是字母，比如：A..Z 和 a..g，也可以是数字，比如：5..100。  
 抓取大众点评网所有城市的脚本见 examples/mongodb_city.yaml
 
@@ -154,7 +171,5 @@ BeePasture-camel
 ------
 是异步执行的版本，是以流的方式执行，flow关键字下面的所有步骤都是单独线程同时执行的，就行工厂里的流水线一样。这个工具可以一次性执行。也可以作为demo进程提供服务，比如监听mq的topic，然后通过步骤执行业务逻辑。
 
-BeePasture-grizzly2
-------
-是sun的jersey框架的restful服务。脚本通过http post执行。
+
 
