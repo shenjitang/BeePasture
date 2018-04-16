@@ -3,8 +3,7 @@ BeePasture （蜜蜂牧场）
 蜜蜂牧场是一个数据采集清洗工具，也是一个ETL工具，同时也是一套脚本语言。最初只是完成网页数据采集清洗入库的工作。随着它的发展，功能越来越多。拥有同步和异步两种模式。结合apache camel，可以很方面的创建异步流式处理集群，称为牧场蜂群模式。使用这套脚本，根据任务情况，需要有xml，yaml，json，xpath, jsonpath, beetl模板，apache camel等相关知识。脚本本身是yaml格式。支持单步调试。   
 
 request: jdk1.7   
-   
-详细文档参见wiki    
+详细文档参见wiki
 BeePasture-core
 ------
 命令行运行   
