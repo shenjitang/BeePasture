@@ -4,7 +4,7 @@ BeePasture （蜜蜂牧场）
 
 request: jdk1.7   
    
-详细文档参见wiki
+详细文档参见wiki    
 BeePasture-core
 ------
 命令行运行   
