@@ -136,10 +136,11 @@ public class ElectroHttpProxy implements Runnable {
                     Thread.sleep(1000);
                 } else {
                     String line = br.readLine();
-                        //LOGGER.debug("=====receive: " + line);
+                    LOGGER.debug("=====receive: " + line);
                     synchronized(sb) {
                         if (line.contains(END_MARK)) {
-                            sb.append(line.replaceAll("END_MARK", ""));
+                            LOGGER.debug("=====receive finished");
+                            sb.append(line.replaceAll(END_MARK, ""));
                             page = sb.toString();
                             sb.delete(0, sb.length());
                             sb.notify();

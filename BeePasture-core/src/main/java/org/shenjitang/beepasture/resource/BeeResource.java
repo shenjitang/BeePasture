@@ -21,6 +21,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.shenjitang.beepasture.core.BeeGather;
 import org.shenjitang.beepasture.core.GatherStep;
+import org.shenjitang.beepasture.function.StringFunctions;
 
 /**
  *

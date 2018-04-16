@@ -618,6 +618,11 @@ public class GatherStep {
                 return index > Integer.valueOf(express.substring(1));
             } else if (express.matches("<\\d+")) { // <22
                 return index < Integer.valueOf(express.substring(1));
+            } else if (express.matches("\\d+")) { // 22
+                return index == Integer.valueOf(express);
+            } else if (express.matches("\\d+[-]\\d+")) { // 2-6
+                String[] beginEnd = express.split("-");
+                return index >= Integer.valueOf(beginEnd[0]) && index <= Integer.valueOf(beginEnd[1]);
             } else {
                 String res = template.expressCalcu(express, templateParamMap);
                 return Boolean.valueOf(res);
